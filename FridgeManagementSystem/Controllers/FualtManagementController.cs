@@ -2,13 +2,9 @@
 
 namespace FridgeManagementSystem.Controllers
 {
-    public class Fridges : Controller
+    public class FualtManagementController : Controller
     {
         public IActionResult Index()
-        {
-            return View();
-        }
-        public IActionResult Register()
         {
             return View();
         }

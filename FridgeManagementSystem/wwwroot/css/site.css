@@ -18,5 +18,10 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
+    height: 100%;
+}
+
+footer {
+    align-content: end;
 }
