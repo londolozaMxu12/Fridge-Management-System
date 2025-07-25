@@ -1,0 +1,132 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FridgeSystem</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        body{
+            color:white;
+            min-height:100%;
+
+
+        }
+        /*.container {
+            padding-left: 0;
+            margin-left: 20px;
+        }*/
+        a {
+            color: white;
+        }
+        header > a{
+            color:white;
+        }
+        footer{
+           /* background-color:black;*/
+            margin-top:auto;
+            margin-bottom:0;
+            height:auto;
+
+        }
+        .widget {
+            margin-right: 300px;
+        }
+        .nav-item{
+            font-weight:bold;
+            font-size:15px;
+
+        }
+        .nav-link{
+            background-color:black;
+            border:2px solid white;
+            border-radius:3px;
+            margin-left:20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm  text-bg-dark p-3  py-3">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/Images/WhatsApp Image 2025-05-27 at 18.37.15_1c44df4a.jpg" height="60" width="120" />
+                </a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+
+                    </ul>
+
+                </div>
+                <div>
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="AboutUs">About Us</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="ContactUs">Contact Us</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Role" asp-action="Index">Roles</a>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+    <footer>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-dark ">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="widget">
+                            <h5 class="widgetheading">Our Contact</h5>
+                            <p>
+                                <i class="icon-phone"></i>*****123 <br>
+                                <i class="icon-envelope-alt"></i>fridgesystem@gmail.com
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="widget">
+                            <h5 class="widgetheading">Quick Links</h5>
+                            <ul class="link-list">
+                                <li><a href="@Url.Action(" Index", "Carrer")">Carrer</a></li>
+                                <li><a href="@Url.Action(" Index", "Contact")">Contacts</a></li>
+                                <li><a href="@Url.Action(" Index", "AboutUs")">AboutUs</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </footer>
+
+
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
