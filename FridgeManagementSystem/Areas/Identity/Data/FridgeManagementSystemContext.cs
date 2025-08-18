@@ -1,4 +1,5 @@
 ﻿using FridgeManagementSystem.Areas.Identity.Data;
+using FridgeManagementSystem.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,15 @@ public class FridgeManagementSystemContext : IdentityDbContext<IdentityUser>
     }
     public DbSet<ApplicationUser> ApplicationUsers { get; set; }
     public DbSet<IdentityRole> IdentityRoles { get; set; }
+
+    // FOR BUSINESS TABLES
+    public DbSet<Customer> Customers { get; set; }
+    public DbSet<Fridge> Fridges { get; set; }
+    public DbSet<Fault> Faults { get; set; }
+    public DbSet<FaultTechnician> FaultTechnicians { get; set; }
+    public DbSet<RepairSchedule> RepairSchedules { get; set; }
+    public DbSet<FridgeRequest> FridgeRequests { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
