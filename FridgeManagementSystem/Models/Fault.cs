@@ -28,8 +28,8 @@ namespace FridgeManagementSystem.Models
         public int CustomerId { get; set; }
         public Customer Customer { get; set; }
 
-        public int FridgeId { get; set; }
-        public Fridge Fridge { get; set; }
+        public int? FridgeId { get; set; }
+        public Fridge? Fridge { get; set; }
 
         public int? FaultTechnicianId { get; set; }
         public FaultTechnician FaultTechnician { get; set; }
