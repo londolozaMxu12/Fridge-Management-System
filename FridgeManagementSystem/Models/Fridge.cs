@@ -20,7 +20,8 @@ namespace FridgeManagementSystem.Models
         // Foreign Key
         public int CustomerId { get; set; }
         public Customer Customer { get; set; }
-
+        public ICollection<MaintenanceRecord> MaintenanceRecords { get; set; }
         public ICollection<Fault> Faults { get; set; }
+        public ICollection<PurchasingOrderDetails> OrderDetails { get; set; }
     }
 }

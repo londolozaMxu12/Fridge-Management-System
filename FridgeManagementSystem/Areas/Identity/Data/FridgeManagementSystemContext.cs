@@ -23,6 +23,23 @@ public class FridgeManagementSystemContext : IdentityDbContext<IdentityUser>
     public DbSet<FaultTechnician> FaultTechnicians { get; set; }
     public DbSet<RepairSchedule> RepairSchedules { get; set; }
     public DbSet<FridgeRequest> FridgeRequests { get; set; }
+    public DbSet<City> Cities { get; set; }
+    public DbSet<CustomerData> CustomerDatas { get; set; }
+    public DbSet<CustomerLiaison> CustomerLiaisons { get; set; }
+    public DbSet<FridgeInventory> FridgeInventories { get; set; }
+    public DbSet<InventoryLiaison> InventoryLiaisons { get; set; }
+    public DbSet<MaintenanceRecord> MaintenanceRecords { get; set; }
+    public DbSet<MaintenanceTech> MaintenanceTechs { get; set; }
+    public DbSet<Province> Provinces { get; set; }
+    public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
+    public DbSet<PurchasingManager> PurchasingManagers { get; set; }
+    public DbSet<PurchasingOrderDetails> OrderDetails { get; set; }
+    public DbSet<PurchasingOrder> PurchasingOrders { get; set; }
+    public DbSet<Quotation> Quotations { get; set; }
+    public DbSet<StockLevel> StockLevels { get; set; }
+    public DbSet<Suburb> Suburbs { get; set; }
+    public DbSet<Supplier> Suppliers { get; set; }
+    public DbSet<FaultReport> FaultReports { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
