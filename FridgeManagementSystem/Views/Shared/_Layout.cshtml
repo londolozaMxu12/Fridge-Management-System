@@ -11,9 +11,28 @@
         body{
             color:white;
             min-height:100%;
-
-
+            
+            flex: 1;
+            overflow: auto;
+            padding-bottom: 100px;
         }
+        .widget{
+            list-style-type: disc;
+            display: flex;
+            gap: 20px;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            text-spacing: normal;
+        }
+        /* i{
+            list-style-type: disc;
+            display: flex;
+            gap: 20px;
+            padding: 0;
+            margin: 0;
+        } */
         /*.container {
             padding-left: 0;
             margin-left: 20px;
@@ -44,6 +63,20 @@
             border:2px solid white;
             border-radius:3px;
             margin-left:20px;
+        }
+        
+        
+        #footer{
+            position: absolute;
+            /* height: 100%; */
+            /* margin-top: -100%; */
+            /* clear: both; */
+            bottom: 0;
+            width: 100vw;
+            margin-bottom: 0px;
+        }
+        *{
+            margin: 0;
         }
     </style>
 </head>
@@ -92,7 +125,7 @@
             @RenderBody()
         </main>
     </div>
-    <footer>
+    <footer id="footer">
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-dark ">
             <div class="container">
                 <div class="row">
@@ -100,19 +133,19 @@
                         <div class="widget">
                             <h5 class="widgetheading">Our Contact</h5>
                             <p>
-                                <i class="icon-phone"></i>*****123 <br>
-                                <i class="icon-envelope-alt"></i>fridgesystem@gmail.com
+                                <i class="icon-phone"></i>016 435 7123<br>
+                                <i class="icon-envelope-alt"></i>nmdesignhub@gmail.com
                             </p>
                         </div>
                     </div>
                     <div class="col-lg-3">
                         <div class="widget">
                             <h5 class="widgetheading">Quick Links</h5>
-                            <ul class="link-list">
-                                <li><a href="@Url.Action("Index", "Carrer")">Carrer</a></li>
+                            @* <ul class="link-list">
+                                <li><a href="@Url.Action("Index", "Carrer")">Careers</a></li>
                                 <li><a href="@Url.Action("ContactUs", "Home")">Contact Us</a></li>
                                 <li><a href="@Url.Action("AboutUs", "Home")">About Us</a></li>
-                            </ul>
+                            </ul> *@
                         </div>
                     </div>
                 </div>
