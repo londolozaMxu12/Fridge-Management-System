@@ -7,7 +7,7 @@ var connectionString = builder.Configuration.GetConnectionString("FridgeManageme
 
 builder.Services.AddDbContext<FridgeManagementSystemContext>(options => options.UseSqlServer(connectionString));
 
-builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false).AddRoles<IdentityRole>().AddEntityFrameworkStores<FridgeManagementSystemContext>();
+builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true).AddRoles<IdentityRole>().AddEntityFrameworkStores<FridgeManagementSystemContext>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -34,6 +34,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
+app.UseAuthentication();
 
 app.MapControllerRoute(
     name: "default",

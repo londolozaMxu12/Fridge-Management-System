@@ -2,7 +2,7 @@
 
 namespace FridgeManagementSystem.Controllers
 {
-    public class FualtManagementController : Controller
+    public class FaultManagementController : Controller
     {
         public IActionResult Index()
         {

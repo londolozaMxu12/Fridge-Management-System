@@ -1,6 +1,4 @@
 ﻿
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -64,14 +62,25 @@
     </style>
 </head>
 <body>
+     <button class="logout" onclick="location.href='@Url.Action("Index","Home")'" style="float: right">Log Out</button>
 
-
-   @*  <button class="logout" onclick="location.href='@Url.Action("Index","Home")'" style="float: right">Log Out</button> *@
+@*     <button class="Adminbtn" onclick="location.href='@Url.Action("Index","Home")'">Logout</button>
+ *@    <div>
+        <h1 style="font-size: 3rem; font-weight: bold; color:black; text-align:left; margin-top: 2rem; text-shadow: 2px
+                    2px 4px rgba(0,0,0,0.2); ">
+            Users
+        </h1>
+    </div> <!-- Products Section -->
 
     <ul class="adminBtns">
         <li><button class="Adminbtn">CUSTOMERS</button></li>
         <li><button class="Adminbtn">EMPLOYEES</button></li>
         <li><button class="Adminbtn" onclick="location.href='@Url.Action("Index","Role")'">ROLES</button></li>
+        <li>
+            <button type="button" onclick="location.href='/Identity/Account/Register' ">
+                ADD NEW USERS
+            </button>
+        </li>
     </ul>
 
 

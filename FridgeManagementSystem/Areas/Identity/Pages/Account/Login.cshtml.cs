@@ -122,7 +122,35 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
+                    var user = await _userManager.FindByNameAsync(Input.Email);
+                    var role = await _userManager.GetRolesAsync(user);  
                     _logger.LogInformation("User logged in.");
+
+                    if (role.Contains("Admin"))
+                    {
+                        return RedirectToAction("Index", "Admin");
+                    }
+                    else if(role.Contains("Customer"))
+                    {
+                        return RedirectToAction("Index", "Customer");
+                    }
+                    else if(role.Contains("Customer Management"))
+                    {
+                        return RedirectToAction("Index", "CustomerManagement");
+                    }
+                    else if(role.Contains("Fault Technician"))
+                    {
+                        return RedirectToAction("Index", "FaultManagement");
+                    }
+                    else if (role.Contains("Maintenance Technician"))
+                    {
+                        return RedirectToAction("Index", "MaintenanceManagement");
+                    }
+                    else if (role.Contains("Purchasing Management"))
+                    {
+                        return RedirectToAction("Index", "PurchasingManagement");
+                    }
+
                     return LocalRedirect(returnUrl);
                 }
                 if (result.RequiresTwoFactor)
