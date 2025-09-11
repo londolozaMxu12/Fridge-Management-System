@@ -1,0 +1,340 @@
+﻿@* <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .cart {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+            .cart-item img {
+                width: 80px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 8px;
+                margin-right: 15px;
+            }
+
+        .item-details {
+            flex: 1;
+        }
+
+            .item-details h3 {
+                margin: 0;
+                font-size: 18px;
+            }
+
+            .item-details p {
+                margin: 4px 0;
+                color: #555;
+                font-size: 14px;
+            }
+
+        .cart-item button {
+            background: red;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .cart-total {
+            margin-top: 20px;
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .checkout {
+            display: block;
+            margin: 20px auto 0;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            background: green;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🛍️ Shopping Cart</h1>
+    <div class="cart" id="cart"></div>
+    <button class="checkout" onclick="checkout()">Checkout</button>
+
+    <script>
+        const cartItems = [
+          {
+            name: "Apple",
+            description: "Fresh red apples from the farm",
+            price: 1.5,
+            quantity: 3,
+            image: "https://upload.wikimedia.org/wikipedia/commons/1/15/Red_Apple.jpg"
+          },
+          {
+            name: "Bread",
+            description: "Whole wheat healthy bread",
+            price: 2.0,
+            quantity: 1,
+            image: "https://upload.wikimedia.org/wikipedia/commons/d/d4/Bread_%28example%29.jpg"
+          },
+          {
+            name: "Milk",
+            description: "1L organic whole milk",
+            price: 2.5,
+            quantity: 2,
+            image: "https://upload.wikimedia.org/wikipedia/commons/a/a4/Milk_glass.jpg"
+          }
+        ];
+
+        function renderCart() {
+          const cartDiv = document.getElementById("cart");
+          cartDiv.innerHTML = "";
+
+          if (cartItems.length === 0) {
+            cartDiv.innerHTML = "<p>Your cart is empty.</p>";
+            return;
+          }
+
+          let total = 0;
+          cartItems.forEach((item, index) => {
+            total += item.price * item.quantity;
+            cartDiv.innerHTML += `
+              <div class="cart-item">
+                <img src="${item.image}" alt="${item.name}">
+                <div class="item-details">
+                  <h3>${item.name}</h3>
+                  <p>${item.description}</p>
+                  <p>${item.quantity} × $${item.price.toFixed(2)}</p>
+                </div>
+                <button onclick="removeItem(${index})">Remove</button>
+              </div>
+            `;
+          });
+
+          cartDiv.innerHTML += `<div class="cart-total">Total: $${total.toFixed(2)}</div>`;
+        }
+
+        function removeItem(index) {
+          cartItems.splice(index, 1);
+          renderCart();
+        }
+
+        function checkout() {
+          if (cartItems.length === 0) {
+            alert("Your cart is empty.");
+            return;
+          }
+          let total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+          alert("Thank you for your purchase! Your total is $" + total.toFixed(2));
+          cartItems.length = 0; // clear cart
+          renderCart();
+        }
+
+        renderCart();
+    </script>
+
+</body>
+</html> *@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fridge Cart</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .cart {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+            padding: 15px 0;
+        }
+
+            .cart-item img {
+                width: 100px;
+                height: 100px;
+                object-fit: cover;
+                border-radius: 8px;
+                margin-right: 15px;
+            }
+
+        .item-details {
+            flex: 1;
+        }
+
+            .item-details h3 {
+                margin: 0;
+                font-size: 18px;
+            }
+
+            .item-details p {
+                margin: 4px 0;
+                color: #555;
+                font-size: 14px;
+            }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .quantity-controls button {
+                width: 30px;
+                height: 30px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 18px;
+                background: #007bff;
+                color: white;
+            }
+
+            .quantity-controls span {
+                min-width: 25px;
+                text-align: center;
+                font-weight: bold;
+            }
+
+        .price {
+            font-weight: bold;
+            font-size: 16px;
+            color: green;
+            margin-left: 20px;
+        }
+
+        .cart-total {
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🧊 Fridge Shopping Cart</h1>
+
+    <div class="cart" id="cart"></div>
+
+    <script>
+        // Sample fridge cart items
+        const cartItems = [
+          {
+            name: "LG Double Door",
+            description: "350L frost-free refrigerator",
+            price: 750,
+            quantity: 1,
+            image: "https://images.unsplash.com/photo-1606813908571-9bbcb4e4f983?w=600"
+          },
+          {
+            name: "Samsung Family Hub",
+            description: "Smart fridge with touch display",
+            price: 1200,
+            quantity: 1,
+            image: "https://images.unsplash.com/photo-1616628182501-8a1d9c6b134e?w=600"
+          }
+        ];
+
+        function renderCart() {
+          const cartDiv = document.getElementById("cart");
+          cartDiv.innerHTML = "";
+
+          if (cartItems.length === 0) {
+            cartDiv.innerHTML = "<p>Your cart is empty.</p>";
+            return;
+          }
+
+          let total = 0;
+          cartItems.forEach((item, index) => {
+            total += item.price * item.quantity;
+            cartDiv.innerHTML += `
+              <div class="cart-item">
+                <img src="${item.image}" alt="${item.name}">
+                <div class="item-details">
+                  <h3>${item.name}</h3>
+                  <p>${item.description}</p>
+                </div>
+                <div class="quantity-controls">
+                  <button onclick="decrement(${index})">-</button>
+                  <span>${item.quantity}</span>
+                  <button onclick="increment(${index})">+</button>
+                </div>
+                <div class="price">$${(item.price * item.quantity).toFixed(2)}</div>
+              </div>
+            `;
+          });
+
+          cartDiv.innerHTML += `<div class="cart-total">Total: $${total.toFixed(2)}</div>`;
+        }
+
+        function increment(index) {
+          cartItems[index].quantity++;
+          renderCart();
+        }
+
+        function decrement(index) {
+          if (cartItems[index].quantity > 1) {
+            cartItems[index].quantity--;
+          } else {
+            cartItems.splice(index, 1); // remove if quantity goes to 0
+          }
+          renderCart();
+        }
+
+        renderCart();
+    </script>
+
+</body>
+</html>

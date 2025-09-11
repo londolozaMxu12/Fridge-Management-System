@@ -12,5 +12,13 @@ namespace FridgeManagementSystem.Controllers
         {
             return View();
         }
+        public IActionResult Fridge()
+        {
+            return View();
+        }
+        public IActionResult Cart()
+        {
+            return View();
+        }
     }
 }

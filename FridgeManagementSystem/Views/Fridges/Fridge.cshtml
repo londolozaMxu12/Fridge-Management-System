@@ -1,0 +1,194 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fridges for Sale</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .item {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 15px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+            .item:hover {
+                transform: translateY(-5px);
+            }
+
+            .item img {
+                width: 100%;
+                height: 200px;
+                object-fit: cover;
+                border-radius: 8px;
+                margin-bottom: 10px;
+            }
+
+            .item h3 {
+                margin: 10px 0 5px;
+                font-size: 18px;
+            }
+
+            .item p {
+                font-size: 14px;
+                color: #555;
+                margin: 4px 0;
+            }
+
+        .price {
+            font-weight: bold;
+            font-size: 16px;
+            margin: 8px 0;
+            color: green;
+        }
+
+        h1{
+            color: #007bff;
+        }
+
+        .buy-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            background: #007bff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+            .buy-btn:hover {
+                background: #0056b3;
+            }
+    </style>
+</head>
+<body>
+
+    <h1>🧊 Fridges for Sale</h1>
+
+    <div class="grid">
+
+        <div class="item">
+            <img src="~/images/fridges/defy 80l white.jpg" />
+            <h3>DEFY 80L WHITE</h3>
+            <p>DEFY 80L WHITE BAR FRIDGE</p>
+            <div class="price">R2 299.00</div>
+            <a href="/Identity/Account/Register" class="buy-btn">Buy Now</a>
+        </div>
+
+        <div class="item">
+            <img src="~/images/fridges/univa 81l white bar fridge.webp" />
+            <h3>UNIVA 81L WHITE</h3>
+            <p>UNIVA 81L WHITE BAR FRIDG</p>
+            <div class="price">R2 099.00</div>
+            <a href="/Identity/Account/Register" class="buy-btn">Buy Now</a>
+        </div>
+
+        <div class="item">
+            <img src="~/images/fridges/defy 90l grey.jpg" />
+            <h3>DEFY 90L GREY</h3>
+            <p>DEFY 90L GREY BAR FRIDGE</p>
+            <div class="price">R2 799.00</div>
+            <a href="/Identity/Account/Register" class="buy-btn">Buy Now</a>
+        </div>
+
+        <div class="item">
+            <img src="~/images/fridges/goldair 130l white top freezer fridge.jpg" />
+            <h3>GOLDAIR 130L WHITE</h3>
+            <p>GOLDAIR 130L WHITE DOUBLE DOOR FREEZER</p>
+            <div class="price">R3 599.00</div>
+            <a href="/Identity/Account/Register" class="buy-btn">Buy Now</a>
+        </div>
+
+        <div class="item">
+            <img src="~/images/fridges/midea 173l white top mount freezer.webp" />
+            <h3>MIDEA 173L WHITE</h3>
+            <p>MIDEA 173L WHITE TOP MOUNT FREEZER</p>
+            <div class="price">R3 899.00</div>
+            <a href="/Identity/Account/Register" class="buy-btn">Buy Now</a>
+        </div>
+
+        <div class="item">
+            <img src="~/images/fridges/lg 298l silver grey double door refrigerator.jpg" />
+            <h3>LG 296L SILVER</h3>
+            <p>LG 296L SILVER DOUBLE DOOR FRIDGE</p>
+            <div class="price">R8 799.00</div>
+            <a href="/Identity/Account/Register" class="buy-btn">Buy Now</a>
+        </div>
+
+        <div class="item">
+            <img src="~/images/fridges/lg 323l top fridge bottom freezer with water dispenser.jpg" />
+            <h3>HISENSE 323L SILVER GREY</h3>
+            <p>HISENSE 323L SILVER GREY TOP FRIDGE BOTTOM FREEZER WITH WATER DISPENSER</p>
+            <div class="price">R7 999.00</div>
+            <a href="/Identity/Account/Register" class="buy-btn">Buy Now</a>
+        </div>
+
+        <div class="item">
+            <img src="~/images/fridges/lg 323l top fridge bottom freezer with water dispenser.jpg" />
+            <h3>LG 323L TOP FRIDGE BOTTOM FREEZER</h3>
+            <p>LG 323L TOP FRIDGE BOTTOM FREEZER WITH WATER DISPENSER</p>
+            <div class="price">R6 899.00</div>
+            <a href="/Identity/Account/Register" class="buy-btn">Buy Now</a>
+        </div>
+
+        <div class="item">
+            <img src="~/images/fridges/samsung 470l silver grey french door fridge .jpg" />
+            <h3>SAMSUNG 470L BLACK FRENCH DOOR FRIDGE</h3>
+            <p>SAMSUNG 470L BLACK FRENCH DOOR FRIDGE TWIN COOLING SYSTEM</p>
+            <div class="price">R18 999.00</div>
+            <a href="/Identity/Account/Register" class="buy-btn">Buy Now</a>
+        </div>
+
+        <div class="item">
+            <img src="~/images/fridges/defy 559l grey side by side fridge.webp" />
+            <h3>DEFY 559L GREY</h3>
+            <p>DEFY 559L GREY SIDE BY SIDE FRIDGE FREEZER</p>
+            <div class="price">R10 999.00</div>
+            <a href="/Identity/Account/Register" class="buy-btn">Buy Now</a>
+        </div>
+
+        <div class="item">
+            <img src="~/images/fridges/defy 496l black side by side glassdoor.jpg" />
+            <h3>DEFY 496L BLACK</h3>
+            <p>DEFY 496L BLACK SIDE BY SIDE DOOR FRIDGE</p>
+            <div class="price">R9 999.00</div>
+            <a href="/Identity/Account/Register" class="buy-btn">Buy Now</a>
+        </div>
+
+        <div class="item">
+            <img src="~/images/fridges/samsung 673l matte black  french door smart fridge .jpg" />
+            <h3>SAMSUNG 673L MATTE BLACK</h3>
+            <p>SAMSUNG 673L MATTE BLACK  FRENCH DOOR SMART FRIDGE</p>
+            <div class="price">R 23 999.00</div>
+            <a href="/Identity/Account/Register" class="buy-btn">Buy Now</a>
+        </div>
+
+    </div>
+
+</body>
+</html>
