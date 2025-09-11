@@ -17,6 +17,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<IdentityUser>
     public DbSet<IdentityRole> IdentityRoles { get; set; }
 
     // FOR BUSINESS TABLES
+    public DbSet<ApplicationUser> Admin {  get; set; }
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Fridge> Fridges { get; set; }
     public DbSet<Fault> Faults { get; set; }

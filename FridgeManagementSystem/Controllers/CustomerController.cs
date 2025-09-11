@@ -8,5 +8,6 @@ namespace FridgeManagementSystem.Controllers
         {
             return View();
         }
+
     }
 }

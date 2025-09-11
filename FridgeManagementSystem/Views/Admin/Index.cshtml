@@ -1,4 +1,6 @@
-﻿
+﻿@using Microsoft.AspNetCore.Identity
+@using System.Linq
+@model IEnumerable<IdentityUser>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,14 +75,18 @@
     </div> <!-- Products Section -->
 
     <ul class="adminBtns">
+        <li><button type="button" onclick="location.href='@Url.Action("ListUsers")' ">
+            Users
+        </button>
+        </li>
         <li><button class="Adminbtn">CUSTOMERS</button></li>
         <li><button class="Adminbtn">EMPLOYEES</button></li>
         <li><button class="Adminbtn" onclick="location.href='@Url.Action("Index","Role")'">ROLES</button></li>
-        <li>
-            <button type="button" onclick="location.href='/Identity/Account/Register' ">
-                ADD NEW USERS
-            </button>
+         <li>
+        
         </li>
+         <li>
+       
     </ul>
 
 
@@ -97,6 +103,7 @@
         </ul>
 
     </div> *@
+   
 
 </body>
 </html>
