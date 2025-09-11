@@ -49,8 +49,10 @@
 </head>
 <body>
     <header>
+
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm  text-bg-dark p-3  py-3">
             <div class="container">
+                
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
                     <img src="~/Images/WhatsApp Image 2025-05-27 at 18.37.15_1c44df4a.jpg" height="60" width="120" />
                 </a>
@@ -81,11 +83,15 @@
                         @* <li class="nav-item">
                             <a class="nav-link text-light" asp-area="" asp-controller="Role" asp-action="Index">Roles</a>
                         </li> *@
-
+                      @*  <div>
+                            @await Html.PartialAsync("_LoginPartial")
+                       </div> *@
                     </ul>
+                   
                 </div>
             </div>
         </nav>
+
     </header>
     <div class="container">
         <main role="main" class="pb-3">
@@ -128,5 +134,6 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+  
 </body>
 </html>

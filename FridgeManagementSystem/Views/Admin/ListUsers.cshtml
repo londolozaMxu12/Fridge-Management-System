@@ -1,0 +1,73 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using System.Linq
+
+
+
+@{
+    ViewBag.Title = "All User";
+}
+<!DOCTYPE html">
+    <head>
+        <style>
+            body{
+                color:black;
+            }
+            a{
+            color: indigo;
+            
+            }
+        </style>
+    </head>
+    <body>
+    <h1>All Users</h1>
+
+
+    <p>
+        @* <button type="button" onclick="location.href='/Identity/Account/Register' ">
+            ADD NEW USERS
+        </button>
+        <a asp-action="Register" asp-controller="Account"
+           class="btn btn-primary mb-3" style="width:auto">Add new User</a> *@
+        <a href="/Identity/Account/Register" class="btn btn-primary mb-3" style="width:auto">Add new User</a>
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="600px">
+                    Id
+                </th>
+                <th width="600px">
+                    Email
+                </th>
+
+                <th></th>
+            </tr>
+        </thead>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td width="600px">
+                    @user.Id
+                </td>
+                <td width="600px">
+                    @user.Email
+                </td>
+
+                <td width="400px">
+                    <a asp-action="EditUser" asp-route-Id="@user.Id">Edit</a>
+                    <a asp-action="DetailUser" asp-route-Id="@user.Id">Details</a>
+                    <a asp-action="DeleteUser" asp-route-Id="@user.Id">Delete</a>
+                </td>
+            </tr>
+        }
+    </table>
+   
+    </body>
+</html>
+
+
+
+   
+
+  
