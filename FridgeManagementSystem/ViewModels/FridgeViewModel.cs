@@ -1,32 +1,24 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using NuGet.Protocol.Plugins;
 using System.ComponentModel.DataAnnotations;
 
-namespace FridgeManagementSystem.Models
+namespace FridgeManagementSystem.ViewModels
 {
-    public class Fridge
+    public class FridgeViewModel
     {
-        [Key]
-        public int FridgeId { get; set; }
         [Required, StringLength(100)]
         public string Name { get; set; }
         [Required, StringLength(100)]
         public string Brand { get; set; }
-        [Required, Precision(16, 2)]
+        [Required]
         public Decimal Price { get; set; }
         [Required]
         public string Description { get; set; }
-        [Required, MaxLength(255)]
-        public string ImageFile { get; set; }
+        
+        public IFormFile? ImageFile { get; set; }
         [Required, StringLength(50)]
         public string SerialNumber { get; set; }
 
         [Required]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-
-        [Required]
         public string Model { get; set; }
-
-        
     }
 }

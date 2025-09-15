@@ -1,7 +1,9 @@
+using FridgeManagementSystem.Areas.Identity.Data;
+using FridgeManagementSystem.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using FridgeManagementSystem.Data;
-using FridgeManagementSystem.Areas.Identity.Data;
+using System.Globalization;
+
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("FridgeManagementSystemContextConnection") ?? throw new InvalidOperationException("Connection string 'FridgeManagementSystemContextConnection' not found.");
 
@@ -20,6 +22,10 @@ builder.Services.Configure<IdentityOptions>(options =>
 
 var app = builder.Build();
 
+
+var cultureInfo = new CultureInfo("en-ZA");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

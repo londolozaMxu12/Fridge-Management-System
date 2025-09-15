@@ -4,6 +4,7 @@ using FridgeManagementSystem.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FridgeManagementSystem.Migrations
 {
     [DbContext(typeof(FridgeManagementSystemContext))]
-    partial class FridgeManagementSystemContextModelSnapshot : ModelSnapshot
+    [Migration("20250915092059_UpdatingFridgeModel")]
+    partial class UpdatingFridgeModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -241,7 +244,7 @@ namespace FridgeManagementSystem.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("CustomerId")
+                    b.Property<int>("CustomerId")
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
@@ -250,8 +253,8 @@ namespace FridgeManagementSystem.Migrations
 
                     b.Property<string>("ImageFile")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Model")
                         .IsRequired()
@@ -975,7 +978,7 @@ namespace FridgeManagementSystem.Migrations
                         .HasForeignKey("FaultTechnicianId");
 
                     b.HasOne("FridgeManagementSystem.Models.Fridge", "Fridge")
-                        .WithMany()
+                        .WithMany("Faults")
                         .HasForeignKey("FridgeId");
 
                     b.Navigation("Customer");
@@ -998,9 +1001,13 @@ namespace FridgeManagementSystem.Migrations
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Fridge", b =>
                 {
-                    b.HasOne("FridgeManagementSystem.Models.Customer", null)
+                    b.HasOne("FridgeManagementSystem.Models.Customer", "Customer")
                         .WithMany("Fridges")
-                        .HasForeignKey("CustomerId");
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.FridgeRequest", b =>
@@ -1017,7 +1024,7 @@ namespace FridgeManagementSystem.Migrations
             modelBuilder.Entity("FridgeManagementSystem.Models.MaintenanceRecord", b =>
                 {
                     b.HasOne("FridgeManagementSystem.Models.Fridge", "Fridge")
-                        .WithMany()
+                        .WithMany("MaintenanceRecords")
                         .HasForeignKey("FridgeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1062,7 +1069,7 @@ namespace FridgeManagementSystem.Migrations
             modelBuilder.Entity("FridgeManagementSystem.Models.PurchasingOrderDetails", b =>
                 {
                     b.HasOne("FridgeManagementSystem.Models.Fridge", "Fridge")
-                        .WithMany()
+                        .WithMany("OrderDetails")
                         .HasForeignKey("FridgeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1187,6 +1194,15 @@ namespace FridgeManagementSystem.Migrations
             modelBuilder.Entity("FridgeManagementSystem.Models.FaultTechnician", b =>
                 {
                     b.Navigation("Faults");
+                });
+
+            modelBuilder.Entity("FridgeManagementSystem.Models.Fridge", b =>
+                {
+                    b.Navigation("Faults");
+
+                    b.Navigation("MaintenanceRecords");
+
+                    b.Navigation("OrderDetails");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.MaintenanceRecord", b =>

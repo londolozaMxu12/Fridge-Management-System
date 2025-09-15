@@ -1,0 +1,51 @@
+﻿@model List<Fridge>
+@{
+    Layout = "_AdminLayout";
+}
+
+    <h2 class="text-center mb-5">List of Fridges</h2>
+
+    <div class="row mb-5">
+        <div class="col">
+            <a class="btn btn-primary" asp-controller="Fridge" asp-action="Create">New Fridge</a>
+        </div>
+        <div class="col"></div>
+    </div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fridge ID</th>
+                <th>Serial No</th>
+                <th>Created At</th>
+                <th>Model</th>
+                <th>Name</th>
+                <th>Brand</th>
+                <th>Price</th>
+                @* <th>Description</th> *@
+                <th>Emage</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var fridge in Model)
+            {
+                <tr>
+                    <td>@fridge.FridgeId</td>
+                    <td>@fridge.SerialNumber</td>
+                    <td>@fridge.CreatedAt.ToString("MM/dd/yyyy")</td>
+                    <td>@fridge.Model</td>
+                    <td>@fridge.Name</td>
+                    <td>@fridge.Brand</td>
+                    <td>@fridge.Price.ToString("C")</td>
+                    <td><img src="~/Images/Fridges/@fridge.ImageFile" alt="@fridge.Name" width="100" /></td>
+                    <td style="white-space:nowrap">
+                        <a class="btn btn-primary btn-sm" asp-controller="Fridge" asp-action="Edit" asp-route-id="@fridge.FridgeId">Edit</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="Fridge" asp-action="Delete" asp-route-id="@fridge.FridgeId">Delete</a>
+                    </td>         
+                </tr>
+
+
+        }
+        </tbody>
+    </table>
