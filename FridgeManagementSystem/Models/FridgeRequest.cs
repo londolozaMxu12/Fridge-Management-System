@@ -2,7 +2,7 @@
 
 namespace FridgeManagementSystem.Models
 {
-    public enum RequestStatus
+    public enum Status
     {
         Pending,
         Approved,
@@ -22,10 +22,11 @@ namespace FridgeManagementSystem.Models
         public string Reason { get; set; }
 
         [Required]
+        [Display(Name = "Request Date")]
         public DateTime RequestDate { get; set; } = DateTime.Now;
 
         [Required]
-        public RequestStatus Status { get; set; } = RequestStatus.Pending;
+        public Status Status { get; set; } = Status.Pending;
     }
 
 }

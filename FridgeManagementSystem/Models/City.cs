@@ -7,7 +7,7 @@ namespace FridgeManagementSystem.Models
         [Key]
         public int CityId { get; set; }
 
-        [Required, StringLength(50)]
+        [Required(ErrorMessage = "Please Enter City Name"), StringLength(50)]
         public string Name { get; set; }
 
         // Foreign Key

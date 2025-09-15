@@ -7,7 +7,8 @@ namespace FridgeManagementSystem.Models
         [Key]
         public int ProvinceId { get; set; }
 
-        [Required, StringLength(50)]
+        [Required(ErrorMessage = "Please Enter Province Name"), StringLength(50)]
+        [Display(Name = "Province Name")]
         public string ProvinceName { get; set; }
 
         public ICollection<City> Cities { get; set; }

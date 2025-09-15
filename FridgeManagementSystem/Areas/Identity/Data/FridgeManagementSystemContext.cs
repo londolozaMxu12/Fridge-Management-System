@@ -41,6 +41,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<IdentityUser>
     public DbSet<Suburb> Suburbs { get; set; }
     public DbSet<Supplier> Suppliers { get; set; }
     public DbSet<FaultReport> FaultReports { get; set; }
+    public DbSet<Allocation> Allocations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

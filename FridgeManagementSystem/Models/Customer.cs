@@ -9,13 +9,15 @@ namespace FridgeManagementSystem.Models
         [Key]
         public int CustomerId { get; set; }
 
-        [Required, StringLength(50)]
+        [Required(ErrorMessage = "Please Enter Full Name"), StringLength(50)]
+        [Display(Name = "Full Name")]
         public string FullName { get; set; }
 
-        [Required, StringLength(200)]
+        [Required(ErrorMessage = "Please Enter Address"), StringLength(200)]
         public string Address { get; set; }
 
-        [Required, Phone]
+        [Required(ErrorMessage = "Please Enter Contact Number"), Phone]
+        [Display(Name = "Contact Number")]
         public string ContactNo { get; set; }
 
         // Foreign Key
@@ -26,5 +28,6 @@ namespace FridgeManagementSystem.Models
         public ICollection<Fault> Faults { get; set; }
         public ICollection<FridgeRequest> FridgeRequests { get; set; }
         public ICollection<Quotation> Quotations { get; set; }
+        public ICollection<Allocation> Allocations { get; set; }
     }
 }

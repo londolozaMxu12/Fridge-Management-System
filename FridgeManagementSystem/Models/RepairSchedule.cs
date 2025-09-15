@@ -8,6 +8,7 @@ namespace FridgeManagementSystem.Models
         public int RepairScheduleId { get; set; }
 
         [Required]
+        [Display(Name = "Scheduled Date")]
         public DateTime ScheduledDate { get; set; }
 
         [StringLength(200)]

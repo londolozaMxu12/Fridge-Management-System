@@ -6,9 +6,10 @@ namespace FridgeManagementSystem.Models
     {
         [Key]
         public int SuburbId { get; set; }
-        [Required, StringLength(50)]
+        [Required(ErrorMessage = "Please Enter Suburb Name"), StringLength(50)]
         public string Name { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Please Enter Postal Code")]
+        [Display(Name = "Postal Code")]
         public string PostalCode { get; set; }
 
         // Foreign Key

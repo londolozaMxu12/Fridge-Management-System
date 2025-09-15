@@ -19,6 +19,7 @@ namespace FridgeManagementSystem.Models
         public string Description { get; set; }
 
         [Required]
+        [Display(Name = "Reported Date")]
         public DateTime ReportedDate { get; set; } = DateTime.Now;
 
         [Required]

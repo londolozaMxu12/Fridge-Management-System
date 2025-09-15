@@ -7,7 +7,7 @@ namespace FridgeManagementSystem.Models
         [Key]
         public int CustomerDataId { get; set; }
 
-        [Required, StringLength(50)]
+        [Required(ErrorMessage = "Please Enter Full Name"), StringLength(50)]
         public string FullName { get; set; }
 
         [Required]
