@@ -1,0 +1,148 @@
+﻿@using FridgeManagementSystem.Areas.Identity.Data
+@using Microsoft.AspNetCore.Identity
+@model IEnumerable<ApplicationUser>
+@using System.Linq
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        /*  button {
+                    padding: 10px 18px;
+                    font-size: 15px;
+                    border-radius: 6px;
+                    border: none;
+                    cursor: pointer;
+                    background: #4CAF50;
+                    color: white;
+                    transition: 0.3s; */
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        /* Table styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 16px;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            display: none; /* hidden by default */
+        }
+
+        thead {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+   @*  <h2>Dropdown Table Example</h2>
+    <button onclick="toggleTable()">Show / Hide Table</button> *@
+
+    <table id="myTable">
+        <thead>
+            <tr>
+                <th width="600px">
+                    Id
+                </th>
+                <th width="600px">
+                    Email
+                </th>
+
+                <th width="600px">
+                    Full Name
+                </th>
+                <th width="600px">
+                    City
+                </th>
+                <th width="600px">
+                    Address
+                </th>
+                <th width="600px">
+                    Postal Code
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    @*  <td>@Html.DisplayFor(modelitem => item.Id)</td>
+                <td>@Html.DisplayFor(modelitem => item.Email)</td>
+                <td>@Html.DisplayFor(modelitem => item.FullName)</td>
+                <td>@Html.DisplayFor(modelitem => item.City)</td>
+                <td>@Html.DisplayFor(modelitem => item.Address)</td>
+                <td>@Html.DisplayFor(modelitem => item.PostalCode)</td> *@
+                    <td width="800px">
+                        @item.Id
+                    </td>
+                    <td width="600px">
+                        @item.Email
+                    </td>
+                    <td width="600px">
+                        @item.FullName
+                    </td>
+                    <td width="600px">
+                        @item.City
+                    </td>
+                    <td width="600px">
+                        @item.Address
+                    </td>
+                    <td width="600px">
+                        @item.PostalCode
+                    </td>
+                    <td width="400px">
+                        <a asp-action="EditUser" asp-route-Id="@item.Id">Edit</a>
+                        <a asp-action="DeleteUser" asp-route-Id="@item.Id">Delete</a>
+                    </td>
+
+                </tr>
+
+
+
+
+            }
+        </tbody>
+    </table>
+
+    @* <script>
+        function toggleTable() {
+            const table = document.getElementById("myTable");
+            if (table.style.display === "none" || table.style.display === "") {
+                table.style.display = "table";
+            } else {
+                table.style.display = "none";
+            }
+        }
+    </script> *@
+</body>
+</html>

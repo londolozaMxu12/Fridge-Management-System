@@ -11,15 +11,70 @@
     ViewBag.Title = "All User";
 }
 <!DOCTYPE html">
+
     <head>
         <style>
             body{
                 color:black;
+            background-color: lightyellow;
             }
             a{
             color: indigo;
             
             }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Table headers */
+        thead {
+            background-color: deepskyblue;
+            color: white;
+        }
+
+            thead th {
+                padding: 12px 15px;
+                font-weight: bold;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
+            }
+
+        /* Table body rows */
+        tbody tr {
+            border-bottom: 1px solid #ddd;
+        }
+
+            tbody tr:nth-child(even) {
+                background-color:darkgray; /* Zebra striping */
+            }
+
+        tbody td {
+            padding: 12px 15px;
+            color: #333;
+        }
+
+        /* Hover effect */
+        tbody tr:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+
+        /* Optional: Add spacing at the bottom */
+        table caption {
+            caption-side: bottom;
+            padding: 10px;
+            font-style: italic;
+            color: #666;
+        }
         </style>
     </head>
     <body>
@@ -48,23 +103,26 @@
                 <th></th>
             </tr>
         </thead>
-        @foreach (var user in Model)
-        {
-            <tr>
-                <td width="600px">
-                    @user.Id
-                </td>
-                <td width="600px">
-                    @user.Email
-                </td>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td width="600px">
+                        @user.Id
+                    </td>
+                    <td width="600px">
+                        @user.Email
+                    </td>
 
-                <td width="400px">
-                    <a asp-action="EditUser" asp-route-Id="@user.Id">Edit</a>
-                    <a asp-action="DetailUser" asp-route-Id="@user.Id">Details</a>
-                    <a asp-action="DeleteUser" asp-route-Id="@user.Id">Delete</a>
-                </td>
-            </tr>
-        }
+                    <td width="400px">
+                        <a asp-action="EditUser" asp-route-Id="@user.Id">Edit</a>
+                        <a asp-action="DetailUser" asp-route-Id="@user.Id">Details</a>
+                        <a asp-action="DeleteUser" asp-route-Id="@user.Id">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+       
     </table>
    
     </body>

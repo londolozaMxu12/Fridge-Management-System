@@ -11,17 +11,67 @@
     <style>
         body {
             color: black;
-            background-color:deepskyblue;
-        }
-
-        .table {
-            color: black;
-            background-color:coral;
+            background-color: lightyellow;
         }
 
         a {
-            font-size: 25px;
+            color: indigo;
         }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Table headers */
+        thead {
+            background-color: deepskyblue;
+            color: white;
+        }
+
+            thead th {
+                padding: 12px 15px;
+                font-weight: bold;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
+            }
+
+        /* Table body rows */
+        tbody tr {
+            border-bottom: 1px solid #ddd;
+        }
+
+            tbody tr:nth-child(even) {
+                background-color: darkgray; /* Zebra striping */
+            }
+
+        tbody td {
+            padding: 12px 15px;
+            color: #333;
+        }
+
+        /* Hover effect */
+        tbody tr:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+
+        /* Optional: Add spacing at the bottom */
+        table caption {
+            caption-side: bottom;
+            padding: 10px;
+            font-style: italic;
+            color: #666;
+        }
+
+     
 
         .role_h1 {
             align-items: center;
@@ -33,7 +83,7 @@
 <body>
     <a onclick="location.href='@Url.Action("Index","Admin")'" style="float: left  , background-color:lime " class="btn btn-primary">BACK</a>
     <div>
-        <h3 style="font-size: 3rem; font-weight: bold; color:white; text-align:center; margin-top: 2rem; text-shadow: 2px
+        <h3 style="font-size: 3rem; font-weight: bold; color:black; text-align:center; margin-top: 2rem; text-shadow: 2px
                     2px 4px rgba(0,0,0,0.2); ">
             APPLICATION ROLES
         </h3>
@@ -47,18 +97,31 @@
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th>@Html.DisplayNameFor(model => model.Id)</th>
-                <th>@Html.DisplayNameFor(model => model.Name)</th>
-                @* <th>@Html.DisplayNameFor(model => model.NormalizedName)</th> *@
+                <th width="600px">
+                    Id
+                </th>
+                <th width="600px">
+                    Role Name
+                </th>
+
+                <th></th>
             </tr>
         </thead>
         <tbody>
             @foreach (var item in Model)
             {
                 <tr>
-                    <td>@Html.DisplayFor(modelitem => item.Id)</td>
-                    <td>@Html.DisplayFor(modelitem => item.Name)</td>
-                    @* <td>@Html.DisplayFor(modelitem => item.NormalizedName)</td> *@
+                    <td width="600px">
+                        @item.Id
+                    </td>
+                    <td width="600px">
+                        @item.Name
+                    </td>
+
+                    <td width="200px">
+                        <a asp-action="EditUser" asp-route-Id="@item.Id">Edit</a>                        
+                        <a asp-action="DeleteUser" asp-route-Id="@item.Id">Delete</a>
+                    </td>
                 </tr>
             }
         </tbody>

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FridgeManagementSystem.Data;
 
-public class FridgeManagementSystemContext : IdentityDbContext<IdentityUser>
+public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
 {
     public FridgeManagementSystemContext(DbContextOptions<FridgeManagementSystemContext> options)
         : base(options)

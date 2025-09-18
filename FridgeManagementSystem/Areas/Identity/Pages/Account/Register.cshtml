@@ -1,5 +1,6 @@
 ﻿@page
 @model RegisterModel
+@using Microsoft.AspNetCore.Identity
 @{
     ViewData["Title"] = "Register";
 }
@@ -44,27 +45,37 @@
                 <span asp-validation-for="Input.FullName" class="text-danger"></span>
             </div>
             <div class="form-floating mb-3">
+                    <input asp-for="Input.ContactNo" class="form-control" autocomplete="PhoneNumber" aria-required="true" placeholder="071 234 5678" />
+                    <label asp-for="Input.ContactNo">Phone Number</label>
+                    <span asp-validation-for="Input.ContactNo" class="text-danger"></span>
+            </div>
+                <div class="form-floating mb-3">
+                    <input asp-for="Input.Address" class="form-control" autocomplete="Address" aria-required="true" placeholder="Address" />
+                    <label asp-for="Input.Address">Address</label>
+                    <span asp-validation-for="Input.Address" class="text-danger"></span>
+                </div>
+            <div class="form-floating mb-3">
                 <input asp-for="Input.City" class="form-control" autocomplete="City" aria-required="true" placeholder="City" />
                 <label asp-for="Input.City">City</label>
                 <span asp-validation-for="Input.City" class="text-danger"></span>
             </div>
             <div class="form-floating mb-3">
-                <input asp-for="Input.Address" class="form-control" autocomplete="Address" aria-required="true" placeholder="Address" />
-                <label asp-for="Input.Address">Address</label>
-                <span asp-validation-for="Input.Address" class="text-danger"></span>
+                    <input asp-for="Input.Suburb" class="form-control" autocomplete="Suburb" aria-required="true" placeholder="Suburb" />
+                    <label asp-for="Input.Suburb">Suburb</label>
+                    <span asp-validation-for="Input.Suburb" class="text-danger"></span>
             </div>
             <div class="form-floating mb-3">
                 <input asp-for="Input.PostalCode" class="form-control" autocomplete="PostalCode" aria-required="true" placeholder="PostalCode" />
                 <label asp-for="Input.PostalCode">PostalCode</label>
                 <span asp-validation-for="Input.PostalCode" class="text-danger"></span>
             </div>
-            <div class="form-floating">
+            @* <div class="form-floating">
                 <select asp-for="Input.Role" asp-items="@Model.Input.RoleList" class="form-select" aria-required="true" placeholder="Role">
                     <option disabled selected>Select role</option>
                 </select>
                 <span asp-validation-for="Input.Role" class="text-danger"></span>
 
-            </div>
+            </div> *@
             <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </form>
     </div>

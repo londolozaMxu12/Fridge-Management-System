@@ -18,6 +18,11 @@ namespace FridgeManagementSystem.Controllers
             this.roleManager = roleManager;
             this.userManager = userManager;
 
+
+        }
+        public IActionResult index()
+        {
+            return View();
         }
 
         public async Task<IActionResult> ListCustomers()
@@ -28,6 +33,7 @@ namespace FridgeManagementSystem.Controllers
            
             return View(customer);
         }
+       
         //public async Task<IActionResult> ListUsers()
         //{
         //    var users = userManager.Users.ToList();

@@ -85,8 +85,17 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             [DataType(DataType.Text)]
             [Display(Name = "Full Name")]
             public string FullName { get; set; }
-            public string City { get; set; }
+           
+            [Required(ErrorMessage = "Please Enter Contact Number"), Phone]
+            [Display(Name = "Contact Number")]
+            public string ContactNo { get; set; }
+            [Required]
             public string Address { get; set; }
+            [Required]
+            public string City { get; set; }
+            [Required]
+            public string Suburb { get; set; }
+            [Required]
             public string PostalCode { get; set; }
 
             [Required]
@@ -113,8 +122,8 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
 
-            public string Role { get; set;}
-            public IEnumerable<SelectListItem> RoleList { get; set; }
+            //public string Role { get; set;}
+            //public IEnumerable<SelectListItem> RoleList { get; set; }
         }
 
 
@@ -127,14 +136,14 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
-            Input = new InputModel
-            {
-                RoleList = _roleManager.Roles.Select(x => x.Name).Select(i => new SelectListItem
-                {
-                    Text = i,
-                    Value = i
-                })
-            };
+            //Input = new InputModel
+            //{
+            //    RoleList = _roleManager.Roles.Select(x => x.Name).Select(i => new SelectListItem
+            //    {
+            //        Text = i,
+            //        Value = i
+            //    })
+            //};
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -145,8 +154,14 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             {
                 var user = CreateUser();
                 user.FullName = Input.FullName;
+                user.ContactNo = Input.ContactNo;
                 user.Address = Input.Address;
+                user.City = Input.City;
+                user.Suburb = Input.Suburb;
                 user.PostalCode = Input.PostalCode;
+                
+                user.IsActive= true;
+                user.CreatedAt= DateTime.UtcNow;
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
                 var result = await _userManager.CreateAsync(user, Input.Password);
@@ -155,7 +170,16 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User created a new account with password.");
 
-                    await _userManager.AddToRoleAsync(user, Input.Role);
+                    // ensure Customer role exist
+                    if(!await _roleManager.RoleExistsAsync("Customer"))
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole("Customer"));
+                    }
+
+                    // Automatically assign Customer role
+
+                    await _userManager.AddToRoleAsync(user, "Customer");
+                    //await _userManager.AddToRoleAsync(user, Input.Role);
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
