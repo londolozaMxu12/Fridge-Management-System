@@ -1,0 +1,60 @@
+﻿@using FridgeManagementSystem.ViewModels
+@model EmployeeViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Deactivate Employee";
+}
+
+<div class="container">
+    <h2>Deactivate Employee</h2>
+
+    <div class="alert alert-danger">
+        <h4>Are you sure you want to deactivate this employee?</h4>
+        <p class="mb-0">
+            This will deactivate the employee account. The employee will no longer be able to log in,
+            but their data will be preserved in the system for record-keeping purposes.
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4>Employee Information</h4>
+          
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">ID</dt>
+                <dd class="col-sm-9">@Model.Id</dd>
+
+                <dt class="col-sm-3">Full Name</dt>
+                <dd class="col-sm-9">@Model.FullName</dd>
+
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">@Model.Email</dd>
+
+                <dt class="col-sm-3">Contact Number</dt>
+                <dd class="col-sm-9">@Model.ContactNo</dd>
+
+                <dt class="col-sm-3">Roles</dt>
+                <dd class="col-sm-9">@string.Join(", ", Model.Roles)</dd>
+
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9">
+                    <span class="badge @(Model.IsActive ? "bg-success" : "bg-danger")">
+                        @(Model.IsActive ? "Active" : "Inactive")
+                    </span>
+                </dd>
+
+                <dt class="col-sm-3">Created At</dt>
+                <dd class="col-sm-9">@(Model.CreatedAt.ToString("yyyy-MM-dd HH:mm") ?? "Not set")</dd>
+            </dl>
+        </div>
+        <div class="card-footer">
+            <form asp-action="DeactivateAccount" method="post">
+                <input type="hidden" asp-for="Id" />
+                <button type="submit" class="btn btn-danger">Deactivate Account</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
