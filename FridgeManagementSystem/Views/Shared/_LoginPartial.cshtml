@@ -16,24 +16,118 @@
     <ul class="navbar-nav">
         @if (SignInManager.IsSignedIn(User))
         {
-            <li class="nav-item">
-                <a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @UserManager.GetUserName(User)!</a>
-            </li>
-            <li class="nav-item">
+            var appUser = await UserManager.GetUserAsync(User);
 
-                <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                    <button id="logout" type="submit" class="nav-link btn btn-link text-dark border-0">Logout</button>
-                </form>
+            if (User.IsInRole("admin"))
+            {
+                <li class="nav-item">
+                    <a id="manage" class="nav-link text-white" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@(appUser!.FullName + " (Admin)")</a>
+                </li>
+                <li class="nav-item">
 
-            </li>
+                    <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                        <button id="logout" type="submit" class="nav-link btn btn-link text-white border-0">Logout</button>
+                    </form>
+
+                </li>
+            }
+            else if (User.IsInRole("Customer"))
+            {
+                <li class="nav-item">
+                    <a id="manage" class="nav-link text-white" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@(appUser!.FullName + " (Customer)")</a>
+                </li>
+                <li class="nav-item">
+
+                    <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                        <button id="logout" type="submit" class="nav-link btn btn-link text-white border-0">Logout</button>
+                    </form>
+
+                </li>
+            }
+
+            else if (User.IsInRole("Fault Technician"))
+            {
+                <li class="nav-item">
+                    <a id="manage" class="nav-link text-white" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@(appUser!.FullName + " (Fault Technician)")</a>
+                </li>
+                <li class="nav-item">
+
+                    <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                        <button id="logout" type="submit" class="nav-link btn btn-link text-white border-0">Logout</button>
+                    </form>
+
+                </li>
+            }
+            else if (User.IsInRole("Maintenance Technician"))
+            {
+                <li class="nav-item">
+                    <a id="manage" class="nav-link text-white" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@(appUser!.FullName + " (Maintenance Technician)")</a>
+                </li>
+                <li class="nav-item">
+
+                    <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                        <button id="logout" type="submit" class="nav-link btn btn-link text-white border-0">Logout</button>
+                    </form>
+
+                </li>
+            }
+            else if (User.IsInRole("Inventory Liaison"))
+            {
+                <li class="nav-item">
+                    <a id="manage" class="nav-link text-white" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@(appUser!.FullName + " (Inventory Liaison)")</a>
+                </li>
+                <li class="nav-item">
+
+                    <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                        <button id="logout" type="submit" class="nav-link btn btn-link text-white border-0">Logout</button>
+                    </form>
+
+                </li>
+            }
+            else if (User.IsInRole("Purchasing Management"))
+            {
+                <li class="nav-item">
+                    <a id="manage" class="nav-link text-white" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@(appUser!.FullName + " (Purchasing Management)")</a>
+                </li>
+                <li class="nav-item">
+
+                    <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                        <button id="logout" type="submit" class="nav-link btn btn-link text-white border-0">Logout</button>
+                    </form>
+
+                </li>
+            }
+            else if (User.IsInRole("Customer Management"))
+            {
+                <li class="nav-item">
+                    <a id="manage" class="nav-link text-white" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@(appUser!.FullName + " (Customer Management)")</a>
+                </li>
+                <li class="nav-item">
+
+                    <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                        <button id="logout" type="submit" class="nav-link btn btn-link text-white border-0">Logout</button>
+                    </form>
+
+                </li>
+            }
+            else
+            {
+                <li class="nav-item">
+
+                    <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                        <button id="logout" type="submit" class="nav-link btn btn-link text-white border-0">Logout</button>
+                    </form>
+
+                </li>
+            }
         }
         else
         {
             <li class="nav-item">
-                <a class="nav-link text-dark" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
+                <a class="nav-link text-white" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link text-dark" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
+                <a class="nav-link text-white" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
             </li>
         }
     </ul>

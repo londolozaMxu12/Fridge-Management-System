@@ -16,7 +16,7 @@ namespace FridgeManagementSystem.Areas.Identity.Data
         public string? City { get; set; } = "";
         public string? Suburb { get; set; } = "";
         public string? PostalCode { get; set; } = "";
-        public bool? IsActive { get; set; } = true;
+        public bool IsActive { get; set; } = true;
         public DateTime?CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

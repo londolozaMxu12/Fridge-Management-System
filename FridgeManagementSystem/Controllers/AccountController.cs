@@ -27,7 +27,7 @@ namespace FridgeManagementSystem.Controllers
             var allUsers = await _userManager.Users.ToListAsync();
 
             // Filter for active users only (IsActive = true or null treated as active)
-            var activeUsers = allUsers.Where(u => u.IsActive ?? true).ToList();
+            var activeUsers = allUsers.Where(u => u.IsActive).ToList();
 
             var employeeViewModels = new List<EmployeeViewModel>();
             foreach (var user in activeUsers) 
@@ -46,7 +46,7 @@ namespace FridgeManagementSystem.Controllers
                         City = user.City,
                         Suburb = user.Suburb,
                         PostalCode = user.PostalCode,
-                        IsActive = user.IsActive ?? true,
+                        IsActive = user.IsActive,
                         CreatedAt = user.CreatedAt ?? DateTime.UtcNow,
                         Roles = roles.ToList(),
                     });
@@ -56,80 +56,6 @@ namespace FridgeManagementSystem.Controllers
             return View(employeeViewModels);
         }
 
-        public IActionResult EmployeeRegister()
-        {
-            // Include all roles except Customer for selection
-            //var roles = _roleManager.Roles.Where(r => r.Name != "Customer").ToList();
-            //ViewBag.Roles = roles;
-
-            // Fetch roles excluding "Customer"
-            var roles = _roleManager.Roles.Where(r => r.Name != "Customer").ToList();
-
-            // Convert roles to SelectListItem for the dropdown
-            var roleList = roles.Select(r => new SelectListItem
-            {
-                Value = r.Name,  // Using the role Name as the value
-                Text = r.Name    // The role Name will also be the display text
-            }).ToList();
-
-            // Pass the roles to the view as SelectListItem
-            ViewBag.Roles = roleList;
-
-            var model = new EmployeeRegisterViewModel();
-            return View(model);
-        }
-        // POST: Employees/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EmployeeRegister(EmployeeRegisterViewModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                // create a new account and authenticate the user
-                var user = new ApplicationUser()
-                {
-                    UserName = model.Email,// UserName will be used to authenticate the user
-                    Email = model.Email,
-                    FullName = model.FullName,
-                    ContactNo = model.ContactNo,
-                    Address = model.Address,
-                    City = model.City,
-                    Suburb = model.Suburb,
-                    PostalCode = model.PostalCode,
-                    IsActive = true, // New employees are always active
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                var result = await _userManager.CreateAsync(user, model.Password);
-
-
-                if (result.Succeeded)
-                {
-                    if (!string.IsNullOrEmpty(model.SelectedRole) && model.SelectedRole != "Customer")
-                    {
-                        await _userManager.AddToRoleAsync(user, model.SelectedRole);
-                    }
-
-                    return RedirectToAction("Index", "Admin");
-                }
-
-                // registration failed => show registration errors
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError("", error.Description);
-                }
-            }
-
-
-            // If we reach here, something went wrong, so return the roles again
-            ViewBag.Roles = _roleManager.Roles.Where(r => r.Name != "Customer").Select(r => new SelectListItem
-            {
-                Value = r.Name,
-                Text = r.Name
-            }).ToList();
-
-            return View(model);
-        }
         // GET: Employees/Edit/5
         // GET: Employees/Edit/5
         public async Task<IActionResult> EditEmployee(string id)
@@ -153,13 +79,13 @@ namespace FridgeManagementSystem.Controllers
                 Suburb = user.Suburb,
                 PostalCode = user.PostalCode,
                 //IsActive = (bool)user.IsActive,
-                IsActive = user.IsActive ?? true,
+                IsActive = user.IsActive,
                 SelectedRole = roles.FirstOrDefault(),
             };
 
             ViewData["EmployeeId"] = user.Id;
             ViewData["CreatedAt"] = user.CreatedAt?.ToString("MM/dd/yyyy");
-            ViewData["IsActiveStatus"] = (user.IsActive ?? true) ? "Active" : "Inactive";
+            ViewData["IsActiveStatus"] = (user.IsActive) ? "Active" : "Inactive";
             //ViewData["IsActiveStatus"] = (bool)user.IsActive? "Active" : "Inactive";
 
             ViewBag.Roles = _roleManager.Roles
@@ -218,7 +144,8 @@ namespace FridgeManagementSystem.Controllers
                     {
                         await _userManager.AddToRoleAsync(user, model.SelectedRole);
                     }
-
+                    
+                    TempData["SuccessMessage"] = "Updated successfully!.";
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -268,7 +195,7 @@ namespace FridgeManagementSystem.Controllers
                 City = user.City,
                 Suburb = user.Suburb,
                 PostalCode = user.PostalCode,
-                IsActive = user.IsActive ?? true,
+                IsActive = user.IsActive,
                 CreatedAt = user.CreatedAt ?? DateTime.UtcNow,
                 Roles = roles.ToList()
             };
@@ -284,7 +211,7 @@ namespace FridgeManagementSystem.Controllers
             }
 
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null || !(user.IsActive ?? true))  // Check if already inactive
+            if (user == null || !(user.IsActive))  // Check if already inactive
             {
                 return RedirectToAction("Index", "Account");
             }
@@ -307,7 +234,7 @@ namespace FridgeManagementSystem.Controllers
                 City = user.City,
                 Suburb = user.Suburb,
                 PostalCode = user.PostalCode,
-                IsActive = user.IsActive ?? true,
+                IsActive = user.IsActive,
                 CreatedAt = (DateTime)user.CreatedAt,
                 Roles = roles.ToList(),
                 
@@ -326,7 +253,7 @@ namespace FridgeManagementSystem.Controllers
             }
 
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null || !(user.IsActive ?? true))  // Check if already inactive
+            if (user == null || !(user.IsActive))  // Check if already inactive
             {
                 return RedirectToAction("Index", "Account");
             }
@@ -346,7 +273,7 @@ namespace FridgeManagementSystem.Controllers
 
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = "Employee has been deactivated successfully.";
+                TempData["SuccessMessage"] = $" Employee {user.FullName} has been deactivated successfully.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -367,20 +294,20 @@ namespace FridgeManagementSystem.Controllers
                 City = user.City,
                 Suburb = user.Suburb,
                 PostalCode = user.PostalCode,
-                IsActive = user.IsActive ?? true,
+                IsActive = user.IsActive,
                 CreatedAt = (DateTime)user.CreatedAt,
                 Roles = roles.ToList(),
                 
             };
 
-            return View(model);
+            return View("DeactivateAccount", model);
         }
         // GET: Employees/Inactive
         public async Task<IActionResult> InactiveAccounts()
         {
             // Get all inactive users excluding Customers
             var allUsers = await _userManager.Users
-                .Where(u => !(u.IsActive ?? true))  // Only inactive users
+                .Where(u => !(u.IsActive))  // Only inactive users
                 .ToListAsync();
 
             var employeeViewModels = new List<EmployeeViewModel>();
@@ -400,7 +327,7 @@ namespace FridgeManagementSystem.Controllers
                         City = user.City,
                         Suburb = user.Suburb,
                         PostalCode = user.PostalCode,
-                        IsActive = user.IsActive ?? false,
+                        IsActive = user.IsActive,
                         CreatedAt = (DateTime)user.CreatedAt,
                         Roles = roles.ToList(),
                         
@@ -420,7 +347,7 @@ namespace FridgeManagementSystem.Controllers
             }
 
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null || (user.IsActive ?? false))  // Check if already active
+            if (user == null || (user.IsActive))  // Check if already active
             {
                 return RedirectToAction("InactiveAccounts", "Account");
             }
@@ -443,7 +370,7 @@ namespace FridgeManagementSystem.Controllers
                 City = user.City,
                 Suburb = user.Suburb,
                 PostalCode = user.PostalCode,
-                IsActive = user.IsActive ?? false,
+                IsActive = user.IsActive,
                 CreatedAt = (DateTime)user.CreatedAt,  
                 Roles = roles.ToList(),
             };
@@ -461,7 +388,7 @@ namespace FridgeManagementSystem.Controllers
             }
 
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null || (user.IsActive ?? false))  // Check if already active
+            if (user == null || (user.IsActive))  // Check if already active
             {
                 return RedirectToAction("InactiveAccounts", "Account");
             }
@@ -481,7 +408,7 @@ namespace FridgeManagementSystem.Controllers
 
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = "Employee has been reactivated successfully.";
+                TempData["SuccessMessage"] = $"Employee {user.FullName} has been reactivated successfully.";
                 return RedirectToAction("InactiveAccounts", "Account"); 
             }
 
@@ -502,7 +429,7 @@ namespace FridgeManagementSystem.Controllers
                 City = user.City,
                 Suburb = user.Suburb,
                 PostalCode = user.PostalCode,
-                IsActive = user.IsActive ?? false,
+                IsActive = user.IsActive,
                 CreatedAt = (DateTime)user.CreatedAt,
                 Roles = roles.ToList(),
             };

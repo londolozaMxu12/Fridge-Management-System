@@ -162,6 +162,11 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                     _logger.LogWarning("User account locked out.");
                     return RedirectToPage("./Lockout");
                 }
+                //if (result == Microsoft.AspNetCore.Identity.SignInResult.NotAllowed)
+                //{
+                //    ModelState.AddModelError(string.Empty, "This account has been deactivated. Please contact administrator.");
+                //    return Page();
+                //}
                 else
                 {
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");

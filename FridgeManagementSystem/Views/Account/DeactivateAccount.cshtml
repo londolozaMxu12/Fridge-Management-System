@@ -4,12 +4,37 @@
     Layout = "_AdminLayout";
     ViewData["Title"] = "Deactivate Employee";
 }
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        <h4><i class="fas fa-exclamation-triangle"></i> Deactivation Failed</h4>
+        <ul class="mb-0">
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+<h2 class="text-center mb-3">Deactivate Employee</h2>
 
 <div class="container">
-    <h2>Deactivate Employee</h2>
+    
 
     <div class="alert alert-danger">
         <h4>Are you sure you want to deactivate this employee?</h4>
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger">
+                <h4>Errors occurred:</h4>
+                <ul>
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                </ul>
+            </div>
+        }
         <p class="mb-0">
             This will deactivate the employee account. The employee will no longer be able to log in,
             but their data will be preserved in the system for record-keeping purposes.
@@ -51,10 +76,18 @@
         </div>
         <div class="card-footer">
             <form asp-action="DeactivateAccount" method="post">
+                @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Id" />
                 <button type="submit" class="btn btn-danger">Deactivate Account</button>
                 <a asp-action="Index" class="btn btn-secondary">Cancel</a>
             </form>
         </div>
+        @section Scripts {
+            <script>
+                function confirmDeactivation() {
+                    return confirm('Are you sure you want to deactivate this employee? This action cannot be undone.');
+                }
+            </script>
+        }
     </div>
 </div>
