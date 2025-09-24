@@ -1,21 +1,30 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using FridgeManagementSystem.Areas.Identity.Data;
+using System.ComponentModel.DataAnnotations;
 
 namespace FridgeManagementSystem.Models
 {
     public class Supplier
     {
         [Key]
-        public int SupplierId { get; set; }
+        public int Id { get; set; }
 
-        [Required(ErrorMessage = "Please Enter Full Name"), StringLength(50)]
-        [Display(Name = "Full Name")]
-        public string FullName { get; set; }
-        [Required(ErrorMessage = "Please Enter Email Address"), StringLength(50)]
-        public string Email { get; set; }
+        [Required]
+        public string UserId { get; set; }
+        public ApplicationUser User { get; set; }
 
-        [Required(ErrorMessage = "Please Enter Contact Number"), Phone]
-        [Display(Name = "Contact Number")]
-        public string ContactNo { get; set; }
+        [Required]
+        [Display(Name = "Company Name")]
+        [StringLength(100)]
+        public string CompanyName { get; set; }
+
+        [Required]
+        [Display(Name = "Supplier Type")]
+        public string SupplierType { get; set; } // Fridge, Parts, Other
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public string CreatedById { get; set; }
+        public ApplicationUser CreatedBy { get; set; }
         public ICollection<PurchasingOrder> PurchasingOrders { get; set; }
         public ICollection<Fridge> Fridges { get; set; }
     }

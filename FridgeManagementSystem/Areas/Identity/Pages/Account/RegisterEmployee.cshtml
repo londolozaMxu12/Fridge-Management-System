@@ -6,36 +6,34 @@
     Layout = "_AdminLayout";
 }
 @* <h2>@ViewData["Title"]</h2> *@
+
 <h2 class="text-center mb-3">Register New Employee</h2>
 
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
+
 
 <div class="row">
     @* <h2 class="text-center mb-3">Register Employee</h2> *@
 
     <div class="col-lg-8 mx-auto rounded border p-5">
-        <h2 class="text-center mb-3">Account Details:</h2>
+        <h2 class="text-center mb-3">Account Details</h2>
         <hr />
 
         <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
 
         <form method="post">
-            <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">Full Name*</label>
-                <div class="col-sm-8">
-                    <input class="form-control" asp-for="Input.FullName">
-                    <span asp-validation-for="Input.FullName" class="text-danger"></span>
-                </div>
-            </div>
-
+            
             <div class="row mb-3">
                 <label class="col-sm-4 col-form-label">Email*</label>
                 <div class="col-sm-8">
                     <input class="form-control" asp-for="Input.Email">
-                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    <span asp-validation-for="Input.Email" class="text-danger small"></span>
                 </div>
             </div>
 
@@ -43,7 +41,7 @@
                 <label class="col-sm-4 col-form-label">Password*</label>
                 <div class="col-sm-8">
                     <input class="form-control" type="password" asp-for="Input.Password">
-                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    <span asp-validation-for="Input.Password" class="text-danger small"></span>
                 </div>
             </div>
 
@@ -51,35 +49,35 @@
                 <label class="col-sm-4 col-form-label">Confirm Password*</label>
                 <div class="col-sm-8">
                     <input class="form-control" type="password" asp-for="Input.ConfirmPassword">
-                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
                 </div>
             </div>
 
-            <h2 class="text-center mb-3">Contact Details:</h2>
+            <h2 class="text-center mb-3">Personal Details</h2>
             <hr />
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Full Name*</label>
+                <div class="col-sm-8">
+                    <input class="form-control" asp-for="Input.FullName">
+                    <span asp-validation-for="Input.FullName" class="text-danger small"></span>
+                </div>
+            </div>
 
             <div class="row mb-3">
                 <label class="col-sm-4 col-form-label">Contact No*</label>
                 <div class="col-sm-8">
                     
                     <input type="tel" class="form-control" asp-for="Input.ContactNo">
-                    <span asp-validation-for="Input.ContactNo" class="text-danger"></span>
+                    <span asp-validation-for="Input.ContactNo" class="text-danger small"></span>
                 </div>
             </div>
-
-            @* <div class="row mb-3">
-                <label for="SelectedRole" class="col-sm-4 col-form-label">Role*</label>
-                <div class="col-sm-8">
-                    @Html.DropDownListFor(model => model.Input.SelectedRole, (IEnumerable<SelectListItem>)ViewBag.Roles, "-->Select a Role<--", new { @class = "form-control" })
-                    <span asp-validation-for="Input.SelectedRole" class="text-danger"></span>
-                </div>
-            </div> *@
-
+                        
             <div class="row mb-3">
                 <label class="col-sm-4 col-form-label">Address*</label>
                 <div class="col-sm-8">
                     <input class="form-control" asp-for="Input.Address">
-                    <span asp-validation-for="Input.Address" class="text-danger"></span>
+                    <span asp-validation-for="Input.Address" class="text-danger small"></span>
                 </div>
             </div>
 
@@ -87,7 +85,7 @@
                 <label class="col-sm-4 col-form-label">City*</label>
                 <div class="col-sm-8">
                     <input class="form-control" asp-for="Input.City">
-                    <span asp-validation-for="Input.City" class="text-danger"></span>
+                    <span asp-validation-for="Input.City" class="text-danger small"></span>
                 </div>
             </div>
 
@@ -95,7 +93,7 @@
                 <label class="col-sm-4 col-form-label">Suburb*</label>
                 <div class="col-sm-8">
                     <input class="form-control" asp-for="Input.Suburb">
-                    <span asp-validation-for="Input.Suburb" class="text-danger"></span>
+                    <span asp-validation-for="Input.Suburb" class="text-danger small"></span>
                 </div>
             </div>
 
@@ -103,20 +101,89 @@
                 <label class="col-sm-4 col-form-label">Postal Code*</label>
                 <div class="col-sm-8">
                     <input class="form-control" asp-for="Input.PostalCode">
-                    <span asp-validation-for="Input.PostalCode" class="text-danger"></span>
+                    <span asp-validation-for="Input.PostalCode" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <h2 class="text-center mb-3">Employment Details</h2>
+            <hr />
+
+            <div class="row mb-3">
+                <label asp-for="Input.EmployeeTypeId" class="col-sm-4 col-form-label">Employee Type*</label>
+                <div class="col-sm-8">
+                    <select asp-for="Input.EmployeeTypeId" class="form-control">
+                        <option value="">-- Select Employee Type --</option>
+                        @foreach (var type in Model.EmployeeTypes)
+                        {
+                            <option value="@type.Value">@type.Text</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.EmployeeTypeId" class="text-danger small"></span>
+                </div>
+                
+                
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Job Title*</label>
+                <div class="col-sm-8">
+                    <input class="form-control" asp-for="Input.JobTitle">
+                    <span asp-validation-for="Input.JobTitle" class="text-danger small"></span>
                 </div>
             </div>
 
             <div class="row mb-3">
+                <label asp-for="Input.DateEmployed" class="col-sm-4 col-form-label"></label>
+                <div class="col-sm-8">
+                    
+                    <input asp-for="Input.DateEmployed" type="date" class="form-control" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="Input.DateEmployed" class="text-danger small"></span>
+                </div>
+                
+            </div>
+
+            <div>
+                <!-- Auto-generated Employee Number Display -->
+                <div class="row mb-3">
+                    <label class="col-sm-4 col-form-label">Employee Number*</label>
+                    <div class="form-control bg-light">
+                        <span class="text-muted" id="employeeNumberPreview">Will be auto-generated</span>
+                    </div>
+                    <div class="form-text">Employee number is automatically generated by the system</div>
+                </div>
+            </div>
+
+            <!-- Role Information (Read-only) -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading mb-2">
+                            <i class="fas fa-info-circle me-2"></i>Role Information
+                        </h6>
+                        <p class="mb-1">
+                            <strong>Assigned Role:</strong>
+                            <span class="badge bg-success">Employee</span>
+                        </p>
+                        <p class="mb-0">
+                            <strong>Status:</strong>
+                            <span class="badge bg-success">Auto-Approved</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
+            @* <div class="row mb-3">
                 <label asp-for="Input.SelectedRole" class="col-sm-4 col-form-label">Role*</label>
                 <div class="col-sm-8">
-                    @* <label asp-for="Input.SelectedRole"></label> *@
+                    
                     <select asp-for="Input.SelectedRole" asp-items="Model.Roles" class="form-control">
                         <option value="Role">-->Select Role<--</option>
                     </select>
                     <span asp-validation-for="Input.SelectedRole" class="text-danger"></span>
                 </div>
-            </div>
+            </div> *@
+
             @* <div class="form-group">
                 <label asp-for="Input.SelectedRole"></label>
                 <select asp-for="Input.SelectedRole" asp-items="Model.Roles" class="form-control">
@@ -143,4 +210,36 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        // Auto-fill job title based on employee type
+                if (this.value !== '' && !jobTitleInput.value) {
+                    jobTitleInput.value = selectedOption.text;
+                }
+
+        // Date validation - cannot select future dates
+            const dateEmployedInput = document.querySelector('input[type="date"]');
+            const today = new Date().toISOString().split('T')[0];
+            dateEmployedInput.setAttribute('max', today);
+
+        // Contact number formatting
+           const contactNoInput = document.getElementById('Input_ContactNo');
+           contactNoInput.addEventListener('input', function() {
+               this.value = this.value.replace(/[^0-9]/g, '');
+               if (this.value.length > 10) {
+                   this.value = this.value.slice(0, 10);
+               }
+           });
+    </script>
+
+<style>
+    .alert {
+        border: none;
+        border-radius: 10px;
+    }
+</style>
+}
 

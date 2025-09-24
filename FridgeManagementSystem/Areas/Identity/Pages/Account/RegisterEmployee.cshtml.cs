@@ -1,6 +1,8 @@
 #nullable disable
 
 using FridgeManagementSystem.Areas.Identity.Data;
+using FridgeManagementSystem.Data;
+using FridgeManagementSystem.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -29,12 +31,12 @@ public class RegisterEmployeeModel : PageModel
     private readonly IUserEmailStore<ApplicationUser> _emailStore;
     private readonly ILogger<RegisterEmployeeModel> _logger;
     private readonly RoleManager<IdentityRole> _roleManager;
-
+    private readonly FridgeManagementSystemContext _context;
     [BindProperty]
     public InputModel Input { get; set; }
 
-    public List<SelectListItem> Roles { get; set; }
-
+    //public List<SelectListItem> Roles { get; set; }
+    public List<SelectListItem> EmployeeTypes { get; set; } = new List<SelectListItem>();
     public class InputModel
     {
         [Required]
@@ -76,60 +78,72 @@ public class RegisterEmployeeModel : PageModel
         [Compare("Password", ErrorMessage = "Passwords do not match.")]
         public string ConfirmPassword { get; set; } = string.Empty;
 
+        // Employee-specific properties
+        //[Required]
+        //[Display(Name = "Employee Number")]
+        //[StringLength(20)]
+        //public string EmployeeId { get; set; } // Auto-generated: EMP001, EMP002, etc.
+
         [Required]
-        [Display(Name = "Role")]
-        public string SelectedRole { get; set; } = string.Empty;
+        [Display(Name = "Employee Type")]
+        public int EmployeeTypeId { get; set; }
+
+        [Required]
+        [Display(Name = "Job Title")]
+        public string JobTitle { get; set; }
+
+        [Required]
+        [Display(Name = "Date Employed")]
+        [DataType(DataType.Date)]
+        public DateTime DateEmployed { get; set; } = DateTime.Today;
+
+        //[Required]
+        //[Display(Name = "Role")]
+        //public string SelectedRole { get; set; } = string.Empty;
+
     }
 
     public RegisterEmployeeModel(
         UserManager<ApplicationUser> userManager,
         IUserStore<ApplicationUser> userStore,
         ILogger<RegisterEmployeeModel> logger,
-        RoleManager<IdentityRole> roleManager)
+        RoleManager<IdentityRole> roleManager,
+        FridgeManagementSystemContext context)
     {
         _userManager = userManager;
         _userStore = userStore;
         _emailStore = GetEmailStore();
         _logger = logger;
         _roleManager = roleManager;
+        _context = context;
     }
 
     public async Task OnGetAsync()
     {
         // Check if 'Admin' role exists, create it if not
-        var adminRole = await _roleManager.FindByNameAsync("Admin");
-        if (adminRole == null)
-        {
-            _logger.LogWarning("Admin role does not exist. Creating Admin role.");
-            await _roleManager.CreateAsync(new IdentityRole("Admin"));
-        }
-
-        // Ensure the user is logged in and has the 'Admin' role
-        if (!User.Identity.IsAuthenticated)
-        {
-            _logger.LogWarning("User is not authenticated.");
-            RedirectToPage("/Account/Login");
-            return;
-        }
-
-        if (!User.IsInRole("Admin"))
-        {
-            _logger.LogWarning("User is not an Admin.");
-            RedirectToPage("/Account/AccessDenied");
-            return;
-        }
 
         // Get all available roles EXCEPT Customer role
-        Roles = await _roleManager.Roles
-            .Where(r => r.Name != "Customer") // Exclude Customer role
-            .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
-            .ToListAsync();
+        //Roles = await _roleManager.Roles
+        //    .Where(r => r.Name != "Customer") // Exclude Customer role
+        //    .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
+        //    .ToListAsync();
+        await LoadEmployeeTypes();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
         if (ModelState.IsValid)
         {
+            // Check if employee ID already exists
+            //var existingEmployeeId = await _context.Employees
+            //    .AnyAsync(e => e.EmployeeNo == Input.EmployeeNo);
+
+            //if (existingEmployeeId)
+            //{
+            //    ModelState.AddModelError("Input.EmployeeId", "Employee Number already exists.");
+            //    await LoadEmployeeTypes();
+            //    return Page();
+            //}
             var user = new ApplicationUser
             {
                 FullName = Input.FullName,
@@ -140,31 +154,65 @@ public class RegisterEmployeeModel : PageModel
                 City = Input.City,
                 Suburb = Input.Suburb,
                 PostalCode = Input.PostalCode,
-                IsActive = true,
-                CreatedAt = DateTime.Now
+                ApprovalStatus = "Approved", // Employees are auto-approved
+
+                ApprovedById = _userManager.GetUserId(User),
+                ApprovedAt = DateTime.UtcNow,
+                IsActive = true              
             };
 
             var result = await _userManager.CreateAsync(user, Input.Password);
 
             if (result.Succeeded)
             {
-                // Ensure the selected role exists
-                if (!await _roleManager.RoleExistsAsync(Input.SelectedRole))
+                // ensure Employee role exist
+                if (!await _roleManager.RoleExistsAsync("Employee"))
                 {
-                    await _roleManager.CreateAsync(new IdentityRole(Input.SelectedRole));
+                    await _roleManager.CreateAsync(new IdentityRole("Employee"));
                 }
 
-                // Add the user to the selected role
-                await _userManager.AddToRoleAsync(user, Input.SelectedRole);
+                // Add to Employee role
+                await _userManager.AddToRoleAsync(user, "Employee");
+
+                // Create Employee record
+                var employee = new Employee
+                {
+                    UserId = user.Id,
+                    // EmployeeId = Input.EmployeeId,
+                    // EmployeeNumber will be auto-generated by the service
+                    EmployeeTypeId = Input.EmployeeTypeId,
+                    JobTitle = Input.JobTitle,
+                    DateEmployed = Input.DateEmployed,
+                    CreatedById = _userManager.GetUserId(User)
+                };
+                // The EmployeeNumber will be auto-generated when saving
+                _context.Employees.Add(employee);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Employee account created for {Email} by {Admin}", Input.Email, User.Identity.Name);
+
+                 //return RedirectToPage("RegisterEmployeeConfirmation", new { email = Input.Email });
 
                 // Auto-confirm email for admin-created users
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 await _userManager.ConfirmEmailAsync(user, token);
 
                 _logger.LogInformation("Admin created new user account for {Email}", Input.Email);
-                TempData["SuccessMessage"] = $"Employee {Input.FullName} as been registered successfully with role {Input.SelectedRole}.";
+                TempData["SuccessMessage"] = $"Employee {Input.FullName} as been registered successfully!!!.";
                 return RedirectToPage();
             }
+
+
+            //// Ensure the selected role exists
+            //if (!await _roleManager.RoleExistsAsync(Input.SelectedRole))
+            //{
+            //    await _roleManager.CreateAsync(new IdentityRole(Input.SelectedRole));
+            //}
+
+            //// Add the user to the selected role
+            //await _userManager.AddToRoleAsync(user, Input.SelectedRole);
+
+
 
             foreach (var error in result.Errors)
             {
@@ -173,14 +221,24 @@ public class RegisterEmployeeModel : PageModel
         }
 
         // Reload roles if validation fails (excluding Customer role)
-        Roles = await _roleManager.Roles
-            .Where(r => r.Name != "Customer") // Exclude Customer role
-            .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
-            .ToListAsync();
-
+        //Roles = await _roleManager.Roles
+        //    .Where(r => r.Name != "Customer") // Exclude Customer role
+        //    .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
+        //    .ToListAsync();
+        await LoadEmployeeTypes();
         return Page();
     }
-
+    private async Task LoadEmployeeTypes()
+    {
+        EmployeeTypes = await _context.EmployeeTypes
+            .Where(et => et.IsActive)
+            .Select(et => new SelectListItem
+            {
+                Value = et.Id.ToString(),
+                Text = et.Name
+            })
+            .ToListAsync();
+    }
     private IUserEmailStore<ApplicationUser> GetEmailStore()
     {
         if (!_userManager.SupportsUserEmail)

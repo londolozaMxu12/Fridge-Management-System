@@ -1,4 +1,5 @@
-﻿using FridgeManagementSystem.Controllers;
+﻿using FridgeManagementSystem.Areas.Identity.Data;
+using FridgeManagementSystem.Controllers;
 using NuGet.Protocol.Plugins;
 using System.ComponentModel.DataAnnotations;
 
@@ -7,23 +8,23 @@ namespace FridgeManagementSystem.Models
     public class Customer
     {
         [Key]
-        public int CustomerId { get; set; }
+        public int Id { get; set; }
 
-        [Required(ErrorMessage = "Please Enter Full Name"), StringLength(50)]
-        [Display(Name = "Full Name")]
-        public string FullName { get; set; }
+        [Required]
+        public string UserId { get; set; }
+        public ApplicationUser User { get; set; }
 
-        [Required(ErrorMessage = "Please Enter Address"), StringLength(200)]
-        public string Address { get; set; }
-
-        [Required(ErrorMessage = "Please Enter Contact Number"), Phone]
-        [Display(Name = "Contact Number")]
-        public string ContactNo { get; set; }
-
-        // Foreign Key
-        public int SuburbId { get; set; }
-        public Suburb Suburb { get; set; }
-
+        [Required]
+        [Display(Name = "Business Name")]
+        [StringLength(100)]
+        public string BusinessName { get; set; }
+        [Required]
+        [Display(Name = "Customer Type")]
+        public string CustomerType { get; set; } // Spaza Shop, Liquor, Other
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public string CreatedByFullName { get; set; }
+        public ApplicationUser CreatedBy { get; set; }
         public ICollection<Fridge> Fridges { get; set; }
         public ICollection<Fault> Faults { get; set; }
         public ICollection<FridgeRequest> FridgeRequests { get; set; }

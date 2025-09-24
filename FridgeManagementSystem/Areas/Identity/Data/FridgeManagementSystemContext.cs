@@ -19,6 +19,10 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     // FOR BUSINESS TABLES
     public DbSet<ApplicationUser> Admin {  get; set; }
     public DbSet<Customer> Customers { get; set; }
+    public DbSet<Supplier> Suppliers { get; set; }
+    public DbSet<Employee> Employees { get; set; }
+    public DbSet<EmployeeType> EmployeeTypes { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
     public DbSet<Fridge> Fridges { get; set; }
     public DbSet<Fault> Faults { get; set; }
     public DbSet<FaultTechnician> FaultTechnicians { get; set; }
@@ -39,7 +43,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     public DbSet<Quotation> Quotations { get; set; }
     public DbSet<StockLevel> StockLevels { get; set; }
     public DbSet<Suburb> Suburbs { get; set; }
-    public DbSet<Supplier> Suppliers { get; set; }
+    
     public DbSet<FaultReport> FaultReports { get; set; }
     public DbSet<Allocation> Allocations { get; set; }
 
@@ -49,6 +53,85 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
         // Customize the ASP.NET Identity model and override the defaults if needed.
         // For example, you can rename the ASP.NET Identity table names and more.
         // Add your customizations after calling base.OnModelCreating(builder);
-        
+
+        // Configure relationships
+        // Configure the self-referencing foreign key with NO ACTION
+        builder.Entity<ApplicationUser>()
+            .HasOne(u => u.ApprovedBy)
+            .WithMany()
+            .HasForeignKey(u => u.ApprovedById)
+            .OnDelete(DeleteBehavior.NoAction); // This is correct
+
+        // Customer relationship - remove cascade since it's a one-to-one
+        builder.Entity<Customer>()
+            .HasOne(c => c.User)
+            .WithOne(u => u.Customers)
+            .HasForeignKey<Customer>(c => c.UserId)
+            .OnDelete(DeleteBehavior.NoAction); // Change from Cascade to NoAction
+
+        // Employee relationships
+        builder.Entity<Employee>()
+            .HasOne(e => e.User)
+            .WithOne(u => u.Employees)
+            .HasForeignKey<Employee>(e => e.UserId)
+            .OnDelete(DeleteBehavior.NoAction); // Change from Cascade to NoAction
+
+        builder.Entity<Employee>()
+            .HasOne(e => e.CreatedBy)
+            .WithMany()
+            .HasForeignKey(e => e.CreatedById)
+            .OnDelete(DeleteBehavior.NoAction); // Change from Restrict to NoAction
+
+        builder.Entity<Employee>()
+            .HasOne(e => e.EmployeeType)
+            .WithMany()
+            .HasForeignKey(e => e.EmployeeTypeId)
+            .OnDelete(DeleteBehavior.NoAction); // Change from Restrict to NoAction
+
+        // Supplier relationships
+        builder.Entity<Supplier>()
+            .HasOne(s => s.User)
+            .WithOne(u => u.Suppliers)
+            .HasForeignKey<Supplier>(s => s.UserId)
+            .OnDelete(DeleteBehavior.NoAction); // Change from Cascade to NoAction
+
+        builder.Entity<Supplier>()
+            .HasOne(s => s.CreatedBy)
+            .WithMany()
+            .HasForeignKey(s => s.CreatedById)
+            .OnDelete(DeleteBehavior.NoAction); // Change from Restrict to NoAction
+
+        // Employee number configuration
+        builder.Entity<Employee>()
+            .Property(e => e.EmployeeNo)
+            .IsRequired()
+            .HasMaxLength(20);
+
+    }
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        await GenerateEmployeeNumbers();
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    public override int SaveChanges()
+    {
+        GenerateEmployeeNumbers().Wait();
+        return base.SaveChanges();
+    }
+
+    private async Task GenerateEmployeeNumbers()
+    {
+        var employeeNumberService = new EmployeeNumberService(this);
+
+        var newEmployees = ChangeTracker.Entries<Employee>()
+            .Where(e => e.State == EntityState.Added && string.IsNullOrEmpty(e.Entity.EmployeeNo))
+            .Select(e => e.Entity)
+            .ToList();
+
+        foreach (var employee in newEmployees)
+        {
+            employee.EmployeeNo = await employeeNumberService.GenerateEmployeeNumberAsync();
+        }
     }
 }

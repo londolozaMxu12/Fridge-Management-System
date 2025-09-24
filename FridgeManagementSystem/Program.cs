@@ -27,7 +27,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(
     })
     .AddRoles<IdentityRole>().AddEntityFrameworkStores<FridgeManagementSystemContext>()
     .AddDefaultTokenProviders();
-    //.AddUserValidator<ActiveUserValidator<ApplicationUser>>();
+//.AddUserValidator<ActiveUserValidator<ApplicationUser>>();
+
+builder.Services.AddScoped<IEmployeeNumberService, EmployeeNumberService>();
 
 // Register Admin Seed Service
 builder.Services.AddScoped<IAdminSeedService, AdminSeedService>();
@@ -43,6 +45,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var employeeNumberService = scope.ServiceProvider.GetRequiredService<IEmployeeNumberService>();
+    //await employeeNumberService.InitializeSequenceAsync();
+}
 
 // Ensure 'Admin' role exists at application startup
 using (var scope = app.Services.CreateScope())

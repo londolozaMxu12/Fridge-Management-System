@@ -3,6 +3,8 @@
 #nullable disable
 
 using FridgeManagementSystem.Areas.Identity.Data;
+using FridgeManagementSystem.Data;
+using FridgeManagementSystem.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -11,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -23,6 +26,7 @@ using System.Threading.Tasks;
 
 namespace FridgeManagementSystem.Areas.Identity.Pages.Account
 {
+    //[AllowAnonymous]
     public class RegisterModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -32,15 +36,17 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
         private readonly RoleManager<IdentityRole> _roleManager;
-
+        private readonly FridgeManagementSystemContext _context;
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             IUserStore<ApplicationUser> userStore,
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
             RoleManager<IdentityRole> roleManager,
-            IEmailSender emailSender)
-            
+            IEmailSender emailSender,
+
+            FridgeManagementSystemContext context)
+
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -49,6 +55,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             _roleManager = roleManager;
             _logger = logger;
             _emailSender = emailSender;
+            _context = context;
         }
 
         /// <summary>
@@ -74,6 +81,15 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
+        /// 
+
+        public List<SelectListItem> CustomerTypes { get; set; } = new List<SelectListItem>
+        {
+            new SelectListItem { Value = "SpazaShop", Text = "Spaza Shop" },
+            new SelectListItem { Value = "Liquor", Text = "Bottle Store" },
+            
+            new SelectListItem { Value = "Other", Text = "Other" }
+        };
         public class InputModel
         {
             /// <summary>
@@ -96,6 +112,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             [Required]
             public string Suburb { get; set; }
             [Required]
+            [Display(Name = "Postal Code")]
             public string PostalCode { get; set; }
 
             [Required]
@@ -121,6 +138,14 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+            // Customer specific fields
+            [Required]
+            [Display(Name = "Business Name")]
+            public string BusinessName { get; set; }
+            [Required]
+            [Display(Name = "Customer Type")]
+            public string CustomerType { get; set; } /*= "Spaza Shop";*/
 
             //public string Role { get; set;}
             //public IEnumerable<SelectListItem> RoleList { get; set; }
@@ -153,13 +178,14 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
+
                 user.FullName = Input.FullName;
                 user.ContactNo = Input.ContactNo;
                 user.Address = Input.Address;
                 user.City = Input.City;
                 user.Suburb = Input.Suburb;
                 user.PostalCode = Input.PostalCode;
-                
+                user.ApprovalStatus = "Pending"; // Customers need approval
                 user.IsActive= true;
                 user.CreatedAt= DateTime.UtcNow;
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -180,27 +206,46 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
 
                     await _userManager.AddToRoleAsync(user, "Customer");
                     //await _userManager.AddToRoleAsync(user, Input.Role);
-                    var userId = await _userManager.GetUserIdAsync(user);
-                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    var callbackUrl = Url.Page(
-                        "/Account/ConfirmEmail",
-                        pageHandler: null,
-                        values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
-                        protocol: Request.Scheme);
 
-                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                    // Create customer record
+                    var customer = new Customer
+                    {
+                        UserId = user.Id,
+                        BusinessName = Input.BusinessName,
+                        CustomerType = Input.CustomerType,
+                        CreatedByFullName = user.FullName
+                    };
 
-                    if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                    {
-                        return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
-                    }
-                    else
-                    {
-                        await _signInManager.SignInAsync(user, isPersistent: false);
-                        return LocalRedirect(returnUrl);
-                    }
+                    _context.Customers.Add(customer);
+
+                    // Create notifications for administrators and customer liaisons
+                    await CreateApprovalNotifications(user);
+                    await _context.SaveChangesAsync();
+
+                    // Redirect to custom confirmation page with login details
+                    return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
+
+                    //var userId = await _userManager.GetUserIdAsync(user);
+                    //var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    //code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                    //var callbackUrl = Url.Page(
+                    //    "/Account/ConfirmEmail",
+                    //    pageHandler: null,
+                    //    values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
+                    //    protocol: Request.Scheme);
+
+                    //await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
+                    //    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+                    //if (_userManager.Options.SignIn.RequireConfirmedAccount)
+                    //{
+                    //    return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
+                    //}
+                    //else
+                    //{
+                    //    await _signInManager.SignInAsync(user, isPersistent: false);
+                    //    return LocalRedirect(returnUrl);
+                    //}
                 }
                 foreach (var error in result.Errors)
                 {
@@ -234,5 +279,28 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             }
             return (IUserEmailStore<ApplicationUser>)_userStore;
         }
+        private async Task CreateApprovalNotifications(ApplicationUser user)
+        {
+            // Get all administrators and customer liaisons
+            var adminUsers = await _userManager.GetUsersInRoleAsync("Administrator");
+            var liaisonUsers = await _userManager.GetUsersInRoleAsync("CustomerLiaison");
+
+            var usersToNotify = adminUsers.Union(liaisonUsers).ToList();
+
+            foreach (var notifyUser in usersToNotify)
+            {
+                var notification = new Notification
+                {
+                    UserId = notifyUser.Id,
+                    Title = "New Customer Registration Requires Approval",
+                    Message = $"Customer {user.FullName} ({user.Email}) from {user.City + ", " + user.Suburb} has registered and requires approval.",
+                    Link = $"/Admin/ApproveCustomer/{user.Id}"
+                };
+
+                _context.Notifications.Add(notification);
+            }
+        }
     }
 }
+    
+

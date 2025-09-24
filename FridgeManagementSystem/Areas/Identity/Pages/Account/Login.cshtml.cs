@@ -2,19 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+using FridgeManagementSystem.Areas.Identity.Data;
+using FridgeManagementSystem.Models;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using FridgeManagementSystem.Areas.Identity.Data;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace FridgeManagementSystem.Areas.Identity.Pages.Account
 {
@@ -117,13 +118,32 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
+                // Check if user exists and is approved
+                var user = await _userManager.FindByEmailAsync(Input.Email);
+
+                if (user != null)
+                {
+                    if (user.ApprovalStatus != "Approved")
+                    {
+                        ModelState.AddModelError(string.Empty, "Your account is pending approval. Please wait for administrator approval.");
+                        return Page();
+                    }
+
+                    if (!user.IsActive)
+                    {
+                        ModelState.AddModelError(string.Empty, "Your account has been deactivated. Please contact administrator.");
+                        return Page();
+                    }
+                }
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
-                    var user = await _userManager.FindByNameAsync(Input.Email);
-                    var role = await _userManager.GetRolesAsync(user);  
+                    //var user = await _userManager.FindByNameAsync(Input.Email);
+                    var role = await _userManager.GetRolesAsync(user);
+                    
+
                     _logger.LogInformation("User logged in.");
 
                     if (role.Contains("Admin"))
