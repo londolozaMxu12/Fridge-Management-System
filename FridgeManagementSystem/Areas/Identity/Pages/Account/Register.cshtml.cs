@@ -213,7 +213,9 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                         UserId = user.Id,
                         BusinessName = Input.BusinessName,
                         CustomerType = Input.CustomerType,
-                        CreatedByFullName = user.FullName
+                        CreatedByFullName = user.FullName,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedById = user.Id
                     };
 
                     _context.Customers.Add(customer);

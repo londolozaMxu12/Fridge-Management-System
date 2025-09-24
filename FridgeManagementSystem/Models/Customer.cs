@@ -24,7 +24,8 @@ namespace FridgeManagementSystem.Models
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string CreatedByFullName { get; set; }
-        public ApplicationUser CreatedBy { get; set; }
+        public string? CreatedById { get; set; }
+        public ApplicationUser? CreatedBy { get; set; }
         public ICollection<Fridge> Fridges { get; set; }
         public ICollection<Fault> Faults { get; set; }
         public ICollection<FridgeRequest> FridgeRequests { get; set; }

@@ -67,7 +67,13 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .HasOne(c => c.User)
             .WithOne(u => u.Customers)
             .HasForeignKey<Customer>(c => c.UserId)
-            .OnDelete(DeleteBehavior.NoAction); // Change from Cascade to NoAction
+            .OnDelete(DeleteBehavior.Cascade); // Change from Cascade to NoAction
+
+        builder.Entity<Customer>()
+        .HasOne(c => c.CreatedBy)
+        .WithMany()
+        .HasForeignKey(c => c.CreatedById)
+        .OnDelete(DeleteBehavior.SetNull);
 
         // Employee relationships
         builder.Entity<Employee>()

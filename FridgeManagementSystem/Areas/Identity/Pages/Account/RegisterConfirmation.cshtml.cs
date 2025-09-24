@@ -46,6 +46,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
         public string EmailConfirmationUrl { get; set; }
 
         public string FullName { get; set; }
+        
         public string Email { get; set; }
         public bool DisplayLoginLink { get; set; }
         public async Task<IActionResult> OnGetAsync(string email, string returnUrl = null)
@@ -64,6 +65,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
 
             Email = email;
             FullName = user.FullName;
+           
             DisplayLoginLink = user.ApprovalStatus == "Approved";
             // Once you add a real email sender, you should remove this code that lets you confirm the account
             //DisplayConfirmAccountLink = true;
