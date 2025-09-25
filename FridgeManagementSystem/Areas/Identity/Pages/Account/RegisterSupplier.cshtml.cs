@@ -79,7 +79,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             [DataType(DataType.Password)]
             [Display(Name = "Password")]
             public string Password { get; set; }
-
+            [Required]
             [DataType(DataType.Password)]
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
@@ -99,8 +99,10 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             [Required]
             public string City { get; set; }
 
+            [Required]
             public string Suburb { get; set; }
 
+            [Required]
             [Display(Name = "Postal Code")]
             public string PostalCode { get; set; }
 

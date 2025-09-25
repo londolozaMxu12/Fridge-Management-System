@@ -43,17 +43,20 @@
                             @Html.DisplayNameFor(m => m.Input.RememberMe)
                         </label>
                     </div>
+
                     <div>
                         <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
                     </div>
-                    <div>
+                     
+                    <div class="mt-3 text-center">
+                        <p class="mb-2">
+                            <a id="forgot-password" asp-page="./ForgotPassword" class="text-decoration-none fw-semibold">Forgot your password?</a>
+                        </p class="mb-2">
                         <p>
-                            <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
+                            Don't have an account?
+                            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="text-decoration-none fw-semibold">Register as Customer</a>
                         </p>
-                        <p>
-                            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register as a new user</a>
-                        </p>
-                        <p>
+                        <p class="mb-0">
                             <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
                         </p>
                     </div>

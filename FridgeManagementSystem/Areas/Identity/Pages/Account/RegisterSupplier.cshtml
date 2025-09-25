@@ -1,4 +1,202 @@
 ﻿@page
-@model FridgeManagementSystem.Areas.Identity.Pages.Account.RegisterSupplierModel
+@model RegisterSupplierModel
+
 @{
+    ViewData["Title"] = "Register Employee";
+    Layout = "_AdminLayout";
 }
+@* <h2>@ViewData["Title"]</h2> *@
+
+<h2 class="text-center mb-3">Register New Supplier</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+
+<div class="row">
+    @* <h2 class="text-center mb-3">Register Employee</h2> *@
+
+    <div class="col-lg-8 mx-auto rounded border p-5">
+        <h2 class="text-center mb-3">Account Details</h2>
+        <hr />
+
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+        <form method="post">
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Email*</label>
+                <div class="col-sm-8">
+                    <input class="form-control" asp-for="Input.Email">
+                    <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Password*</label>
+                <div class="col-sm-8">
+                    <input class="form-control" type="password" asp-for="Input.Password">
+                    <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Confirm Password*</label>
+                <div class="col-sm-8">
+                    <input class="form-control" type="password" asp-for="Input.ConfirmPassword">
+                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <h2 class="text-center mb-3">Personal Details</h2>
+            <hr />
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Full Name*</label>
+                <div class="col-sm-8">
+                    <input class="form-control" asp-for="Input.FullName">
+                    <span asp-validation-for="Input.FullName" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Contact No*</label>
+                <div class="col-sm-8">
+
+                    <input type="tel" class="form-control" asp-for="Input.ContactNo">
+                    <span asp-validation-for="Input.ContactNo" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Address*</label>
+                <div class="col-sm-8">
+                    <input class="form-control" asp-for="Input.Address">
+                    <span asp-validation-for="Input.Address" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">City*</label>
+                <div class="col-sm-8">
+                    <input class="form-control" asp-for="Input.City">
+                    <span asp-validation-for="Input.City" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Suburb*</label>
+                <div class="col-sm-8">
+                    <input class="form-control" asp-for="Input.Suburb">
+                    <span asp-validation-for="Input.Suburb" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Postal Code*</label>
+                <div class="col-sm-8">
+                    <input class="form-control" asp-for="Input.PostalCode">
+                    <span asp-validation-for="Input.PostalCode" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <h2 class="text-center mb-3">Supplier Details</h2>
+            <hr />
+            
+            <div class="row mb-3">
+                <label asp-for="Input.SupplierType" class="col-sm-4 col-form-label">Supplier Type*</label>
+                <div class="col-sm-8">
+                    <select asp-for="Input.SupplierType" class="form-control">
+                        <option value="">-- Select Supplier Type --</option>
+                        @foreach (var type in Model.SupplierTypes)
+                        {
+                            <option value="@type.Value">@type.Text</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.SupplierType" class="text-danger small"></span>
+                </div>
+
+
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Company Name*</label>
+                <div class="col-sm-8">
+                    <input class="form-control" asp-for="Input.CompanyName">
+                    <span asp-validation-for="Input.CompanyName" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <!-- Role Information (Read-only) -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading mb-2">
+                            <i class="fas fa-info-circle me-2"></i>Role Information
+                        </h6>
+                        <p class="mb-1">
+                            <strong>Assigned Role:</strong>
+                            <span class="badge bg-success">Supplier</span>
+                        </p>
+                        <p class="mb-0">
+                            <strong>Account Status:</strong>
+                            <span class="badge bg-success">Auto-Approved</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row mb-3">
+                <div class="offset-sm-4 col-sm-4 d-grid">
+                    <button type="submit" class="btn btn-primary">Register Employee</button>
+                    
+                </div>
+                <div class="col-sm-4 d-grid">
+                    <a class="btn btn-outline-secondary" asp-controller="Account" asp-action="Index" role="button">
+                        Back to List
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // Auto-fill job title based on employee type
+                if (this.value !== '' && !jobTitleInput.value) {
+                    jobTitleInput.value = selectedOption.text;
+                }
+
+        // Date validation - cannot select future dates
+            const dateEmployedInput = document.querySelector('input[type="date"]');
+            const today = new Date().toISOString().split('T')[0];
+            dateEmployedInput.setAttribute('max', today);
+
+        // Contact number formatting
+           const contactNoInput = document.getElementById('Input_ContactNo');
+           contactNoInput.addEventListener('input', function() {
+               this.value = this.value.replace(/[^0-9]/g, '');
+               if (this.value.length > 10) {
+                   this.value = this.value.slice(0, 10);
+               }
+           });
+    </script>
+
+    <style>
+        .alert {
+            border: none;
+            border-radius: 10px;
+        }
+    </style>
+}
+
+
