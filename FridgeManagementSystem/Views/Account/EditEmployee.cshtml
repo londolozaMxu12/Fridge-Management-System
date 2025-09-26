@@ -1,4 +1,4 @@
-﻿@model FridgeManagementSystem.ViewModels.EmployeeEditViewModel
+﻿@* @model FridgeManagementSystem.ViewModels.EmployeeEditViewModel
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Edit Employee";
@@ -56,13 +56,13 @@
                 </div>
             </div>
 
-           @*  <div class="row mb-3">
+            <div class="row mb-3">
                 <label for="SelectedRole" class="col-sm-4 col-form-label">Role*</label>
                 <div class="col-sm-8">
                     @Html.DropDownListFor(model => model.SelectedRole, (IEnumerable<SelectListItem>)ViewBag.Roles, "-->Select a Role<--", new { @class = "form-control" })
                     <span asp-validation-for="SelectedRole" class="text-danger"></span>
                 </div>
-            </div> *@
+            </div>
 
             <div class="row mb-3">
                 <label class="col-sm-4 col-form-label">Address*</label>
@@ -116,10 +116,7 @@
             <div class="row mb-3">
                 <div class="offset-sm-4 col-sm-4 d-grid">
                     <button type="submit" class="btn btn-primary">Save Changes</button>
-                    @* <form action="/Account/Index" method="POST">
-                        <button type="submit" class="btn btn-primary">Register</button>
-                    </form>
-                    <button type="submit" class="btn btn-primary" onclick="window.location.href='/Account/Index'">Register</button> *@
+                    
 
                 </div>
                 <div class="col-sm-4 d-grid">
@@ -131,3 +128,4 @@
         </form>
     </div>
 </div>
+ *@

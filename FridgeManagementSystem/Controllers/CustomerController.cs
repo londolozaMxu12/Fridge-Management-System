@@ -4,20 +4,21 @@ using FridgeManagementSystem.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FridgeManagementSystem.Controllers
 {
     public class CustomerController : Controller
     {
-        private readonly RoleManager<IdentityRole> roleManager;
-        private readonly UserManager<ApplicationUser> userManager;
-
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly FridgeManagementSystemContext _context;
         public CustomerController(RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context)
         {
-            this.roleManager = roleManager;
-            this.userManager = userManager;
-
+            _roleManager = roleManager;
+            _userManager = userManager;
+            _context = context;
 
         }
         public IActionResult index()
@@ -25,15 +26,50 @@ namespace FridgeManagementSystem.Controllers
             return View();
         }
 
+        public async Task<IActionResult> MyFridges()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var fridges = await _context.Fridges
+                //.Include(f => f.Location)
+                .Include(f => f.Supplier)
+                .Where(f => f.Customer.UserId == userId && f.IsActive && f.Status == "Assigned")
+                .ToListAsync();
+
+            return View(fridges);
+        }
+        // GET: Customer/MyProfile
+        public async Task<IActionResult> MyProfile()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var customer = await _context.Customers
+                .Include(c => c.User)
+                //.Include(c => c.Location)
+                .FirstOrDefaultAsync(c => c.UserId == userId);
+
+            if (customer == null)
+            {
+                return NotFound();
+            }
+
+            return View(customer);
+        }
         public async Task<IActionResult> ListCustomers()
         {
 
             //var user = userManager.Users.ToList();
-            var customer = await userManager.GetUsersInRoleAsync("Customer");
+            var customer = await _userManager.GetUsersInRoleAsync("Customer");
            
             return View(customer);
         }
-       
+
+        public IActionResult AllocatedFridge()
+        {
+            return View();
+        }
+
+
         //public async Task<IActionResult> ListUsers()
         //{
         //    var users = userManager.Users.ToList();

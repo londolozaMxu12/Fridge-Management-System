@@ -1,14 +1,14 @@
-﻿@using FridgeManagementSystem.ViewModels
+﻿@* @using FridgeManagementSystem.ViewModels
 @model IEnumerable<EmployeeViewModel>
 
 @{
     ViewData["Title"] = "Active Employees";
     Layout = "_AdminLayout";
 }
-@* @if (TempData["SuccessMessage"] != null)
+@if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success">@TempData["SuccessMessage"]</div>
-} *@
+}
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success">@TempData["SuccessMessage"]</div>
@@ -24,51 +24,64 @@
         <a asp-action="InactiveAccounts" class="btn btn-outline-secondary">View Inactive Employees</a>
     </div>
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                @* <th>Employee ID</th> *@
-                <th>Full Name</th>
-                <th>Email</th>
-                @* <th>Contact No</th> *@
-                @* <th>Address</th>
-                <th>City</th>
-                <th>Suburb</th> *@
-                <th>Role</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
+    @if (!Model.Any(u => u.IsActive))
+        {
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No active employees found.
+        </div>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    @* <td>@item.Id</td> *@
-                    <td>@item.FullName</td>
-                    <td>@item.Email</td>
-                    @* <td>@item.ContactNo</td> *@
-                    @* <td>@item.Address</td>
-                    <td>@item.City</td>
-                    <td>@item.Suburb</td> *@
-                    <td>
-                        @string.Join(", ", item.Roles)
-
-                    </td>
-                    <td>
-                        <span class="badge @(item.IsActive ? "bg-success" : "bg-danger")">
-                            @(item.IsActive ? "Active" : "Inactive")
-                        </span>
-                    </td>
-                    @* <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td> *@
-                    <td>@(item.CreatedAt.ToString("yyyy-MM-dd") ?? "Not set")</td>
-                    <td>
-                        <a asp-action="EditEmployee" asp-route-id="@item.Id" class="btn btn-sm btn-warning bi bi-pencil-square">Edit</a>
-                       
-                        <a asp-action="EmployeeDetails" asp-route-id="@item.Id" class="btn btn-sm btn-info bi bi-eye">Details</a>
-                    </td>
+                    <th>Employee ID</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Contact No</th>
+                    <th>Employee Type</th>
+                <th>City</th>
+                <th>Suburb</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@employee.Employee.Id</td>
+                        <td>@employee.FullName</td>
+                        <td>@employee.Email</td>
+                        <td>@employee.ContactNo</td>
+                        <td>@employee.Employee.EmployeeType</td>
+                        <td>@item.Address</td>
+                    <td>@item.City</td>
+                    <td>@item.Suburb</td>
+                        <td>
+                            @string.Join(", ", item.Roles)
+
+                        </td>
+                        <td>
+                            <span class="badge @(item.IsActive ? "bg-success" : "bg-danger")">
+                                @(item.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td>@(item.CreatedAt.ToString("yyyy-MM-dd") ?? "Not set")</td>
+                        <td>
+                            <a asp-action="EditEmployee" asp-route-id="@employee.Id" class="btn btn-sm btn-warning bi bi-pencil-square">Edit</a>
+
+                            <a asp-action="EmployeeDetails" asp-route-id="@employee.Id" class="btn btn-sm btn-info bi bi-eye">Details</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    
 </div>
+  *@

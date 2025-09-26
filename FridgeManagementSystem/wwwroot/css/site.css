@@ -25,3 +25,74 @@ body {
 footer {
     align-content: end;
 }
+
+body {
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    font-weight: 600;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.btn {
+    border-radius: 0.375rem;
+}
+
+.form-control {
+    border-radius: 0.375rem;
+}
+
+.alert {
+    border-radius: 0.375rem;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.list-group-item {
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Custom styles for fridge status badges */
+.badge-available {
+    background-color: #28a745;
+}
+
+.badge-allocated {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-in-service {
+    background-color: #17a2b8;
+}
+
+.badge-retired {
+    background-color: #6c757d;
+}
+
+/* Notification styles */
+.notification-unread {
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196f3;
+}
+
+.notification-read {
+    background-color: #f8f9fa;
+}

@@ -1,0 +1,68 @@
+﻿<!-- Views/Notifications/Index.cshtml -->
+@model IEnumerable<Notification>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Notifications";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-bell"></i> @ViewData["Title"]</h1>
+    @if (Model.Any(n => !n.IsRead))
+    {
+        <form asp-action="MarkAllAsRead" method="post">
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="fas fa-check-double"></i> Mark All as Read
+            </button>
+        </form>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        <h4><i class="fas fa-bell-slash"></i> No Notifications</h4>
+        <p>You don't have any notifications at the moment.</p>
+    </div>
+}
+else
+{
+    <div class="list-group">
+        @foreach (var notification in Model.OrderByDescending(n => n.CreatedAt))
+        {
+            <div class="list-group-item list-group-item-action @(!notification.IsRead ? "list-group-item-primary" : "")">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">
+                        @if (!notification.IsRead)
+                        {
+                            <span class="badge bg-primary me-2">New</span>
+                        }
+                        @notification.Title
+                    </h5>
+                    <small>@notification.CreatedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                </div>
+                <p class="mb-1">@notification.Message</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small>
+                        @if (!notification.IsRead)
+                        {
+                            <form asp-action="MarkAsRead" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@notification.Id" />
+                                <button type="submit" class="btn btn-link p-0 text-decoration-none">
+                                    <i class="fas fa-check"></i> Mark as read
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-muted"><i class="fas fa-check"></i> Read</span>
+                        }
+                    </small>
+                    @if (!string.IsNullOrEmpty(notification.Link))
+                    {
+                        <a href="@notification.Link" class="btn btn-sm btn-outline-primary">View</a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

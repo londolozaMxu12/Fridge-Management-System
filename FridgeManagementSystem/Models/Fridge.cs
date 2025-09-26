@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FridgeManagementSystem.Models
 {
-    public enum FridgeStatus { Available, Allocated, UnderMaintenance, Scrapped }
+    //public enum FridgeStatus { Available, Allocated, UnderMaintenance, Scrapped }
     public class Fridge
     {
         [Key]
@@ -13,6 +13,8 @@ namespace FridgeManagementSystem.Models
         public string Name { get; set; }
         [Required, StringLength(100)]
         public string Brand { get; set; }
+        [Required]
+        public string Model { get; set; }
         [Required, Precision(16, 2)]
         public Decimal Price { get; set; }
         [Required]
@@ -23,13 +25,12 @@ namespace FridgeManagementSystem.Models
         public string SerialNumber { get; set; }
         public DateTime? PurchaseDate { get; set; }
         public DateTime? ScrapDate { get; set; }
-        public FridgeStatus Status { get; set; }
-
+        public string Status { get; set; } = string.Empty;
+        public bool IsActive { get; set; }=true;
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        [Required]
-        public string Model { get; set; }
+        
 
         // Foreign Key
         public int CustomerId { get; set; }

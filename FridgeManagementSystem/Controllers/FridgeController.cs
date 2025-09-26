@@ -2,6 +2,10 @@
 using FridgeManagementSystem.Models;
 using FridgeManagementSystem.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using System.Drawing.Drawing2D;
+using System.Security.Claims;
 
 namespace FridgeManagementSystem.Controllers
 {
@@ -15,63 +19,200 @@ namespace FridgeManagementSystem.Controllers
             _context = context;
            _environment = environment;
         }
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var fridges= _context.Fridges.OrderByDescending(f => f.FridgeId).ToList();
+            var fridges= _context.Fridges
+                .Include(f => f.Customer)
+                .ThenInclude(c => c.User)
+                .Include(f => f.Supplier)
+                .Where(f => f.IsActive)
+                .OrderBy(f => f.Status)
+                .ThenBy(f => f.SerialNumber)
+                .ToListAsync();
+
             return View(fridges);
         }
-        public IActionResult Create()
-        { 
+
+        // GET: Fridges/Details/5
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var fridge = await _context.Fridges
+                
+                .Include(f => f.Customer)
+                .ThenInclude(c => c.User)
+                .Include(f => f.Supplier)
+                
+                .FirstOrDefaultAsync(m => m.FridgeId == id && m.IsActive);
+
+            if (fridge == null)
+            {
+                return NotFound();
+            }
+
+            // Load service history
+            //ViewBag.ServiceRecords = await _context.ServiceRecords
+            //    .Include(sr => sr.ServiceTechnician)
+            //    .Include(sr => sr.ServiceCheckResults)
+            //    .ThenInclude(scr => scr.CheckType)
+            //    .Where(sr => sr.FridgeId == id)
+            //    .OrderByDescending(sr => sr.ServiceDate)
+            //    .ToListAsync();
+
+            return View(fridge);
+        }
+        // GET: Fridges/Create
+        public async Task<IActionResult> Create()
+        {
+            await LoadViewData();
             return View();
         }
+        // POST: Fridges/Create
         [HttpPost]
-        public IActionResult Create(FridgeViewModel fridgeViewModel)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("SerialNumber,Model,Name, Brand, Price, Description, ImageFile, PurchaseDate,Status,SupplierId")] Fridge fridge)
         {
-            if (fridgeViewModel.ImageFile == null)
+            if (ModelState.IsValid)
             {
-                ModelState.AddModelError("ImageFile", "The image file is required");
-            }
-            if (!ModelState.IsValid)
-            {
-                return View(fridgeViewModel);
-            }
+                
+                fridge.CreatedAt = DateTime.UtcNow;
+                fridge.IsActive = true;
 
-            // save the image file
+                _context.Add(fridge);
+                await _context.SaveChangesAsync();
 
-            // 1️⃣ Generate unique filename
-            string newFileName = DateTime.Now.ToString("yyyyMMddHHmmssfff")
-                                 + Path.GetExtension(fridgeViewModel.ImageFile!.FileName);
-
-            // 2️⃣ Full path to save on server (wwwroot)
-            string imageFullPath = Path.Combine(_environment.WebRootPath, "Images", "Fridges", newFileName);
-
-            // Ensure directory exists
-            Directory.CreateDirectory(Path.GetDirectoryName(imageFullPath)!);
-
-            // 3️⃣ Save the file
-            using (var stream = System.IO.File.Create(imageFullPath))
-            {
-                fridgeViewModel.ImageFile.CopyToAsync(stream);
+                TempData["SuccessMessage"] = "Fridge created successfully.";
+                return RedirectToAction(nameof(Index));
             }
 
-            // save the new fridge in the database
-
-            Fridge fridge = new Fridge()
-            {
-                SerialNumber = fridgeViewModel.SerialNumber,
-                Name = fridgeViewModel.Name,
-                Brand = fridgeViewModel.Brand,
-                Model = fridgeViewModel.Model,
-                Description = fridgeViewModel.Description,
-                Price = fridgeViewModel.Price,
-                ImageFile = newFileName,
-                CreatedAt = DateTime.Now,
-            };
-
-            _context.Fridges.Add(fridge);
-            _context.SaveChanges();
-            return RedirectToAction("Index", "Fridge");
+            await LoadViewData();
+            return View(fridge);
         }
-       
+        // GET: Fridges/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var fridge = await _context.Fridges.FindAsync(id);
+            if (fridge == null || !fridge.IsActive)
+            {
+                return NotFound();
+            }
+
+            await LoadViewData();
+            return View(fridge);
+        }
+        // POST: Fridges/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("FridgeId,SerialNumber, Model, Name, Brand, Price, Description, ImageFile, PurchaseDate, Status, SupplierId,LastServiceDate,NextServiceDate, IsActive")] Fridge fridge)
+        {
+            if (id != fridge.FridgeId)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+
+                try
+                {
+                    _context.Update(fridge);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = "Fridge updated successfully.";
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+
+                    if (!FridgeExists(fridge.FridgeId))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+
+            await LoadViewData();
+            return View(fridge);
+        }
+
+        // GET: Fridges/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var fridge = await _context.Fridges
+                
+                .Include(f => f.Customer)
+                .ThenInclude(c => c.User)
+                .Include(f => f.Supplier)
+                .FirstOrDefaultAsync(m => m.FridgeId == id && m.IsActive);
+
+            if (fridge == null)
+            {
+                return NotFound();
+            }
+
+            return View(fridge);
+        }
+        // POST: Fridges/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var fridge = await _context.Fridges.FindAsync(id);
+            if (fridge != null)
+            {
+                fridge.IsActive = false;
+                _context.Update(fridge);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Fridge deleted successfully.";
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool FridgeExists(int id)
+        {
+            return _context.Fridges.Any(e => e.FridgeId == id && e.IsActive);
+        }
+
+        private async Task LoadViewData()
+        {
+            
+
+            ViewData["SupplierId"] = await _context.Suppliers
+                .Where(s => s.User.IsActive)
+                .Select(s => new SelectListItem
+                {
+                    Value = s.Id.ToString(),
+                    Text = s.CompanyName
+                })
+                .ToListAsync();
+
+            ViewData["CustomerId"] = await _context.Customers
+                .Where(c => c.User.IsActive && c.User.ApprovalStatus == "Approved")
+                .Select(c => new SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = c.BusinessName
+                })
+                .ToListAsync();
+        }
     }
 }

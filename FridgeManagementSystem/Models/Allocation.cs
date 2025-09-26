@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using FridgeManagementSystem.Areas.Identity.Data;
+using System.ComponentModel.DataAnnotations;
 
 namespace FridgeManagementSystem.Models
 {
@@ -9,13 +10,14 @@ namespace FridgeManagementSystem.Models
         public int AllocationId { get; set; }
         public int CustomerId { get; set; }
         public Customer Customer { get; set; }
-
+        public int AllocatedById { get; set; }
+        public ApplicationUser AllocatedBy { get; set; }
 
         public int FridgeId { get; set; }
         public Fridge Fridge { get; set; }
-
-
-        public DateTime StartDate { get; set; }
+        public bool IsActive { get; set; }=true;
+      
+        public DateTime AllocationDate { get; set; }=DateTime.Now;
         public DateTime? EndDate { get; set; }
         public AllocationStatus Status { get; set; }
     }

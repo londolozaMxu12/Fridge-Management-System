@@ -21,9 +21,13 @@ namespace FridgeManagementSystem.Controllers
         // GET: EmployeeTypes
         public async Task<IActionResult> Index()
         {
-            return View(await _context.EmployeeTypes
-                  .Where(et => et.IsActive)
-                  .ToListAsync());
+            var employeeTypes = await _context.EmployeeTypes
+
+                .Where(et => et.IsActive)
+                .OrderBy(et => et.Name)
+                .ToListAsync();
+
+            return View(employeeTypes);
         }
 
         // GET: EmployeeTypes/Create
@@ -39,8 +43,14 @@ namespace FridgeManagementSystem.Controllers
         {
             if (ModelState.IsValid)
             {
+               
+                employeeType.CreatedAt = DateTime.UtcNow;
+                employeeType.IsActive = true;
+
                 _context.Add(employeeType);
                 await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Employee type created successfully.";
                 return RedirectToAction(nameof(Index));
             }
             return View(employeeType);
@@ -76,8 +86,20 @@ namespace FridgeManagementSystem.Controllers
             {
                 try
                 {
-                    _context.Update(employeeType);
+                    var existingType = await _context.EmployeeTypes.FindAsync(id);
+                    if (existingType == null)
+                    {
+                        return NotFound();
+                    }
+
+                    existingType.Name = employeeType.Name;
+                    
+                    existingType.IsActive = employeeType.IsActive;
+
+                    _context.Update(existingType);
                     await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = "Employee type updated successfully.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -110,6 +132,16 @@ namespace FridgeManagementSystem.Controllers
                 return NotFound();
             }
 
+            // Check if employee type is in use
+            var employeesUsingType = await _context.Employees
+                .AnyAsync(e => e.EmployeeTypeId == id && e.User.IsActive);
+
+            if (employeesUsingType)
+            {
+                TempData["ErrorMessage"] = "Cannot delete this employee type because it is currently assigned to active employees.";
+                return RedirectToAction(nameof(Index));
+            }
+
             return View(employeeType);
         }
 
@@ -119,12 +151,14 @@ namespace FridgeManagementSystem.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var employeeType = await _context.EmployeeTypes.FindAsync(id);
-
             if (employeeType != null)
             {
+                // Soft delete
                 employeeType.IsActive = false;
                 _context.Update(employeeType);
                 await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Employee type deleted successfully.";
             }
             return RedirectToAction(nameof(Index));
         }
@@ -133,5 +167,6 @@ namespace FridgeManagementSystem.Controllers
         {
             return _context.EmployeeTypes.Any(e => e.Id == id && e.IsActive);
         }
+    
     }
 }

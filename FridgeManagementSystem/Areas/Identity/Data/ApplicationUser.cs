@@ -21,7 +21,7 @@ namespace FridgeManagementSystem.Areas.Identity.Data
         [Display(Name = "Postal Code")]
         public string? PostalCode { get; set; } = "";
         public bool IsActive { get; set; } = true;
-        public DateTime?CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         [Required]
         public string ApprovalStatus { get; set; } = "Pending"; // Pending, Approved, Rejected
 
