@@ -69,7 +69,13 @@
                                     }
                                 </a>
                             } *@
-
+                            @* <a class="nav-link text-white" asp-controller="Notifications" asp-action="Index">
+                                <i class="fas fa-bell"></i> Notifications
+                                @if (await GetUnreadNotificationCount() > 0)
+                                {
+                                    <span class="badge bg-danger">@await GetUnreadNotificationCount()</span>
+                                }
+                            </a> *@
                             <a class="nav-link text-white" style="white-space:nowrap" href="#">
                                 <i class="bi bi-person"></i> <span class="d-none d-sm-inline ms-2">Profile</span>
                             </a>

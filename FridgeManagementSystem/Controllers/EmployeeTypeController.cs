@@ -39,7 +39,7 @@ namespace FridgeManagementSystem.Controllers
         // POST: EmployeeTypes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(EmployeeType employeeType)
+        public async Task<IActionResult> Create([Bind("Name")] EmployeeType employeeType)
         {
             if (ModelState.IsValid)
             {
@@ -75,7 +75,7 @@ namespace FridgeManagementSystem.Controllers
         // POST: EmployeeTypes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, EmployeeType employeeType)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,IsActive")] EmployeeType employeeType)
         {
             if (id != employeeType.Id)
             {

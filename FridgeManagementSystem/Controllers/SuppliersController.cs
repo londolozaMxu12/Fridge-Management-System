@@ -49,11 +49,11 @@ namespace FridgeManagementSystem.Controllers
             }
 
             // Load supplied fridges
-            ViewBag.SuppliedFridges = await _context.Fridges
-                .Where(f => f.SupplierId == id && f.IsActive)
-                .Include(f => f.Customer)
-                .ThenInclude(c => c.User)
-                .ToListAsync();
+            //ViewBag.SuppliedFridges = await _context.Fridges
+            //    .Where(f => f.SupplierId == id && f.IsActive)
+            //    .Include(f => f.Customer)
+            //    .ThenInclude(c => c.User)
+            //    .ToListAsync();
 
             return View(supplier);
         }

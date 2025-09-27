@@ -1,0 +1,222 @@
+﻿@using FridgeManagementSystem.Areas.Identity.Data
+
+@model ApplicationUser
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Approve Customer Registration";
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-user-check"></i> @ViewData["Title"]</h1>
+    <a asp-action="PendingApprovals" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Pending Approvals
+    </a>
+</div>
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-user-circle"></i> Customer Details</h5>
+            </div>
+            <div class="card-body">
+                <!-- Customer Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-success"><i class="fas fa-id-card"></i> Personal Details</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">Full Name:</dt>
+                            <dd class="col-sm-8"><strong>@Model.FullName</strong></dd>
+
+                            <dt class="col-sm-4">Email:</dt>
+                            <dd class="col-sm-8">@Model.Email</dd>
+
+                            <dt class="col-sm-4">Contact Number:</dt>
+                            <dd class="col-sm-8">@Model.ContactNo</dd>
+
+                            <dt class="col-sm-4">Registration Date:</dt>
+                            <dd class="col-sm-8">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success"><i class="fas fa-address-book"></i> Address Information</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">Address:</dt>
+                            <dd class="col-sm-8">@Model.Address</dd>
+
+                            <dt class="col-sm-4">Suburb:</dt>
+                            <dd class="col-sm-8">@Model.Suburb</dd>
+
+                            <dt class="col-sm-4">City:</dt>
+                            <dd class="col-sm-8">@Model.City</dd>
+
+                            <dt class="col-sm-4">Postal Code:</dt>
+                            <dd class="col-sm-8">@Model.PostalCode</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- Business Information -->
+                @if (Model.Customers != null)
+                {
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-success"><i class="fas fa-building"></i> Business Details</h6>
+                            <dl class="row">
+                                <dt class="col-sm-2">Business Name:</dt>
+                                <dd class="col-sm-4">@Model.Customers.BusinessName</dd>
+
+                                <dt class="col-sm-2">Customer Type:</dt>
+                                <dd class="col-sm-4">
+                                    <span class="badge bg-info">@Model.Customers.CustomerType</span>
+                                </dd>
+
+                            </dl>
+                        </div>
+                    </div>
+                }
+
+                <!-- Approval Actions -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Approval Action</h6>
+                            <p class="mb-2">You are about to approve this customer's registration. Once approved:</p>
+                            <ul class="mb-2">
+                                <li>The customer will be able to log in to the system</li>
+                                <li>The customer will receive a notification of approval</li>
+                                <li>The customer will be able to access their dashboard</li>
+                                <li>Fridges can be allocated to this customer</li>
+                            </ul>
+                            <p class="mb-0"><strong>This action cannot be undone.</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <form asp-action="ApproveCustomerConfirmed" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check-circle"></i> Approve Customer
+                            </button>
+                        </form>
+
+                        <button type="button" class="btn btn-danger btn-lg ms-2" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                            <i class="fas fa-times-circle"></i> Reject Registration
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Quick Stats Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Registration Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-user-clock fa-3x text-warning"></i>
+                    </div>
+                    <h5>Pending Approval</h5>
+                    <p class="text-muted">This customer is waiting for approval since</p>
+                    <h6 class="text-warning">@Model.CreatedAt.ToString("MMM dd, yyyy")</h6>
+                    <small class="text-muted">@((DateTime.Now - Model.CreatedAt).Days) days ago</small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="rejectModalLabel">
+                    <i class="fas fa-times-circle"></i> Reject Customer Registration
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="RejectCustomer" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="id" value="@Model.Id" />
+
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Warning</h6>
+                        <p class="mb-0">This action will reject the customer's registration and cannot be undone.</p>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="rejectionReason" class="form-label">
+                            <strong>Reason for Rejection:</strong>
+                        </label>
+                        <textarea id="rejectionReason" name="reason" class="form-control" rows="4"
+                                  placeholder="Please provide a clear reason for rejecting this registration."
+                                  required></textarea>
+                        <small class="form-text text-muted">
+                            This reason will be communicated to the customer. Just be clear.
+                        </small>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="confirmRejection" required>
+                        <label class="form-check-label" for="confirmRejection">
+                            I confirm that I want to reject this customer registration
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="rejectButton" disabled>
+                        <i class="fas fa-ban"></i> Reject Registration
+                    </button>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Enable reject button only when checkbox is checked and reason is provided
+        document.addEventListener('DOMContentLoaded', function() {
+            const reasonTextarea = document.getElementById('rejectionReason');
+            const confirmCheckbox = document.getElementById('confirmRejection');
+            const rejectButton = document.getElementById('rejectButton');
+
+            function updateRejectButton() {
+                const hasReason = reasonTextarea.value.trim().length > 0;
+                const isConfirmed = confirmCheckbox.checked;
+                rejectButton.disabled = !(hasReason && isConfirmed);
+            }
+
+            reasonTextarea.addEventListener('input', updateRejectButton);
+            confirmCheckbox.addEventListener('change', updateRejectButton);
+
+            // Form validation
+            const form = document.querySelector('form[asp-action="RejectCustomer"]');
+            form.addEventListener('submit', function(e) {
+                if (!confirmCheckbox.checked || reasonTextarea.value.trim().length === 0) {
+                    e.preventDefault();
+                    alert('Please provide a rejection reason and confirm the action.');
+                }
+            });
+        });
+    </script>
+}

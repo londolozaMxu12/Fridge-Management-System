@@ -25,6 +25,7 @@ namespace FridgeManagementSystem.Controllers
                 .Include(f => f.Customer)
                 .ThenInclude(c => c.User)
                 .Include(f => f.Supplier)
+                //.Include(f => f.CreatedBy)
                 .Where(f => f.IsActive)
                 .OrderBy(f => f.Status)
                 .ThenBy(f => f.SerialNumber)
@@ -46,7 +47,7 @@ namespace FridgeManagementSystem.Controllers
                 .Include(f => f.Customer)
                 .ThenInclude(c => c.User)
                 .Include(f => f.Supplier)
-                
+                //.Include(f => f.CreatedBy)
                 .FirstOrDefaultAsync(m => m.FridgeId == id && m.IsActive);
 
             if (fridge == null)

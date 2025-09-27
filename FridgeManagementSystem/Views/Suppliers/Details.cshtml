@@ -1,0 +1,156 @@
+﻿
+@model Supplier
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Supplier Details";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-truck"></i> @ViewData["Title"]</h1>
+    <div>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-building"></i> Company Deatails</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Company Name:</dt>
+                    <dd class="col-sm-8"><strong>@Model.CompanyName</strong></dd>
+
+                    <dt class="col-sm-4">Supplier Type:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-info">@Model.SupplierType</span>
+                    </dd>
+
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-address-book"></i> Contact Details</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Email:</dt>
+                    <dd class="col-sm-8">@Model.User.Email</dd>
+
+                    <dt class="col-sm-4">Contact Number:</dt>
+                    <dd class="col-sm-8">@Model.User.ContactNo</dd>
+
+                    <dt class="col-sm-4">Address:</dt>
+                    <dd class="col-sm-8">@Model.User.Address</dd>
+
+                    <dt class="col-sm-4">City:</dt>
+                    <dd class="col-sm-8">@Model.User.City</dd>
+
+                    <dt class="col-sm-4">Suburb:</dt>
+                    <dd class="col-sm-8">@Model.User.Suburb</dd>
+
+                    <dt class="col-sm-4">Postal Code:</dt>
+                    <dd class="col-sm-8">@Model.User.PostalCode</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        
+        @* <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-refrigerator"></i> Supplied Fridges</h5>
+            </div>
+            <div class="card-body">
+                @if (ViewBag.SuppliedFridges != null && ((IEnumerable<dynamic>)ViewBag.SuppliedFridges).Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Serial Number</th>
+                                    <th>Model</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var fridge in ViewBag.SuppliedFridges)
+                                {
+                                    <tr>
+                                        <td>@fridge.SerialNumber</td>
+                                        <td>@fridge.Model</td>
+                                        <td>
+                                            @if (fridge.Customer != null)
+                                            {
+                                                <small>@fridge.Customer.BusinessName</small>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Not allocated</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @{
+                                                var statusBadgeClass = fridge.Status switch
+                                                {
+                                                    "Available" => "bg-success",
+                                                    "Assigned" => "bg-warning",
+                                                    "InService" => "bg-info",
+                                                    "Retired" => "bg-secondary",
+                                                    _ => "bg-secondary"
+                                                };
+                                            }
+                                            <span class="badge @statusBadgeClass">@fridge.Status</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">No fridges supplied by this supplier.</p>
+                }
+            </div>
+        </div> *@
+
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> System Information</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Registered By:</dt>
+                    <dd class="col-sm-8">@Model.CreatedBy.FullName</dd>
+
+                    <dt class="col-sm-4">Registration Date:</dt>
+                    <dd class="col-sm-8">@Model.CreatedAt.ToString("yyyy-MM-dd")</dd>
+
+                    <dt class="col-sm-4">Account Status:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.User.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Inactive</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,4 +1,4 @@
-﻿<!-- Views/Notifications/Index.cshtml -->
+﻿
 @model IEnumerable<Notification>
 @{
     Layout = "_AdminLayout";
@@ -17,6 +17,14 @@
     }
 </div>
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 @if (!Model.Any())
 {
     <div class="alert alert-info">
@@ -26,7 +34,18 @@
 }
 else
 {
-    <div class="list-group">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-list"></i> Notifications
+            <span class="badge bg-light text-primary ms-2">@Model.Count() total</span>
+            @if (Model.Count(n => !n.IsRead) > 0)
+            {
+                <span class="badge bg-warning ms-1">@Model.Count(n => !n.IsRead) unread</span>
+            }
+        </h5>
+    </div>
+
+    <div class="list-group list-group-flush">
         @foreach (var notification in Model.OrderByDescending(n => n.CreatedAt))
         {
             <div class="list-group-item list-group-item-action @(!notification.IsRead ? "list-group-item-primary" : "")">
@@ -34,7 +53,7 @@ else
                     <h5 class="mb-1">
                         @if (!notification.IsRead)
                         {
-                            <span class="badge bg-primary me-2">New</span>
+                            <span class="badge bg-primary me-2">NEW</span>
                         }
                         @notification.Title
                     </h5>

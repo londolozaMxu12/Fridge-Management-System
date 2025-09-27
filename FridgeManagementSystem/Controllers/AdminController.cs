@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using System.Security.Claims;
 
 namespace FridgeManagementSystem.Controllers
@@ -46,6 +47,7 @@ namespace FridgeManagementSystem.Controllers
                 .Include(u => u.Customers)
                 .ToListAsync();
 
+
             return View(pendingUsers);
         }
 
@@ -66,6 +68,12 @@ namespace FridgeManagementSystem.Controllers
                 return NotFound();
             }
 
+            if (user.ApprovalStatus != "Pending")
+            {
+                TempData["ErrorMessage"] = "This customer has already been processed.";
+                return RedirectToAction(nameof(PendingApprovals));
+            }
+
             return View(user);
         }
 
@@ -80,6 +88,13 @@ namespace FridgeManagementSystem.Controllers
                 return NotFound();
             }
 
+            if (user.ApprovalStatus != "Pending")
+            {
+                TempData["ErrorMessage"] = "This customer has already been processed.";
+                return RedirectToAction(nameof(PendingApprovals));
+            }
+
+
             user.ApprovalStatus = "Approved";
             user.ApprovedById = User.FindFirstValue(ClaimTypes.NameIdentifier);
             user.ApprovedAt = DateTime.UtcNow;
@@ -93,11 +108,25 @@ namespace FridgeManagementSystem.Controllers
                 {
                     UserId = user.Id,
                     Title = "Account Approved",
-                    Message = "Your account has been approved. You can now log in to the system and access all features.",
+                    Message = "Your account has been approved. You can now log in to Fridge Management system and access all features.",
                     Link = "/Identity/Account/Login"
                 };
 
                 _context.Notifications.Add(notification);
+
+                // Create notification for customer liaisons
+                var liaisons = await _userManager.GetUsersInRoleAsync("CustomerLiaison");
+                foreach (var liaison in liaisons.Where(l => l.IsActive))
+                {
+                    var liaisonNotification = new Notification
+                    {
+                        UserId = liaison.Id,
+                        Title = "New Customer Approved",
+                        Message = $"Customer {user.FullName} ({user.Customers?.BusinessName}) has been approved and is now active in the system.",
+                        Link = $"/Customers/Details/{user.Customers?.Id}"
+                    };
+                    _context.Notifications.Add(liaisonNotification);
+                }
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = $"Customer {user.FullName} has been approved successfully.";
@@ -123,18 +152,24 @@ namespace FridgeManagementSystem.Controllers
                 return NotFound();
             }
 
+            if (user.ApprovalStatus != "Pending")
+            {
+                TempData["ErrorMessage"] = "This customer has already been processed.";
+                return RedirectToAction(nameof(PendingApprovals));
+            }
+
             user.ApprovalStatus = "Rejected";
             user.IsActive = false;
 
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
-                // Create notification for the customer
+                // notification for the customer
                 var notification = new Notification
                 {
                     UserId = user.Id,
                     Title = "Account Registration Rejected",
-                    Message = $"Your account registration has been rejected. Reason: {reason}",
+                    Message = $"Dear {user.FullName}, your registration has been reviewed. Unfortunately, we cannot approve your account. Reason: {reason}",
                     Link = "/"
                 };
 
@@ -198,7 +233,8 @@ namespace FridgeManagementSystem.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return RedirectToAction("Index", "Admin");
+
             }
 
             var employee = await _userManager.Users
@@ -207,8 +243,10 @@ namespace FridgeManagementSystem.Controllers
 
             if (employee == null)
             {
-                return NotFound();
+                return RedirectToAction("Index", "Admin");
             }
+
+            //var roles = await _userManager.GetRolesAsync(employee);
 
             var model = new EmployeeEditViewModel
             {
@@ -223,9 +261,11 @@ namespace FridgeManagementSystem.Controllers
                 EmployeeNo = employee.Employees.EmployeeNo,
                 EmployeeTypeId = employee.Employees.EmployeeTypeId,
                 JobTitle = employee.Employees.JobTitle,
-                
+                //SelectedRole = selectedRoles.ToList(),
                 DateEmployed = employee.Employees.DateEmployed,
+                //EmployeeRole = roles.FirstOrDefault(),
                 
+                IsActive = employee.IsActive,
                 
             };
 
@@ -238,15 +278,22 @@ namespace FridgeManagementSystem.Controllers
                 })
                 .ToListAsync();
 
-            //var currentRoles = await _userManager.GetRolesAsync(employee);
-            //ViewBag.CurrentRole = currentRoles.FirstOrDefault();
-            //ViewBag.Roles = await _context.Roles
-            //    .Select(r => new SelectListItem
-            //    {
-            //        Value = r.Name,
-            //        Text = r.Name
-            //    })
-            //    .ToListAsync();
+            ViewData["EmployeeId"] = employee.Id;
+            ViewData["EmployeeNo"] = employee.Employees.EmployeeNo;
+            
+            ViewData["IsActiveStatus"] = (employee.IsActive) ? "Active" : "Inactive";
+            ViewData["CreatedAt"] = employee.CreatedAt.ToString("MM/dd/yyyy");
+
+            var currentRoles = await _userManager.GetRolesAsync(employee);
+            ViewBag.CurrentRole = currentRoles.FirstOrDefault();
+            ViewBag.Roles = await _context.Roles
+                .Where(r => r.Name != "Customer")
+                .Select(r => new SelectListItem
+                {
+                    Value = r.Name,
+                    Text = r.Name
+                })
+                .ToListAsync();
 
             return View(model);
         }
@@ -259,7 +306,7 @@ namespace FridgeManagementSystem.Controllers
         {
             if (id != model.Id)
             {
-                return NotFound();
+                return RedirectToAction("Index", "Admin");
             }
 
             if (ModelState.IsValid)
@@ -270,7 +317,15 @@ namespace FridgeManagementSystem.Controllers
 
                 if (employee == null)
                 {
-                    return NotFound();
+                    return RedirectToAction("Index", "Admin"); 
+                }
+
+                //Check if user is a Customer (prevent editing)
+
+                var currentRoles = await _userManager.GetRolesAsync(employee);
+                if (currentRoles.Contains("Customer"))
+                {
+                    return RedirectToAction("Index", "EmployeeManagement");
                 }
 
                 // Update ApplicationUser properties
@@ -286,7 +341,7 @@ namespace FridgeManagementSystem.Controllers
                 if (userResult.Succeeded)
                 {
                     // Update Employee properties
-                    employee.Employees.EmployeeNo = model.EmployeeNo;
+                    //employee.Employees.EmployeeNo = model.EmployeeNo;
                     employee.Employees.EmployeeTypeId = model.EmployeeTypeId;
                     employee.Employees.JobTitle = model.JobTitle;
                     
@@ -295,13 +350,16 @@ namespace FridgeManagementSystem.Controllers
 
                     _context.Employees.Update(employee.Employees);
 
-                    // Update role if changed
-                    //if (!string.IsNullOrEmpty(model.EmployeeRole))
-                    //{
-                    //    var currentRoles = await _userManager.GetRolesAsync(employee);
-                    //    await _userManager.RemoveFromRolesAsync(employee, currentRoles);
-                    //    await _userManager.AddToRoleAsync(employee, model.EmployeeRole);
-                    //}
+                    // Remove existing roles and add new one (excluding Customer role)
+                    await _userManager.RemoveFromRolesAsync(employee, currentRoles);
+
+                    //Update role if changed
+                    if (!string.IsNullOrEmpty(model.EmployeeRole) && model.EmployeeRole != "Customer")
+                    {
+                       //var currentRoles = await _userManager.GetRolesAsync(employee);
+                       await _userManager.RemoveFromRolesAsync(employee, currentRoles);
+                       await _userManager.AddToRoleAsync(employee, model.EmployeeRole);
+                    }
 
                     await _context.SaveChangesAsync();
 
@@ -324,13 +382,13 @@ namespace FridgeManagementSystem.Controllers
                 })
                 .ToListAsync();
 
-            //ViewBag.Roles = await _context.Roles
-            //    .Select(r => new SelectListItem
-            //    {
-            //        Value = r.Name,
-            //        Text = r.Name
-            //    })
-            //    .ToListAsync();
+            ViewBag.Roles = _roleManager.Roles.Where(r => r.Name != "Customer")
+                .Select(r => new SelectListItem
+                {
+                    Value = r.Name,
+                    Text = r.Name
+                })
+                .ToListAsync();
 
             return View(model);
         }

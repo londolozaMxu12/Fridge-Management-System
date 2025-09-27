@@ -96,3 +96,31 @@ body {
 .notification-read {
     background-color: #f8f9fa;
 }
+/* Additional styles for approval page */
+.approval-summary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.customer-details-card {
+    border-left: 4px solid #28a745;
+}
+
+.rejection-modal .modal-header {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.approval-guidelines {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.status-badge {
+    font-size: 0.9em;
+    padding: 0.5em 1em;
+}

@@ -18,6 +18,8 @@ namespace FridgeManagementSystem.ViewModels
         public string City { get; set; }
         
         public string Suburb { get; set; }
+
+        public bool IsActive { get; set; }
         
         public string PostalCode { get; set; }
         [Required]
@@ -26,6 +28,10 @@ namespace FridgeManagementSystem.ViewModels
         public int EmployeeTypeId { get; set; }
         [Required]
         public string JobTitle { get; set; }
+        [Required]
+        //public string SelectedRole { get; set; }
+        [Display(Name = "Employee Role")]
+        public string EmployeeRole { get; set; }
         [Required]
         public DateTime DateEmployed { get; set; }
     }
