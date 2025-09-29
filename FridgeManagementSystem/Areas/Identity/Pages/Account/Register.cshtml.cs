@@ -283,8 +283,8 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
         }
         private async Task CreateApprovalNotifications(ApplicationUser user)
         {
-            // Get all administrators and customer liaisons
-            var adminUsers = await _userManager.GetUsersInRoleAsync("Administrator");
+            // Get all admins and customer liaisons
+            var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
             var liaisonUsers = await _userManager.GetUsersInRoleAsync("CustomerLiaison");
 
             var usersToNotify = adminUsers.Union(liaisonUsers).ToList();
@@ -295,7 +295,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                 {
                     UserId = notifyUser.Id,
                     Title = "New Customer Registration Requires Approval",
-                    Message = $"Customer {user.FullName} ({user.Email}) from {user.City + ", " + user.Suburb} has registered and requires approval.",
+                    Message = $"Customer {user.FullName} ({user.Email}) from {user.City + ", " + user.Suburb} has been registered and requires approval.",
                     Link = $"/Admin/ApproveCustomer/{user.Id}"
                 };
 

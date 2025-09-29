@@ -39,10 +39,13 @@
 
         <div class="card mb-4">
             <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="fas fa-address-book"></i> Contact Details</h5>
+                <h5 class="mb-0"><i class="fas fa-address-book"></i> Personal Details</h5>
             </div>
             <div class="card-body">
                 <dl class="row">
+                    <dt class="col-sm-4">Full Name:</dt>
+                    <dd class="col-sm-8">@Model.User.FullName</dd>
+
                     <dt class="col-sm-4">Email:</dt>
                     <dd class="col-sm-8">@Model.User.Email</dd>
 

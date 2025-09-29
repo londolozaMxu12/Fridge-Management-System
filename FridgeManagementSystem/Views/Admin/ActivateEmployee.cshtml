@@ -1,0 +1,176 @@
+﻿@using FridgeManagementSystem.Areas.Identity.Data
+
+@model ApplicationUser
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Activate Employee";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-user-check"></i> @ViewData["Title"]</h1>
+    <a asp-action="EmployeeManagement" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to List
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-user-plus"></i> Activate Employee Account</h5>
+            </div>
+            <div class="card-body">
+                <!-- Employee Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-success"><i class="fas fa-id-card"></i> Employee Details</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">Name:</dt>
+                            <dd class="col-sm-8"><strong>@Model.FullName</strong></dd>
+
+                            <dt class="col-sm-4">Employee No:</dt>
+                            <dd class="col-sm-8">@Model.Employees?.EmployeeNo</dd>
+
+                            <dt class="col-sm-4">Job Title:</dt>
+                            <dd class="col-sm-8">@Model.Employees?.JobTitle</dd>
+
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success"><i class="fas fa-briefcase"></i> Employment Details</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">Email:</dt>
+                            <dd class="col-sm-8">@Model.Email</dd>
+
+                            <dt class="col-sm-4">Contact:</dt>
+                            <dd class="col-sm-8">@Model.ContactNo</dd>
+
+                            <dt class="col-sm-4">Date Employed:</dt>
+                            <dd class="col-sm-8">@Model.Employees?.DateEmployed.ToString("yyyy-MM-dd")</dd>
+
+                            <dt class="col-sm-4">Current Status:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge bg-danger">Inactive</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- Activation Information -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle"></i> Activation Details</h6>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">Last Active:</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.Employees?.CreatedAt != null)
+                            {
+                                @Model.Employees.CreatedAt.ToString("MMMM dd, yyyy")
+                            }
+                            else
+                            {
+                                <span class="text-muted">Unknown</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-3">Inactive Since:</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.Employees?.CreatedAt != null)
+                            {
+                                var inactiveDays = (DateTime.Now - Model.Employees.CreatedAt).Days;
+                                <span>Approximately @inactiveDays days</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Unknown</span>
+                            }
+                        </dd>
+                    </dl>
+                </div>
+
+                <!-- Activation Form -->
+                <form asp-action="ActivateEmployee" method="post">
+                    <input type="hidden" name="id" value="@Model.Id" />
+
+                    <div class="alert alert-success">
+                        
+                        <p class="mb-0">
+                            Activating this employee will restore their full access to the system with their previous
+                            permissions and roles. They will be able to log in immediately.
+                        </p>
+                    </div>
+
+                    <!-- Final Confirmation -->
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="confirmActivation" required>
+                        <label class="form-check-label" for="confirmActivation">
+                            <strong>I confirm that this employee should be activated and granted system access</strong>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-success" id="activateButton" disabled>
+                            <i class="fas fa-user-check"></i> Activate Employee
+                        </button>
+                        <a asp-action="EmployeeDetails" asp-route-id="@Model.Id" class="btn btn-info">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
+                        <a asp-action="EmployeeManagement" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-history"></i> Employment History</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-clock fa-3x text-primary"></i>
+                </div>
+                <h6>Employment Timeline</h6>
+                <p class="small text-muted mb-1">Originally employed</p>
+                <p class="text-primary mb-2">
+                    <strong>@Model.Employees?.DateEmployed.ToString("MMM dd, yyyy")</strong>
+                </p>
+                <p class="small text-muted mb-0">
+                    @if (Model.Employees?.DateEmployed != null)
+                    {
+                        var totalEmployment = (DateTime.Now - Model.Employees.DateEmployed).Days;
+                        <span>Total: @totalEmployment days</span>
+                    }
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const confirmCheckbox = document.getElementById('confirmActivation');
+            const activateButton = document.getElementById('activateButton');
+
+            function updateActivateButton() {
+                
+                const isConfirmed = confirmCheckbox.checked;
+
+                activateButton.disabled = !isConfirmed;
+            }
+
+            confirmCheckbox.addEventListener('change', updateActivateButton);
+
+            // Form submission confirmation
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                if (!confirm('Are you sure you want to activate this employee? They will immediately gain access to the system.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}

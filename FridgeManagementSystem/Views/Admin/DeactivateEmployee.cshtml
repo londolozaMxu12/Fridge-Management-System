@@ -1,0 +1,144 @@
+﻿@using FridgeManagementSystem.Areas.Identity.Data
+
+@model ApplicationUser
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Deactivate Employee";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-user-slash"></i> @ViewData["Title"]</h2>
+    @* <a asp-action="EmployeeManagement" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to List
+    </a> *@
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Deactivate Employee Account</h5>
+            </div>
+            <div class="card-body">
+                <!-- Employee Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-warning"><i class="fas fa-id-card"></i> Employee Details</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">Name:</dt>
+                            <dd class="col-sm-8"><strong>@Model.FullName</strong></dd>
+
+                            <dt class="col-sm-4">Employee No:</dt>
+                            <dd class="col-sm-8">@Model.Employees?.EmployeeNo</dd>
+
+                            <dt class="col-sm-4">Job Title:</dt>
+                            <dd class="col-sm-8">@Model.Employees?.JobTitle</dd>
+
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-warning"><i class="fas fa-briefcase"></i> Employment Details</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">Email:</dt>
+                            <dd class="col-sm-8">@Model.Email</dd>
+
+                            <dt class="col-sm-4">Contact:</dt>
+                            <dd class="col-sm-8">@Model.ContactNo</dd>
+
+                            <dt class="col-sm-4">Date Employed:</dt>
+                            <dd class="col-sm-8">@Model.Employees?.DateEmployed.ToString("yyyy-MM-dd")</dd>
+
+                            <dt class="col-sm-4">Status:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge bg-success">Active</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- Deactivation Form -->
+                <form asp-action="DeactivateEmployee" method="post">
+                    <input type="hidden" name="id" value="@Model.Id" />
+
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-circle"></i> Deactivation Notice</h6>
+                        <p class="mb-0">
+                            You are about to deactivate this employee's account. The employee will no longer be able to
+                            access the system until their account is reactivated.
+                        </p>
+                    </div>
+
+                    <!-- Final Confirmation -->
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="confirmDeactivation" required>
+                        <label class="form-check-label" for="confirmDeactivation">
+                            <strong>I understand that this employee will lose system access and confirm this deactivation</strong>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-danger" id="deactivateButton" disabled>
+                            <i class="fas fa-user-slash"></i> Deactivate Employee
+                        </button>
+                        <a asp-action="EmployeeDetails" asp-route-id="@Model.Id" class="btn btn-info">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
+                        <a asp-action="EmployeeManagement" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Employment Summary</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-user-tie fa-3x text-primary"></i>
+                </div>
+                <h6>Employment Duration</h6>
+                <p class="text-primary mb-1">
+                    @if (Model.Employees != null)
+                    {
+                        var employmentDuration = DateTime.Now - Model.Employees.DateEmployed;
+                        <strong>@employmentDuration.Days days</strong>
+                    }
+                </p>
+                <small class="text-muted">
+                    Since @Model.Employees?.DateEmployed.ToString("MMM dd, yyyy")
+                </small>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const confirmCheckbox = document.getElementById('confirmDeactivation');
+            const deactivateButton = document.getElementById('deactivateButton');
+
+            function updateDeactivateButton() {
+                
+                const isConfirmed = confirmCheckbox.checked;
+                deactivateButton.disabled = !isConfirmed;
+            }
+
+            
+            confirmCheckbox.addEventListener('change', updateDeactivateButton);
+
+            // Form submission confirmation
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                if (!confirm('Are you sure you want to deactivate this employee? They will immediately lose access to the system.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}

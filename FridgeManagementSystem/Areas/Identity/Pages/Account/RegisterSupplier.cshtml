@@ -170,27 +170,6 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
-    <script>
-        // Auto-fill job title based on employee type
-                if (this.value !== '' && !jobTitleInput.value) {
-                    jobTitleInput.value = selectedOption.text;
-                }
-
-        // Date validation - cannot select future dates
-            const dateEmployedInput = document.querySelector('input[type="date"]');
-            const today = new Date().toISOString().split('T')[0];
-            dateEmployedInput.setAttribute('max', today);
-
-        // Contact number formatting
-           const contactNoInput = document.getElementById('Input_ContactNo');
-           contactNoInput.addEventListener('input', function() {
-               this.value = this.value.replace(/[^0-9]/g, '');
-               if (this.value.length > 10) {
-                   this.value = this.value.slice(0, 10);
-               }
-           });
-    </script>
-
     <style>
         .alert {
             border: none;

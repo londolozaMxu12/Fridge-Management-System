@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace FridgeManagementSystem.Controllers
 {
-    //[Authorize(Roles = "Administrator")]
+    [Authorize(Roles = "Admin")]
     public class EmployeeTypeController : Controller
     {
         private readonly FridgeManagementSystemContext _context;
@@ -82,11 +82,22 @@ namespace FridgeManagementSystem.Controllers
                 return NotFound();
             }
 
+            // Check if trying to deactivate an employee type that's in use
+            if (!employeeType.IsActive)
+            {
+                bool isEmployeeTypeInUse = await IsEmployeeTypeInUse(id);
+                if (isEmployeeTypeInUse)
+                {
+                    ModelState.AddModelError("IsActive", "Cannot deactivate this employee type because it is currently assigned to active employee.");
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
                     var existingType = await _context.EmployeeTypes.FindAsync(id);
+
                     if (existingType == null)
                     {
                         return NotFound();
@@ -138,7 +149,7 @@ namespace FridgeManagementSystem.Controllers
 
             if (employeesUsingType)
             {
-                TempData["ErrorMessage"] = "Cannot delete this employee type because it is currently assigned to active employees.";
+                TempData["ErrorMessage"] = "Can not delete this employee type because it is currently assigned to active employees.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -167,6 +178,14 @@ namespace FridgeManagementSystem.Controllers
         {
             return _context.EmployeeTypes.Any(e => e.Id == id && e.IsActive);
         }
-    
+
+        // Helper method to check if employee type is in use
+        private async Task<bool> IsEmployeeTypeInUse(int employeeTypeId)
+        {
+            // Check if any active employees are using this employee type
+            return await _context.Employees
+                .AnyAsync(e => e.EmployeeTypeId == employeeTypeId && e.User.IsActive);
+        }
+
     }
 }

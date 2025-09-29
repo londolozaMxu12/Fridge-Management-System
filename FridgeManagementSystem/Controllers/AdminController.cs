@@ -12,6 +12,7 @@ using System.Security.Claims;
 
 namespace FridgeManagementSystem.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -189,7 +190,7 @@ namespace FridgeManagementSystem.Controllers
         }
 
         // GET: Admin/EmployeeManagement
-        //[Authorize(Roles = "Administrator")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> EmployeeManagement()
         {
             var employees = await _userManager.Users
@@ -202,7 +203,7 @@ namespace FridgeManagementSystem.Controllers
         }
 
         // GET: Admin/EmployeeDetails/5
-        //[Authorize(Roles = "Administrator")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> EmployeeDetails(string id)
         {
             if (id == null)
@@ -426,7 +427,7 @@ namespace FridgeManagementSystem.Controllers
                 employee.IsActive = false;
                 await _userManager.UpdateAsync(employee);
 
-                TempData["SuccessMessage"] = "Employee deactivated successfully.";
+                TempData["SuccessMessage"] = $"Employee {employee.FullName} has been deactivated successfully.";
             }
 
             return RedirectToAction(nameof(EmployeeManagement));
@@ -465,7 +466,7 @@ namespace FridgeManagementSystem.Controllers
                 employee.IsActive = true;
                 await _userManager.UpdateAsync(employee);
 
-                TempData["SuccessMessage"] = "Employee activated successfully.";
+                TempData["SuccessMessage"] = $"Employee {employee.FullName} has been activated successfully.";
             }
 
             return RedirectToAction(nameof(EmployeeManagement));

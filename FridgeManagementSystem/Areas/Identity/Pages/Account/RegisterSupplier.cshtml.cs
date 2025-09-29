@@ -62,7 +62,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
         public List<SelectListItem> SupplierTypes { get; set; } = new List<SelectListItem>
         {
             new SelectListItem { Value = "Fridge", Text = "Fridge Supplier" },
-            //new SelectListItem { Value = "Beverage", Text = "Beverage Supplier" },
+            
             new SelectListItem { Value = "Parts", Text = "Parts Supplier" },
             new SelectListItem { Value = "Other", Text = "Other" }
         };

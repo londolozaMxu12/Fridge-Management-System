@@ -8,21 +8,40 @@
 <h1><i class="fas fa-edit"></i> @ViewData["Title"]</h1>
 
 <div class="row">
-    <h5 class="mb-0"><i class="fas fa-edit"></i> Edit Employee Type</h5>
+    @* <h5 class="mb-0"><i class="fas fa-edit"></i> Edit Employee Type</h5> *@
     <div class="col-md-6">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
             <input type="hidden" asp-for="Id" />
 
-            <div class="form-group mb-3">
-                <label asp-for="Name" class="form-label"></label>
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label">Employee Type Name *</label>
                 <input asp-for="Name" class="form-control" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
 
-            <div class="form-group form-check mb-3">
-                <input asp-for="IsActive" class="form-check-input" />
-                <label asp-for="IsActive" class="form-check-label"></label>
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input asp-for="IsActive" class="form-check-input" type="checkbox"
+                           id="isActiveCheckbox" onchange="checkEmployeeTypeUsage()">
+                    <label asp-for="IsActive" class="form-check-label" for="isActiveCheckbox">
+                        Active Status
+                    </label>
+                </div>
+                <span asp-validation-for="IsActive" class="text-danger"></span>
+
+                <!-- Warning message container -->
+                <div id="deactivationWarning" class="alert alert-warning mt-2 d-none">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="warningMessage"></span>
+                </div>
             </div>
 
             <div class="form-group">
@@ -41,4 +60,44 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        // Check if employee type is in use when deactivating
+        async function checkEmployeeTypeUsage() {
+            const checkbox = document.getElementById('isActiveCheckbox');
+            const warningDiv = document.getElementById('deactivationWarning');
+            const warningMessage = document.getElementById('warningMessage');
+            const submitButton = document.getElementById('submitButton');
+            const employeeTypeId = @Model.Id;
+
+            if (!checkbox.checked) {
+                try {
+                    const response = await fetch(`/EmployeeTypes/CheckEmployeeTypeUsage/${employeeTypeId}`);
+                    const data = await response.json();
+
+                    if (data.isInUse) {
+                        warningMessage.textContent = data.message;
+                        warningDiv.classList.remove('d-none');
+                        submitButton.disabled = true;
+                        submitButton.title = "Cannot deactivate while employee type is in use";
+                    } else {
+                        warningDiv.classList.add('d-none');
+                        submitButton.disabled = false;
+                        submitButton.title = "";
+                    }
+                } catch (error) {
+                    console.error('Error checking employee type usage:', error);
+                }
+            } else {
+                warningDiv.classList.add('d-none');
+                submitButton.disabled = false;
+                submitButton.title = "";
+            }
+        }
+
+        // Check on page load in case the type is already inactive but in use
+        document.addEventListener('DOMContentLoaded', function() {
+            checkEmployeeTypeUsage();
+        });
+    </script>
 }
