@@ -1,9 +1,16 @@
 ﻿
 @model IEnumerable<Notification>
-@{
-    Layout = "_AdminLayout";
+@* @{
+    // Layout = "_AdminLayout";
+    
     ViewData["Title"] = "Notifications";
-}
+} *@
+<style>
+    body {
+       /*  color: black; */
+        background-color: skyblue;
+    }
+</style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1><i class="fas fa-bell"></i> @ViewData["Title"]</h1>

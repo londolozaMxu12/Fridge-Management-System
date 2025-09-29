@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using FridgeManagementSystem.Areas.Identity.Data;
 using FridgeManagementSystem.Data;
 using FridgeManagementSystem.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace FridgeManagementSystem.Controllers
@@ -11,17 +13,20 @@ namespace FridgeManagementSystem.Controllers
     public class NotificationsController : Controller
     {
         private readonly FridgeManagementSystemContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public NotificationsController(FridgeManagementSystemContext context)
+        public NotificationsController(FridgeManagementSystemContext context,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: Notifications
         public async Task<IActionResult> Index()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
+            
             var notifications = await _context.Notifications
                 .Where(n => n.UserId == userId)
                 .OrderByDescending(n => n.CreatedAt)

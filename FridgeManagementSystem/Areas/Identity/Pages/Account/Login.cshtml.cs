@@ -148,7 +148,8 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
 
                     if (role.Contains("Admin"))
                     {
-                        return RedirectToAction("Index", "Admin");
+                        //return RedirectToAction("Index", "Admin");
+                        return LocalRedirect("~/Admin");
                     }
                     else if(role.Contains("Customer"))
                     {
