@@ -13,13 +13,13 @@ using System.Security.Claims;
 namespace FridgeManagementSystem.Controllers
 {
     [Authorize(Roles = "Admin")]
-    public class AdminController : Controller
+    public class AdminController : BaseController
     {
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly FridgeManagementSystemContext _context;
         public AdminController(RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context)
+            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context) : base(userManager)
         {
             _roleManager = roleManager;
             _userManager = userManager;

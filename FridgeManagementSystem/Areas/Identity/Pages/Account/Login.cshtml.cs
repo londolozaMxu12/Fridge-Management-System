@@ -118,58 +118,86 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                // Check if user exists and is approved
-                var user = await _userManager.FindByEmailAsync(Input.Email);
+                
+                //var user = await _userManager.FindByEmailAsync(Input.Email);
 
-                if (user != null)
-                {
-                    if (user.ApprovalStatus != "Approved")
-                    {
-                        ModelState.AddModelError(string.Empty, "Your account is pending approval. Please wait for administrator approval.");
-                        return Page();
-                    }
+                //if (user != null)
+                //{
+                //    if (user.ApprovalStatus != "Approved")
+                //    {
+                //        ModelState.AddModelError(string.Empty, "Your account is pending approval. Please wait for administrator approval.");
+                //        return Page();
+                //    }
 
-                    if (!user.IsActive)
-                    {
-                        ModelState.AddModelError(string.Empty, "Your account has been deactivated. Please contact administrator.");
-                        return Page();
-                    }
-                }
+                //    if (!user.IsActive)
+                //    {
+                //        ModelState.AddModelError(string.Empty, "Your account has been deactivated. Please contact administrator.");
+                //        return Page();
+                //    }
+                //}
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
                     //var user = await _userManager.FindByNameAsync(Input.Email);
-                    var role = await _userManager.GetRolesAsync(user);
+                    //var role = await _userManager.GetRolesAsync(user);
                     
-
                     _logger.LogInformation("User logged in.");
+                    var user = await _userManager.FindByEmailAsync(Input.Email);
+                    if (user != null)
+                    {
+                        // Check if user exists and is approved
+                        if (user.ApprovalStatus != "Approved")
+                        {
+                            ModelState.AddModelError(string.Empty, "Your account is pending approval. Please wait for administrator approval.");
+                            return Page();
+                        }
 
-                    if (role.Contains("Admin"))
-                    {
-                        //return RedirectToAction("Index", "Admin");
-                        return LocalRedirect("~/Admin");
-                    }
-                    else if(role.Contains("Customer"))
-                    {
-                        return RedirectToAction("Index", "Customer");
-                    }
-                    else if(role.Contains("Customer Management"))
-                    {
-                        return RedirectToAction("Index", "CustomerManagement");
-                    }
-                    else if(role.Contains("Fault Technician"))
-                    {
-                        return RedirectToAction("Index", "FaultManagement");
-                    }
-                    else if (role.Contains("Maintenance Technician"))
-                    {
-                        return RedirectToAction("Index", "MaintenanceManagement");
-                    }
-                    else if (role.Contains("Purchasing Management"))
-                    {
-                        return RedirectToAction("Index", "PurchasingManagement");
+                        if (!user.IsActive)
+                        {
+                            ModelState.AddModelError(string.Empty, "Your account has been deactivated. Please contact administrator.");
+                            return Page();
+                        }
+
+                        var role = await _userManager.GetRolesAsync(user);
+                        var primaryRole = role.FirstOrDefault();
+
+                        // Redirect based on primary role
+                        //return primaryRole?.ToLower() switch
+                        //{
+                        //    "admin" => LocalRedirect("~/Admin"),
+                        //    //"employee" => LocalRedirect("~/Employee/Dashboard"),
+                        //    //"supplier" => LocalRedirect("~/Supplier/Dashboard"),
+                        //    //"customer" => LocalRedirect("~/Customer/Dashboard"),
+                        //    _ => LocalRedirect(returnUrl)
+                        //};
+
+                        if (role.Contains("Admin"))
+                        {
+                            //return RedirectToAction("Index", "Admin");
+                            return LocalRedirect("~/Admin");
+                        }
+                        if (role.Contains("Customer"))
+                        {
+                            return RedirectToAction("Index", "Customer");
+                        }
+                        else if (role.Contains("Customer Management"))
+                        {
+                            return RedirectToAction("Index", "CustomerManagement");
+                        }
+                        else if (role.Contains("Fault Technician"))
+                        {
+                            return RedirectToAction("Index", "FaultManagement");
+                        }
+                        else if (role.Contains("Maintenance Technician"))
+                        {
+                            return RedirectToAction("Index", "MaintenanceManagement");
+                        }
+                        else if (role.Contains("Purchasing Management"))
+                        {
+                            return RedirectToAction("Index", "PurchasingManagement");
+                        }
                     }
 
                     return LocalRedirect(returnUrl);
