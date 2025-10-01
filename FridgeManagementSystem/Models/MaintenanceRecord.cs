@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FridgeManagementSystem.Models
 {
@@ -7,15 +8,28 @@ namespace FridgeManagementSystem.Models
         [Key]
         public int MaintenanceRecordId { get; set; }
 
-        [Required, StringLength(50)]
+        [StringLength(50)]
         public string Description { get; set; }
 
         [Required]
-        public DateTime date { get; set; }
+        [Display(Name = "Service Date")]
+        [DataType(DataType.Date)]
+        public DateTime ServiceDate { get; set; }
+
+        [Display(Name = "Next Service Date")]
+        [DataType(DataType.Date)]
+        public DateTime? NextServiceDate { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Foreign Key
-        public int MaintenanceTechId { get; set; }
-        public MaintenanceTech MaintenanceTech { get; set; }
+        [Required]
+        [Display(Name = "Maintenance Technician")]
+        public int MaintenanceTechnicianId { get; set; } 
+        public Employee MaintenanceTechnician { get; set; }
+
+        [Required]
+        [Display(Name = "Fridge")]
         public int FridgeId { get; set; }
         public Fridge Fridge { get; set; }
 

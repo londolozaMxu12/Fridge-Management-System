@@ -4,6 +4,7 @@ using FridgeManagementSystem.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FridgeManagementSystem.Migrations
 {
     [DbContext(typeof(FridgeManagementSystemContext))]
-    partial class FridgeManagementSystemContextModelSnapshot : ModelSnapshot
+    [Migration("20251001112139_AddModelsAndUpdateProperties")]
+    partial class AddModelsAndUpdateProperties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -961,7 +964,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("PurchasingOrderId");
 
-                    b.ToTable("PurchasingOrderDetails");
+                    b.ToTable("OrderDetails");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Quotation", b =>
@@ -1335,7 +1338,7 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("FridgeManagementSystem.Models.Suburb", null)
                         .WithMany("Customers")
@@ -1344,7 +1347,7 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "User")
                         .WithOne("Customers")
                         .HasForeignKey("FridgeManagementSystem.Models.Customer", "UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CreatedBy");

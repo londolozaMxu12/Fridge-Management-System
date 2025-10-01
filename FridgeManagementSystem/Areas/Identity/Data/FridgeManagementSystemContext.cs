@@ -3,6 +3,7 @@ using FridgeManagementSystem.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace FridgeManagementSystem.Data;
 
@@ -17,7 +18,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     public DbSet<IdentityRole> IdentityRoles { get; set; }
 
     // FOR BUSINESS TABLES
-    public DbSet<ApplicationUser> Admin {  get; set; }
+    //public DbSet<ApplicationUser> Admin {  get; set; }
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Supplier> Suppliers { get; set; }
     public DbSet<Employee> Employees { get; set; }
@@ -39,6 +40,11 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
     public DbSet<PurchasingManager> PurchasingManagers { get; set; }
     public DbSet<PurchasingOrderDetails> OrderDetails { get; set; }
+    public DbSet<CartDetails> CartDetails { get; set; }
+    public DbSet<FridgeType> FridgeType { get; set; }
+    public DbSet<OrderStatus> OrderStatus { get; set; }
+    public DbSet<ShoppingCart> ShoppingCart { get; set; }
+    public DbSet<PurchasingOrderDetails> PurchasingOrderDetails { get; set; }
     public DbSet<PurchasingOrder> PurchasingOrders { get; set; }
     public DbSet<Quotation> Quotations { get; set; }
     public DbSet<StockLevel> StockLevels { get; set; }
@@ -56,62 +62,74 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
 
         // Configure relationships
         // Configure the self-referencing foreign key with NO ACTION
-        builder.Entity<ApplicationUser>()
-            .HasOne(u => u.ApprovedBy)
-            .WithMany()
-            .HasForeignKey(u => u.ApprovedById)
-            .OnDelete(DeleteBehavior.NoAction); // This is correct
+        //builder.Entity<ApplicationUser>()
+        //    .HasOne(u => u.ApprovedBy)
+        //    .WithMany()
+        //    .HasForeignKey(u => u.ApprovedById)
+        //    .OnDelete(DeleteBehavior.NoAction);
 
-        // Customer relationship - remove cascade since it's a one-to-one
+        builder.Entity<MaintenanceRecord>()
+        .HasOne(m => m.MaintenanceTechnician)
+        .WithMany()
+        .HasForeignKey(m => m.MaintenanceTechnicianId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PurchasingOrderDetails>()
+        .Property(p => p.UnitPrice)
+        .HasPrecision(18, 4);
+
+        // Customer relationship 
         builder.Entity<Customer>()
             .HasOne(c => c.User)
             .WithOne(u => u.Customers)
             .HasForeignKey<Customer>(c => c.UserId)
-            .OnDelete(DeleteBehavior.Cascade); // Change from Cascade to NoAction
+            .OnDelete(DeleteBehavior.NoAction);
 
         builder.Entity<Customer>()
         .HasOne(c => c.CreatedBy)
         .WithMany()
         .HasForeignKey(c => c.CreatedById)
-        .OnDelete(DeleteBehavior.SetNull);
+        .OnDelete(DeleteBehavior.NoAction);
 
         // Employee relationships
         builder.Entity<Employee>()
             .HasOne(e => e.User)
             .WithOne(u => u.Employees)
             .HasForeignKey<Employee>(e => e.UserId)
-            .OnDelete(DeleteBehavior.NoAction); // Change from Cascade to NoAction
+            .OnDelete(DeleteBehavior.NoAction);
 
         builder.Entity<Employee>()
             .HasOne(e => e.CreatedBy)
             .WithMany()
             .HasForeignKey(e => e.CreatedById)
-            .OnDelete(DeleteBehavior.NoAction); // Change from Restrict to NoAction
+            .OnDelete(DeleteBehavior.NoAction);
 
         builder.Entity<Employee>()
             .HasOne(e => e.EmployeeType)
             .WithMany()
             .HasForeignKey(e => e.EmployeeTypeId)
-            .OnDelete(DeleteBehavior.NoAction); // Change from Restrict to NoAction
+            .OnDelete(DeleteBehavior.NoAction);
 
         // Supplier relationships
         builder.Entity<Supplier>()
             .HasOne(s => s.User)
             .WithOne(u => u.Suppliers)
             .HasForeignKey<Supplier>(s => s.UserId)
-            .OnDelete(DeleteBehavior.NoAction); // Change from Cascade to NoAction
+            .OnDelete(DeleteBehavior.NoAction);
 
         builder.Entity<Supplier>()
             .HasOne(s => s.CreatedBy)
             .WithMany()
             .HasForeignKey(s => s.CreatedById)
-            .OnDelete(DeleteBehavior.NoAction); // Change from Restrict to NoAction
+            .OnDelete(DeleteBehavior.NoAction);
 
         // Employee number configuration
         builder.Entity<Employee>()
             .Property(e => e.EmployeeNo)
             .IsRequired()
             .HasMaxLength(20);
+
+
 
     }
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

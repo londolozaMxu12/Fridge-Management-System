@@ -17,8 +17,13 @@ namespace FridgeManagementSystem.Models
         // Foreign Key
         public int SupplierId { get; set; }
         public Supplier Supplier { get; set; }
+
         public int PurchasingManagerId { get; set; }
         public PurchasingManager PurchasingManager { get; set; }
+
+        public int OrderStatusId { get; set; }
+        public OrderStatus OrderStatus { get; set; }
+
         public ICollection<PurchasingOrderDetails> OrderDetails { get; set; }
     }
 }

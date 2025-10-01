@@ -10,6 +10,8 @@ namespace FridgeManagementSystem.Models
         [Required, StringLength(200)]
         public string Details { get; set; }
 
+        public decimal UnitPrice { get; set; }
+
         // Foreign Key
         public int FridgeId { get; set; }
         public Fridge Fridge { get; set; }
