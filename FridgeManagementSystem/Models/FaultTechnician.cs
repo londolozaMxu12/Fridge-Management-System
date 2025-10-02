@@ -18,6 +18,6 @@ namespace FridgeManagementSystem.Models
         [Display(Name = "Contact Number")]
         public string ContactNo { get; set; }
 
-        public ICollection<Fault> Faults { get; set; }
+        
     }
 }

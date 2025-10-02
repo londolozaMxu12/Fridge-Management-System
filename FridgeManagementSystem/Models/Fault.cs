@@ -32,9 +32,10 @@ namespace FridgeManagementSystem.Models
         public int? FridgeId { get; set; }
         public Fridge? Fridge { get; set; }
 
-        public int? FaultTechnicianId { get; set; }
-        public FaultTechnician FaultTechnician { get; set; }
-
+        [Display(Name = "Fault Technician")]
+        public int? EmployeeId { get; set; }
+        public Employee FaultTechnician { get; set; }
+        
         public RepairSchedule RepairSchedule { get; set; }
     }
 }

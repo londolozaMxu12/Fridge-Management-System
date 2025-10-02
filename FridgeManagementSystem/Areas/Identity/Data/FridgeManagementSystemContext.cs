@@ -41,6 +41,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     public DbSet<PurchasingManager> PurchasingManagers { get; set; }
     public DbSet<PurchasingOrderDetails> OrderDetails { get; set; }
     public DbSet<CartDetails> CartDetails { get; set; }
+    
     public DbSet<FridgeType> FridgeType { get; set; }
     public DbSet<OrderStatus> OrderStatus { get; set; }
     public DbSet<ShoppingCart> ShoppingCart { get; set; }
@@ -68,11 +69,11 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
         //    .HasForeignKey(u => u.ApprovedById)
         //    .OnDelete(DeleteBehavior.NoAction);
 
-        builder.Entity<MaintenanceRecord>()
-        .HasOne(m => m.MaintenanceTechnician)
-        .WithMany()
-        .HasForeignKey(m => m.MaintenanceTechnicianId)
-        .OnDelete(DeleteBehavior.Restrict);
+        //builder.Entity<MaintenanceRecord>()
+        //.HasOne(m => m.MaintenanceTechnician)
+        //.WithMany()
+        //.HasForeignKey(m => m.MaintenanceTechnicianId)
+        //.OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<PurchasingOrderDetails>()
         .Property(p => p.UnitPrice)

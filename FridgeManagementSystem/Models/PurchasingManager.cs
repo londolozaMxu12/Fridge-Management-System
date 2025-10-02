@@ -16,8 +16,7 @@ namespace FridgeManagementSystem.Models
         [Required(ErrorMessage = "Please Enter Contact Number"), Phone]
         [Display(Name = "Contact Number")]
         public string ContactNo { get; set; }
-        public ICollection<PurchaseRequest> PurchaseRequests { get; set; }
-        public ICollection<PurchasingOrder> PurchasingOrders { get; set; }
-    
+        
+
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using FridgeManagementSystem.Areas.Identity.Data;
+using System.ComponentModel.DataAnnotations;
 
 namespace FridgeManagementSystem.Models
 {
@@ -7,7 +8,9 @@ namespace FridgeManagementSystem.Models
         [Key]
         public int ShoppingCartId { get; set; }
 
+        [Required]
         public string UserId { get; set; }
+        public ApplicationUser User { get; set; }
 
         public bool IsDeleted { get; set; } = false;
     }

@@ -37,5 +37,10 @@ namespace FridgeManagementSystem.Models
 
         public string CreatedById { get; set; }
         public ApplicationUser CreatedBy { get; set; }
+
+        public ICollection<PurchaseRequest> PurchaseRequests { get; set; }
+        public ICollection<PurchasingOrder> PurchasingOrders { get; set; }
+        public ICollection<MaintenanceRecord> MaintenanceRecords { get; set; }
+        public ICollection<Fault> Faults { get; set; }
     }
 }

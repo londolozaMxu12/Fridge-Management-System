@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using FridgeManagementSystem.Areas.Identity.Data;
+using System.ComponentModel.DataAnnotations;
 
 namespace FridgeManagementSystem.Models
 {
@@ -7,9 +8,15 @@ namespace FridgeManagementSystem.Models
         [Key]
         public int PurchasingOrderId { get; set; }
         [Required]
-        public DateTime Date {  get; set; }
+        public DateTime Date {  get; set; } = DateTime.UtcNow;
         [Required, StringLength(200)]
         public string Details { get; set; }
+
+        [Required]
+        public string UserId { get; set; }
+        public ApplicationUser User { get; set; }
+
+        public bool IsDeleted { get; set; }
         //[Required]
         //public OrderStatus Status { get; set; } = FaultStatus.Pending;
 
@@ -18,8 +25,10 @@ namespace FridgeManagementSystem.Models
         public int SupplierId { get; set; }
         public Supplier Supplier { get; set; }
 
-        public int PurchasingManagerId { get; set; }
-        public PurchasingManager PurchasingManager { get; set; }
+        //[Required]
+        [Display(Name = "Purchasing Manager")]
+        public int EmployeeId { get; set; }
+        public Employee PurchasingManager { get; set; }
 
         public int OrderStatusId { get; set; }
         public OrderStatus OrderStatus { get; set; }

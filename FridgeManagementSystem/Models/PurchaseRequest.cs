@@ -23,5 +23,9 @@ namespace FridgeManagementSystem.Models
         public int Quantity { get; set; }
         public RequestStatus Status { get; set; } = RequestStatus.Pending;
         public string Notes { get; internal set; }
+
+        [Display(Name = "Purchasing Manager")]
+        public int EmployeeId { get; set; }
+        public Employee PurchasingManager { get; set; }
     }
 }

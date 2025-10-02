@@ -25,14 +25,13 @@ namespace FridgeManagementSystem.Models
         // Foreign Key
         [Required]
         [Display(Name = "Maintenance Technician")]
-        public int MaintenanceTechnicianId { get; set; } 
+        public int EmployeeId { get; set; } 
         public Employee MaintenanceTechnician { get; set; }
 
-        [Required]
         [Display(Name = "Fridge")]
         public int FridgeId { get; set; }
         public Fridge Fridge { get; set; }
-
+        
         public ICollection<FaultReport> FaultReports { get; set; }
     }
 }

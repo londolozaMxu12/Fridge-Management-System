@@ -17,11 +17,11 @@
 //        public FridgeController(FridgeManagementSystemContext context, IWebHostEnvironment environment)
 //        {
 //            _context = context;
-//           _environment = environment;
+//            _environment = environment;
 //        }
 //        public async Task<IActionResult> Index()
 //        {
-//            var fridges= _context.Fridges
+//            var fridges = _context.Fridges
 //                .Include(f => f.Customer)
 //                .ThenInclude(c => c.User)
 //                .Include(f => f.Supplier)
@@ -43,7 +43,7 @@
 //            }
 
 //            var fridge = await _context.Fridges
-                
+
 //                .Include(f => f.Customer)
 //                .ThenInclude(c => c.User)
 //                .Include(f => f.Supplier)
@@ -79,7 +79,7 @@
 //        {
 //            if (ModelState.IsValid)
 //            {
-                
+
 //                fridge.CreatedAt = DateTime.UtcNow;
 //                fridge.IsActive = true;
 
@@ -158,7 +158,7 @@
 //            }
 
 //            var fridge = await _context.Fridges
-                
+
 //                .Include(f => f.Customer)
 //                .ThenInclude(c => c.User)
 //                .Include(f => f.Supplier)
@@ -195,7 +195,7 @@
 
 //        private async Task LoadViewData()
 //        {
-            
+
 
 //            ViewData["SupplierId"] = await _context.Suppliers
 //                .Where(s => s.User.IsActive)
