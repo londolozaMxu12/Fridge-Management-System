@@ -9,10 +9,12 @@ namespace FridgeManagementSystem.Controllers
     public class FridgesController : Controller
     {
         private readonly FridgeManagementSystemContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public FridgesController(FridgeManagementSystemContext context)
+        public FridgesController(FridgeManagementSystemContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         public async Task<IActionResult> Index()
