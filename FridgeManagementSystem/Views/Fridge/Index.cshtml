@@ -1,52 +1,88 @@
-﻿@* @model List<Fridge>
+﻿@model IEnumerable<FridgeManagementSystem.Models.Fridge>
+
 @{
     Layout = "_AdminLayout";
+    ViewData["Title"] = "Fridges";
 }
 
-    <h2 class="text-center mb-5">List of Fridges</h2>
-
-    <div class="row mb-5">
-        <div class="col">
-            <a class="btn btn-primary" asp-controller="Fridge" asp-action="Create">New Fridge</a>
-        </div>
-        <div class="col"></div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Fridge Management</h1>
+    <div>
+        <a asp-action="AddFridge" class="btn btn-primary">Add New Fridge</a>
+        <a asp-action="Inactive" class="btn btn-outline-secondary">View Inactive Fridges</a>
     </div>
-    
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Fridge ID</th>
-                <th>Serial No</th>
-                <th>Created At</th>
-                <th>Model</th>
-                <th>Name</th>
-                <th>Brand</th>
-                <th>Price</th>
-                <th>Description</th>
-                <th>Emage</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach(var fridge in Model)
-            {
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">List Of Active Fridges</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped table-bordered">
+            <thead>
                 <tr>
-                    <td>@fridge.FridgeId</td>
-                    <td>@fridge.SerialNumber</td>
-                    <td>@fridge.CreatedAt.ToString("MM/dd/yyyy")</td>
-                    <td>@fridge.Model</td>
-                    <td>@fridge.Name</td>
-                    <td>@fridge.Brand</td>
-                    <td>@fridge.Price.ToString("C")</td>
-                    <td><img src="~/Images/Fridges/@fridge.ImageFile" alt="@fridge.Name" width="100" /></td>
-                    <td style="white-space:nowrap">
-                        <a class="btn btn-primary btn-sm" asp-controller="Fridge" asp-action="Edit" asp-route-id="@fridge.FridgeId">Edit</a>
-                        <a class="btn btn-danger btn-sm" asp-controller="Fridge" asp-action="Delete" asp-route-id="@fridge.FridgeId">Delete</a>
-                    </td>         
+                    <th>Image</th>
+                    <th>Serial Number</th>
+                    <th>Description</th>
+                    <th>Type</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Supplier</th>
+                    <th>Actions</th>
                 </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.ImageFile))
+                            {
+                                <img src="@item.ImageFile" alt="Fridge Image" style="width: 60px; height: 60px; object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <span class="text-muted">No Image</span>
+                            }
+                        </td>
+                        <td>@item.SerialNumber</td>
+                        <td>@item.Description</td>
+                        <td>@item.FridgeType?.Name</td>
+                        <td>@item.Price.ToString("C")</td>
+                        <td>
+                            <span class="badge @GetStatusBadgeClass(item.Status)">@item.Status</span>
+                        </td>
+                        <td>@item.Supplier?.User?.FullName</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="FridgeDetails" asp-route-id="@item.FridgeId" class="btn btn-info m-1">Details</a>
+                                <a asp-action="EditFridge" asp-route-id="@item.FridgeId" class="btn btn-warning m-1">Edit</a>
+                                <a asp-action="DeleteFridge" asp-route-id="@item.FridgeId" class="btn btn-danger m-1">Delete</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
 
-
-        }
-        </tbody>
-    </table>
- *@
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Available" => "bg-success",
+            "Allocated" => "bg-primary",
+            "InService" => "bg-warning",
+            "Scrapped" => "bg-danger",
+            "Maintenance" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+}

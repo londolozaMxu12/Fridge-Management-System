@@ -38,25 +38,27 @@
                                 <i class="bi bi-speedometer2"></i> <span class="d-none d-sm-inline ms-2">Dashboard</span>
                             </a>
                             <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Admin" asp-action="ListUsers">
-                                <i class="bi bi-person-circle"></i> <span class="d-none d-sm-inline ms-2">Users</span>
+                                <i class="bi bi-person-circle"></i> <span class="d-none d-sm-inline ms-2">Manage Users</span>
                             </a>
 
                             <a class="nav-link text-white" style="white-space:nowrap" href='@Url.Action("ListCustomers", "Customer")'>
-                                <i class="bi bi-people"></i> <span class="d-none d-sm-inline ms-2">Customers</span>
+                                <i class="bi bi-people"></i> <span class="d-none d-sm-inline ms-2">Manage Customers</span>
                             </a>
                             <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Admin" asp-action="EmployeeManagement">
-                                <i class="bi bi-person-gear"></i><span class="d-none d-sm-inline ms-2">Employee Management</span>
+                                <i class="bi bi-person-gear"></i><span class="d-none d-sm-inline ms-2">Manage Employees</span>
                             </a>
                             <a class="nav-link text-white" style="white-space:nowrap" asp-controller="EmployeeType" asp-action="Index">
-                                <i class="bi bi-people-fill"></i> <span class="d-none d-sm-inline ms-2">Employee Type</span>
+                                <i class="bi bi-people-fill"></i> <span class="d-none d-sm-inline ms-2">Employee Types</span>
                             </a>
                             <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Suppliers" asp-action="Index" ">
                                 <i class="bi bi-people-fill"></i> <span class="d-none d-sm-inline ms-2">Suppliers</span>
                             </a>
-                            <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Fridge" asp-action="Index">
-                                <i class="bi bi-door-closed"></i> <span class="d-none d-sm-inline ms-2">Fridges</span>
+                            <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Fridge" asp-action="Index" asp-area="">
+                                <i class="bi bi-door-closed"></i> <span class="d-none d-sm-inline ms-2">Manage Fridges</span>
                             </a>
-
+                            <a class="nav-link text-white" style="white-space:nowrap" asp-controller="FridgeType" asp-action="Index" asp-area="">
+                                <i class="bi bi-door-closed"></i> <span class="d-none d-sm-inline ms-2">Fridge Types</span>
+                            </a>
                             <a class="nav-link text-white" style="white-space:nowrap" href='@Url.Action("Index", "Role")'>
                                 <i class="bi-person-workspace"></i> <span class="d-none d-sm-inline ms-2">Roles</span>
                             </a>
@@ -109,17 +111,11 @@
                         
                     </div>
                     
-                    @* <div class="container-fluid">
-                        <ul class="navbar-nav ms-auto">
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("Index", "Home")"><i class="bi bi-arrow-bar-right me-2"></i> Logout</a>
-                            </li>
-                        </ul>
-                    </div> *@
                 </nav>
                 <div class="px-3">
                     @RenderBody()
                 </div>
+                
             </div>
 
         </div>

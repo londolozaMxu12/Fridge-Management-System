@@ -78,7 +78,33 @@
         *{
             margin: 0;
         }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        main {
+            flex: 1 0 auto;
+        }
+
+        footer {
+            flex-shrink: 0;
+            margin-top: auto;
+        }
+
+        .container {
+            flex: 1;
+        }
     </style>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <header>
@@ -114,95 +140,11 @@
                             <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="ContactUs">Contact Us</a>
                         </li>
 
-                        @* <div>
+                        <div>
                             @await Html.PartialAsync("_LoginPartial")
-                       </div> *@
+                       </div>
                     </ul>
 
-                    @using FridgeManagementSystem.Areas.Identity.Data
-                    @using Microsoft.AspNetCore.Identity
-                    @inject SignInManager<ApplicationUser> SignInManager
-                    @inject UserManager<ApplicationUser> UserManager
-
-                    @if (SignInManager.IsSignedIn(User))
-                    {
-                        var appUser = await UserManager.GetUserAsync(User);
-
-                        if (User.IsInRole("Customer"))
-                        {
-                            <ul class="navbar-nav">
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle text-light" id="userDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-user"></i>Welcome back, @(appUser!.FullName + " (Customer)")
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                        <li>
-                                            <a class="dropdown-item" asp-area="" asp-controller="Customer" asp-action="Index">
-                                                <i class="fas fa-user-cog"></i> Dashboard
-                                            </a>
-                                        </li>
-
-                                        <li>
-                                            <a class="dropdown-item" asp-area="" asp-controller="Customer" asp-action="MyFridges">
-                                                <i class="fas fa-user-cog"></i> My Fridges
-                                            </a>
-                                        </li>
-
-                                        @if (User.Identity.IsAuthenticated)
-                                        {
-                                            <li>
-                                                <a class="dropdown-item" asp-controller="Notifications" asp-action="Index">
-                                                    <i class="fas fa-user-cog"></i> Notifications
-                                                    @await Component.InvokeAsync("Notifications")
-                                                </a>
-                                            </li>
-                                            
-                                        }
-
-                                        <li>
-                                            <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">
-                                                <i class="fas fa-user-cog"></i> Profile
-                                            </a>
-                                        </li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                                <button type="submit" class="dropdown-item">
-                                                    <i class="fas fa-sign-out-alt"></i> Logout
-                                                </button>
-                                            </form>
-                                        </li>
-                                    </ul>
-
-                                </li>
-                            </ul>
-                        }
-                        else
-                        {
-
-                            <li class="nav-item">
-
-                                <form id="logoutForm" class="dropdown-item" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                    <button id="logout" type="submit" class="nav-link btn btn-link text-white border-0">Logout</button>
-                                </form>
-                            </li>
-
-                        }
-
-                    }
-
-                    else
-                    {
-
-                        <ul class="navbar-nav">
-                            <li class="nav-item">
-                                <a class="nav-link text-white" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
-                            </li>
-                        </ul>
-                    }
                 </div>
                 @* <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
@@ -242,7 +184,7 @@
             @RenderBody()
         </main>
     </div> *@
-    <footer id="footer">
+    @* <footer id="footer">
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-dark ">
             <div class="container">
                 <div class="row">
@@ -257,19 +199,48 @@
                     </div>
                     <div class="col-lg-3">
                         <div class="widget">
-                            @* <h5 class="widgetheading">Quick Links</h5>
+                            <h5 class="widgetheading">Quick Links</h5>
                             <ul class="link-list">
                                 <li><a href="@Url.Action("Index", "Carrer")">Careers</a></li>
                                 <li><a href="@Url.Action("ContactUs", "Home")">Contact Us</a></li>
                                 <li><a href="@Url.Action("AboutUs", "Home")">About Us</a></li>
                             </ul>
-                        </div> *@
+                        </div>
                     </div>
                 </div>
             </div>
         </nav>
-    </footer>
+    </footer> *@
+    <footer class="bg-dark text-light mt-5">
+        <div class="container py-4">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5 class="fw-bold">
+                        <i class="bi bi-refrigerator me-2"></i>Fridge Management System
+                    </h5>
+                    <p class="mb-2">Ensuring proper refrigeration for your beverages</p>
 
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <h6 class="fw-bold">Support</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-telephone me-2"></i>+27 12 345 6789</li>
+                        <li><i class="bi bi-envelope me-2"></i>nmdesignhub@gmail.com</li>
+                        <li><i class="bi bi-clock me-2"></i>Mon-Fri: 8:00-17:00</li>
+                    </ul>
+                </div>
+
+            </div>
+            <hr class="my-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2024 Fridge Management System. All rights reserved.</p>
+                </div>
+
+            </div>
+        </div>
+    </footer>
 
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

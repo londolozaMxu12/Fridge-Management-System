@@ -8,13 +8,13 @@ using System.Security.Claims;
 
 namespace FridgeManagementSystem.Controllers
 {
-    public class CustomerController : Controller
+    public class CustomerController : BaseController
     {
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly FridgeManagementSystemContext _context;
         public CustomerController(RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context)
+            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context) : base(userManager)
         {
             _roleManager = roleManager;
             _userManager = userManager;

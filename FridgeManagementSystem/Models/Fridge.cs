@@ -37,7 +37,7 @@ namespace FridgeManagementSystem.Models
         public string Status { get; set; } // Available, Allocated, InService, scrapped
 
         [Display(Name = "Active")]
-        public bool IsActive { get; set; }=true;
+        public bool IsActive { get; set; } =true;
 
         [Required]
         public DateTime PurchaseDate { get; set; } = DateTime.Now;
@@ -48,7 +48,6 @@ namespace FridgeManagementSystem.Models
         public string CreatedById { get; set; }
         [ForeignKey("CreatedById")]
         public ApplicationUser CreatedBy { get; set; }
-
 
         [Display(Name = "Next Service Date")]
         [DataType(DataType.Date)]

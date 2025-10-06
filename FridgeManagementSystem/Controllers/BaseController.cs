@@ -23,7 +23,7 @@ public class BaseController : Controller
             "admin" => "_AdminLayout",
             //"employee" => "_EmployeeLayout",
             //"supplier" => "_SupplierLayout",
-            //"customer" => "_CustomerLayout",
+            "customer" => "_CustomerLayout",
             _ => "_Layout"
         };
     }

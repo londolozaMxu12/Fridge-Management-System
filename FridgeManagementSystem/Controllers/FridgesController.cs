@@ -19,54 +19,12 @@ namespace FridgeManagementSystem.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var availableFridges = await _context.Fridges
-                .Include(f => f.FridgeType)
-                .Where(f => f.IsAvailable && f.IsActive && f.Status == "Available")
-                .Select(f => new FridgeViewModel
-                {
-                    FridgeId = f.FridgeId,
-                    Price = f.Price,
-                    Description = f.Description,
-                    ImageFile = f.ImageFile,
-                    SerialNumber = f.SerialNumber,
-                    Status = f.Status,
-                    FridgeTypeName = f.FridgeType.Name,
-                    Brand = f.FridgeType.Brand,
-                    Model = f.FridgeType.Model,
-                    IsAvailable = f.IsAvailable
-                })
-                .ToListAsync();
+            
 
-            return View(availableFridges);
+            return View();
         }
 
-        public async Task<IActionResult> FridgeDetails(int id)
-        {
-            var fridge = await _context.Fridges
-                .Include(f => f.FridgeType)
-                .Where(f => f.IsAvailable && f.IsActive)
-                .Select(f => new FridgeViewModel
-                {
-                    FridgeId = f.FridgeId,
-                    Price = f.Price,
-                    Description = f.Description,
-                    ImageFile = f.ImageFile,
-                    SerialNumber = f.SerialNumber,
-                    Status = f.Status,
-                    FridgeTypeName = f.FridgeType.Name,
-                    Brand = f.FridgeType.Brand,
-                    Model = f.FridgeType.Model,
-                    IsAvailable = f.IsAvailable
-                })
-                .FirstOrDefaultAsync(f => f.FridgeId == id);
-
-            if (fridge == null)
-            {
-                return NotFound();
-            }
-
-            return View(fridge);
-        }
+        
         public IActionResult Register()
         {
             return View();
