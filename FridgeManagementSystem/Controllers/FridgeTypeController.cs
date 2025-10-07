@@ -9,15 +9,15 @@ using Microsoft.EntityFrameworkCore;
 namespace FridgeManagementSystem.Controllers
 {
     [Authorize(Roles = "Admin")]
-    public class FridgeTypeController : BaseController
+    public class FridgeTypeController : Controller
     {
-        private readonly UserManager<ApplicationUser> _userManager;
+        
         private readonly FridgeManagementSystemContext _context;
 
-        public FridgeTypeController(FridgeManagementSystemContext context, UserManager<ApplicationUser> userManager) : base(userManager)
+        public FridgeTypeController(FridgeManagementSystemContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
-            _userManager = userManager;
+     
         }
         public async Task<IActionResult> Index()
         {
@@ -51,22 +51,28 @@ namespace FridgeManagementSystem.Controllers
             return View();
         }
 
-        // POST: FridgeType/Add
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddFridgeType([Bind("Name, Brand, Model")] FridgeType fridgeType)
+        public async Task<IActionResult> AddFridgeType([Bind("Name,Brand,Model,IsActive")] FridgeType fridgeType)
         {
             if (ModelState.IsValid)
             {
-                fridgeType.IsActive = true;
-                //fridgeType.CreatedAt = DateTime.UtcNow;
+                try
+                {
+                    fridgeType.IsActive = true;
 
-                _context.Add(fridgeType);
-                await _context.SaveChangesAsync();
+                    _context.Add(fridgeType);
+                    await _context.SaveChangesAsync();
 
-                TempData["Success"] = "Fridge type added successfully!";
-                return RedirectToAction(nameof(Index));
+                    TempData["Success"] = "Fridge type added successfully!";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", "An error occurred while saving. Please try again.");
+                }
             }
+
             return View(fridgeType);
         }
 

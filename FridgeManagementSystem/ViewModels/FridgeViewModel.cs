@@ -29,7 +29,7 @@ namespace FridgeManagementSystem.ViewModels
 
         [Required(ErrorMessage = "Status is required")]
         [Display(Name = "Status")]
-        public string Status { get; set; }
+        public string Status { get; set; } = "Available"; // Set default value
 
         [Required(ErrorMessage = "Fridge Type is required")]
         [Display(Name = "Fridge Type")]
@@ -47,8 +47,9 @@ namespace FridgeManagementSystem.ViewModels
         [DataType(DataType.Date)]
         public DateTime? ServiceDate { get; set; }
 
+        [Required(ErrorMessage = "Please upload an image")]
         [Display(Name = "Fridge Image")]
-        public IFormFile? ImageFileName { get; set; }
+        public IFormFile ImageFileName { get; set; }
 
         public string ExistingImagePath { get; set; }
 

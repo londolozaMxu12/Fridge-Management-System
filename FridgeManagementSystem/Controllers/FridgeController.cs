@@ -15,19 +15,18 @@ using System.Security.Claims;
 namespace FridgeManagementSystem.Controllers
 {
     [Authorize(Roles = "Admin")]
-    public class FridgeController : BaseController
+    public class FridgeController : Controller
     {
         private readonly FridgeManagementSystemContext _context;
         private readonly IWebHostEnvironment _environment;
-        private readonly UserManager<ApplicationUser> _userManager;
+        
         private readonly ILogger<RegisterEmployeeModel> _logger;
 
-        public FridgeController(FridgeManagementSystemContext context, IWebHostEnvironment environment, UserManager<ApplicationUser> userManager,
-            ILogger<RegisterEmployeeModel> logger) : base(userManager)
+        public FridgeController(FridgeManagementSystemContext context, IWebHostEnvironment environment,
+            ILogger<RegisterEmployeeModel> logger)
         {
             _context = context;
             _environment = environment;
-            _userManager = userManager;
             _logger = logger;
         }
 
@@ -114,18 +113,34 @@ namespace FridgeManagementSystem.Controllers
         // GET: Fridge/Create
         public async Task<IActionResult> AddFridge()
         {
-            await LoadViewData();
-            var model = new FridgeViewModel
+            try
             {
-                AcquisitionDate = DateTime.Now
-            };
-            return View(model);
+                await LoadViewData();
+                var model = new FridgeViewModel
+                {
+                    AcquisitionDate = DateTime.Now,
+                    Status = "Available" // Set default status
+                };
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading AddFridge page");
+                TempData["Error"] = "An error occurred while loading the form.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddFridge(FridgeViewModel model, IFormFile imageFile)
+        public async Task<IActionResult> AddFridge(FridgeViewModel model)
         {
+            // Manually validate the image file since it's an IFormFile
+            if (model.ImageFileName == null || model.ImageFileName.Length == 0)
+            {
+                ModelState.AddModelError("ImageFileName", "Please upload an image");
+            }
+
             if (ModelState.IsValid)
             {
                 try
@@ -141,29 +156,8 @@ namespace FridgeManagementSystem.Controllers
                         return View(model);
                     }
 
-
                     // Handle image upload
-
-                    if (model.ImageFileName == null)
-                    {
-                        ModelState.AddModelError("ImageFile", "Please upload an image");
-                    }
-
-                    if (!ModelState.IsValid)
-                    {
-                        return View(model);
-                    }
-
-                    // save the image file
-                    string newFileName = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-                    newFileName += Path.GetExtension(model.ImageFileName!.FileName);
-
-                    string imageFullPath = _environment.WebRootPath + "/Images/Fridges/" + newFileName;
-                    using (var stream = System.IO.File.Create(imageFullPath))
-                    {
-                        model.ImageFileName.CopyTo(stream);
-                    }
-
+                    string newFileName = await SaveImageFile(model.ImageFileName);
 
                     var fridge = new Fridge
                     {
@@ -172,31 +166,15 @@ namespace FridgeManagementSystem.Controllers
                         SerialNumber = model.SerialNumber,
                         AcquisitionDate = model.AcquisitionDate,
                         PurchaseDate = DateTime.Now,
-                        Status = "Available",
+                        Status = model.Status, // Use the status from view model
                         IsActive = true,
-                        IsAvailable = true,
+                        IsAvailable = model.Status == "Available", // Set based on status
                         FridgeTypeId = model.FridgeTypeId,
                         SupplierId = model.SupplierId,
                         CreatedById = User.FindFirstValue(ClaimTypes.NameIdentifier),
                         NextServiceDate = model.NextServiceDate,
                         ImageFile = newFileName,
                     };
-                    //if (imageFile != null && imageFile.Length > 0)
-                    //{
-                    //    fridge.ImageFile = await SaveImage(imageFile);
-                    //}
-                    //else
-                    //{
-                    //    ModelState.AddModelError("ImageFile", "Please upload an image");
-                    //    await LoadViewData();
-                    //    return View(model);
-                    //}
-
-                    // Generate serial number if not provided
-                    if (string.IsNullOrEmpty(fridge.SerialNumber))
-                    {
-                        fridge.SerialNumber = await GenerateSerialNumber();
-                    }
 
                     _context.Fridges.Add(fridge);
                     await _context.SaveChangesAsync();
@@ -206,7 +184,8 @@ namespace FridgeManagementSystem.Controllers
                 }
                 catch (Exception ex)
                 {
-                    ModelState.AddModelError("", "An error occurred while creating the fridge: " + ex.Message);
+                    _logger.LogError(ex, "Error adding fridge");
+                    ModelState.AddModelError("", "An error occurred while creating the fridge. Please try again.");
                 }
             }
 
@@ -443,38 +422,38 @@ namespace FridgeManagementSystem.Controllers
                     .Include(s => s.User)
                     .Where(s => s.User.IsActive)
                     .ToListAsync(),
-                "Id",
+                "SupplierId", // Make sure this matches your Supplier model's ID property name
                 "User.FullName"
             );
 
             ViewData["StatusList"] = new SelectList(new[]
             {
-            new { Value = "Available", Text = "Available" },
-            new { Value = "Allocated", Text = "Allocated" },
-            new { Value = "InService", Text = "In-Service" },
-            new { Value = "Scrapped", Text = "Scrapped" },
-            new { Value = "Maintenance", Text = "Under Maintenance" }
-        }, "Value", "Text");
+                 new { Value = "Available", Text = "Available" },
+                 new { Value = "Allocated", Text = "Allocated" },
+                 new { Value = "InService", Text = "In-Service" },
+                 new { Value = "Scrapped", Text = "Scrapped" },
+                 new { Value = "Maintenance", Text = "Under Maintenance" },
+            }, "Value", "Text");
         }
 
-        //private async Task<string> SaveImage(IFormFile imageFile)
-        //{
-        //    var uploadsFolder = Path.Combine(_environment.WebRootPath, "Images", "Fridges");
-        //    if (!Directory.Exists(uploadsFolder))
-        //    {
-        //        Directory.CreateDirectory(uploadsFolder);
-        //    }
+        private async Task<string> SaveImageFile(IFormFile imageFile)
+        {
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, "Images", "Fridges");
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
 
-        //    var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(imageFile.FileName);
-        //    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            var uniqueFileName = DateTime.Now.ToString("yyyyMMddHHmmssfff") + Path.GetExtension(imageFile.FileName);
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-        //    using (var fileStream = new FileStream(filePath, FileMode.Create))
-        //    {
-        //        await imageFile.CopyToAsync(fileStream);
-        //    }
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(fileStream);
+            }
 
-        //    return "/Images/Fridges/" + uniqueFileName;
-        //}
+            return uniqueFileName;
+        }
 
         //private void DeleteImage(string imagePath)
         //{

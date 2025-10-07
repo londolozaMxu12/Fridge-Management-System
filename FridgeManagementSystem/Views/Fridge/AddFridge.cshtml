@@ -12,8 +12,8 @@
                 <h5 class="card-title">@ViewData["Title"]</h5>
             </div>
             <div class="card-body">
-                <form asp-action="AddFridge" enctype="multipart/form-data">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <form asp-action="AddFridge" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="All" class="text-danger"></div>
 
                     <div class="row">
                         <div class="col-md-6">
@@ -23,7 +23,6 @@
                                     <option value="">-- Select Fridge Type --</option>
                                 </select>
                                 <span asp-validation-for="FridgeTypeId" class="text-danger"></span>
-                                <small class="form-text text-muted">Select from available fridge types (Brand - Name - Model)</small>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -50,7 +49,43 @@
                                 <label asp-for="SerialNumber" class="control-label"></label>
                                 <input asp-for="SerialNumber" class="form-control" />
                                 <span asp-validation-for="SerialNumber" class="text-danger"></span>
-                                @* <small class="form-text text-muted">Leave blank to auto-generate</small> *@
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Status" class="control-label"></label>
+                                <select asp-for="Status" class="form-control" asp-items="ViewBag.StatusList">
+                                    <option value="">-- Select Status --</option>
+                                </select>
+                                <span asp-validation-for="Status" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="AcquisitionDate" class="control-label"></label>
+                                <input asp-for="AcquisitionDate" class="form-control" type="date" />
+                                <span asp-validation-for="AcquisitionDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="NextServiceDate" class="control-label"></label>
+                                <input asp-for="NextServiceDate" class="form-control" type="date" />
+                                <span asp-validation-for="NextServiceDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="ImageFileName" class="control-label"></label>
+                                <input asp-for="ImageFileName" class="form-control" type="file" accept="image/*" />
+                                <span asp-validation-for="ImageFileName" class="text-danger"></span>
+                                <small class="form-text text-muted">Upload a clear image of the fridge</small>
                             </div>
                         </div>
                     </div>
@@ -61,37 +96,12 @@
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label asp-for="AcquisitionDate" class="control-label"></label>
-                                <input asp-for="AcquisitionDate" class="form-control" type="date" />
-                                <span asp-validation-for="AcquisitionDate" class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label asp-for="NextServiceDate" class="control-label"></label>
-                                <input asp-for="NextServiceDate" class="form-control" type="date" />
-                                <span asp-validation-for="NextServiceDate" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label asp-for="ImageFileName" class="control-label"></label>
-                        <input asp-for="ImageFileName" class="form-control" type="file"/>
-                        <span asp-validation-for="ImageFileName" class="text-danger"></span>
-                        <small class="form-text text-muted">Upload a clear image of the fridge</small>
-                    </div>
-
                     <div class="form-group">
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save m-1"></i>Add New Fridge
-                           
+                            <i class="fas fa-save me-2"></i>Add New Fridge
                         </button>
                         <a asp-action="Index" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left m-1"></i> Back to List
+                            <i class="fas fa-arrow-left me-2"></i> Back to List
                         </a>
                     </div>
                 </form>
@@ -105,4 +115,3 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
-

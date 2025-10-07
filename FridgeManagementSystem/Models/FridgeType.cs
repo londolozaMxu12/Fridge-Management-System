@@ -8,17 +8,21 @@ namespace FridgeManagementSystem.Models
         [Key]
         public int FridgeTypeId { get; set; }
 
-        [Required, StringLength(100)]
+        [Required(ErrorMessage = "Name is required")]
+        [StringLength(100)]
         public string Name { get; set; }
 
-        [Required, StringLength(100)]
+        [Required(ErrorMessage = "Brand is required")]
+        [StringLength(100)]
         public string Brand { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Model is required")]
+        [StringLength(100)]
         public string Model { get; set; }
         [Display(Name = "Active")]
         public bool IsActive { get; set; } = true;
-        public ICollection<Fridge> Fridges { get; set; }
+
+        public ICollection<Fridge> Fridges { get; set; } = new List<Fridge>();
         // Display property for dropdown
         [NotMapped]
         public string DisplayName => $"{Brand} - {Name} - {Model}";
