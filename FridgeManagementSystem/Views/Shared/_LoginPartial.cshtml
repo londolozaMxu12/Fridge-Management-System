@@ -1,6 +1,8 @@
-﻿@using FridgeManagementSystem.Areas.Identity.Data
+﻿@using FridgeManagementSystem.Data
 @using Microsoft.AspNetCore.Identity
-
+@using Microsoft.EntityFrameworkCore
+@using FridgeManagementSystem.Areas.Identity.Data
+@using FridgeManagementSystem.Models
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
@@ -20,7 +22,12 @@
 <ul class="navbar-nav">
     @if (SignInManager.IsSignedIn(User))
     {
-        var appUser = await UserManager.GetUserAsync(User);
+        // 🔹 Load full user with Employee + EmployeeType
+        var appUser = await UserManager.Users
+        .Include(u => u.Employees)
+        .ThenInclude(e => e.EmployeeType)
+        .FirstOrDefaultAsync(u => u.Id == UserManager.GetUserId(User));
+        @* var appUser = await UserManager.GetUserAsync(User); *@
 
         if (User.IsInRole("Admin"))
         {
@@ -95,7 +102,7 @@
 
         }
 
-        else if (User.IsInRole("Fault Technician"))
+        else if (User.IsInRole("Employee") && appUser?.Employees?.EmployeeType?.Name == "FaultTechnician")
         {
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
@@ -130,7 +137,7 @@
 
             </ul>
         }
-        else if (User.IsInRole("Maintenance Technician"))
+        else if (User.IsInRole("Employee") && appUser?.Employees?.EmployeeType?.Name == "MaintenanceTechnician")
         {
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
@@ -165,13 +172,13 @@
 
             </ul>
         }
-        else if (User.IsInRole("Inventory Liaison"))
+        else if (User.IsInRole("Employee") && appUser?.Employees?.EmployeeType?.Name == "InventoryLiaison")
         {
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
 
-                        <i class="bi bi-person-circle me-2 fs-5"></i>@(appUser!.FullName + " (InventoryLiaison)")
+                        <i class="bi bi-person-circle me-2 fs-5"></i>@(appUser!.FullName + " (Inventory Liaison)")
 
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -200,13 +207,13 @@
 
             </ul>
         }
-        else if (User.IsInRole("Purchasing Management"))
+        else if (User.IsInRole("Employee") && appUser?.Employees?.EmployeeType?.Name == "PurchasingManager")
         {
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
 
-                        <i class="bi bi-person-circle me-2 fs-5"></i>@(appUser!.FullName + " (PurchasingManager)")
+                        <i class="bi bi-person-circle me-2 fs-5"></i>@(appUser!.FullName + " (Purchasing Manager)")
 
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -235,13 +242,13 @@
 
             </ul>
         }
-        else if (User.IsInRole("Customer Management"))
+        else if (User.IsInRole("Employee") && appUser?.Employees?.EmployeeType?.Name == "CustomerLiaison")
         {
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
 
-                        <i class="bi bi-person-circle me-2 fs-5"></i>@(appUser!.FullName + " (CustomerManagement)")
+                        <i class="bi bi-person-circle me-2 fs-5"></i>@(appUser!.FullName + " (Customer Liaison)")
 
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -255,7 +262,16 @@
                                 <i class="bi bi-pencil-square me-2"></i>Update Details
                             </a>
                         </li>
-
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" asp-controller="Notifications" asp-action="Index" id="notificationsToggle">
+                                <i class="bi bi-bell me-2"></i>
+                                Notifications
+                                <span class="badge bg-danger ms-2" id="notificationCount">0</span>
+                                @await Component.InvokeAsync("Notifications")
+                            </a>
+                            
+                        </li>
                         <li><hr class="dropdown-divider"></li>
                         <li class="nav-item">
 
@@ -270,16 +286,7 @@
 
             </ul>
         }
-        @* else
-        {
-            <li class="nav-item">
-
-                <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                    <button id="logout" type="submit" class="nav-link btn btn-link text-white border-0 ">Logout</button>
-                </form>
-
-            </li>
-        } *@
+        
     }
     else
     {
@@ -291,6 +298,26 @@
         </li>
     }
 </ul>
+
+@functions {
+    private async Task<int> GetUnreadNotificationCount()
+    {
+        var context = new FridgeManagementSystemContext(new Microsoft.EntityFrameworkCore.DbContextOptions<FridgeManagementSystemContext>());
+        var userManager = Context.RequestServices.GetService<UserManager<ApplicationUser>>();
+
+        if (User.Identity.IsAuthenticated)
+        {
+            var user = await userManager.GetUserAsync(User);
+            if (user != null)
+            {
+                return await context.Notifications
+                    .Where(n => n.UserId == user.Id && !n.IsRead)
+                    .CountAsync();
+            }
+        }
+        return 0;
+    }
+}
 
 
 

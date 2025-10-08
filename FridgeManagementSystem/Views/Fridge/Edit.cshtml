@@ -1,22 +1,47 @@
-﻿@model FridgeManagementSystem.Models.CreateFridgeViewModel
+﻿@model FridgeManagementSystem.ViewModels.FridgeViewModel
 
 @{
-    ViewData["Title"] = "Create New Fridge";
+    ViewData["Title"] = "Edit Fridge";
     Layout = "_AdminLayout";
 }
 
 <div class="row justify-content-center">
     <div class="col-md-10">
         <div class="card">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-warning text-dark">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-plus-circle"></i> @ViewData["Title"]
+                    <i class="fas fa-edit m-1"></i> @ViewData["Title"]
                 </h5>
             </div>
             <div class="card-body">
-                <form asp-action="Create" enctype="multipart/form-data" id="createForm">
+                @if (!string.IsNullOrEmpty(Model.SelectedFridgeTypeDisplay))
+                {
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-info-circle"></i> Current Fridge Type
+                                </h6>
+                                <p class="mb-0">@Model.SelectedFridgeTypeDisplay</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+                <form asp-action="Edit" enctype="multipart/form-data" id="editForm">
+                    <input type="hidden" asp-for="FridgeId" />
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
+                   @*  <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-info-circle m-1"></i> Current Fridge Type
+                                </h6>
+                                <p class="mb-0">@Model.SelectedFridgeTypeDisplay</p>
+                            </div>
+                        </div>
+                    </div>
+ *@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">
@@ -25,7 +50,6 @@
                                     <option value="">-- Select Fridge Type --</option>
                                 </select>
                                 <span asp-validation-for="FridgeTypeId" class="text-danger small"></span>
-                                <div class="form-text">Select from available fridge types (Brand - Name - Model)</div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -53,9 +77,8 @@
                         <div class="col-md-4">
                             <div class="form-group mb-3">
                                 <label asp-for="SerialNumber" class="form-label fw-bold"></label>
-                                <input asp-for="SerialNumber" class="form-control" @* placeholder="Leave blank to auto-generate" *@ />
+                                <input asp-for="SerialNumber" class="form-control" />
                                 <span asp-validation-for="SerialNumber" class="text-danger small"></span>
-                                
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -69,9 +92,8 @@
 
                     <div class="form-group mb-3">
                         <label asp-for="Description" class="form-label fw-bold"></label>
-                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter fridge description..."></textarea>
+                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
                         <span asp-validation-for="Description" class="text-danger small"></span>
-                        <div class="form-text">Describe the fridge features, condition, and specifications</div>
                     </div>
 
                     <div class="row">
@@ -87,7 +109,6 @@
                                 <label asp-for="NextServiceDate" class="form-label fw-bold"></label>
                                 <input asp-for="NextServiceDate" class="form-control" type="date" />
                                 <span asp-validation-for="NextServiceDate" class="text-danger small"></span>
-                                <div class="form-text">Optional: Next scheduled maintenance date</div>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -95,7 +116,6 @@
                                 <label asp-for="ServiceDate" class="form-label fw-bold"></label>
                                 <input asp-for="ServiceDate" class="form-control" type="date" />
                                 <span asp-validation-for="ServiceDate" class="text-danger small"></span>
-                                <div class="form-text">Optional: Last service date</div>
                             </div>
                         </div>
                     </div>
@@ -104,16 +124,37 @@
                         <label asp-for="ImageFileName" class="form-label fw-bold"></label>
                         <input asp-for="ImageFileName" class="form-control" type="file" accept="image/*" id="imageInput" />
                         <span asp-validation-for="ImageFileName" class="text-danger small"></span>
-                        <div class="form-text">Upload a clear image of the fridge (JPEG, PNG, GIF - Max 5MB)</div>
-                        <div id="imagePreview" class="mt-2 text-center" style="display: none;">
-                            <img id="previewImage" src="#" alt="Preview" class="img-thumbnail" style="max-height: 200px;" />
-                        </div>
+                        <div class="form-text">Upload a new image to replace the current one</div>
+
+                       @*  @if (!string.IsNullOrEmpty(Model.ExistingImagePath))
+                        {
+                            <div class="mt-3">
+                                <label class="form-label fw-bold">Current Image:</label>
+                                <div>
+                                    <img src="@Model.ExistingImagePath" alt="Current Fridge Image" class="img-thumbnail" style="max-height: 200px;" />
+                                </div>
+                            </div>
+                        } *@
+                        @if (!string.IsNullOrEmpty(Model.ExistingImagePath))
+                        {
+                            <div class="form-group mb-3">
+                                <label class="form-label fw-bold">Current Image:</label>
+                                <div>
+                                    <img src="@Model.ExistingImagePath" alt="Current Fridge Image"
+                                         class="img-thumbnail" style="max-height: 200px;"
+                                         onerror="this.style.display='none'" />
+                                </div>
+                            </div>
+                        }
                     </div>
 
                     <div class="form-group">
-                        <button type="submit" class="btn btn-primary me-2">
-                            <i class="fas fa-save m-1"></i> Create Fridge
+                        <button type="submit" class="btn btn-warning me-2">
+                            <i class="fas fa-save m-1"></i> Save Changes
                         </button>
+                        <a asp-action="Details" asp-route-id="@Model.FridgeId" class="btn btn-info me-2">
+                            <i class="fas fa-eye m-1"></i> View Details
+                        </a>
                         <a asp-action="Index" class="btn btn-secondary">
                             <i class="fas fa-arrow-left m-1"></i> Back to List
                         </a>
@@ -131,31 +172,8 @@
 
     <script>
         $(document).ready(function () {
-            // Set acquisition date to today if not set
-            var acquisitionDate = $('#AcquisitionDate');
-            if (!acquisitionDate.val()) {
-                var today = new Date().toISOString().split('T')[0];
-                acquisitionDate.val(today);
-            }
-
-            // Image preview functionality
-            $('#imageInput').change(function() {
-                const file = this.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        $('#previewImage').attr('src', e.target.result);
-                        $('#imagePreview').show();
-                    }
-                    reader.readAsDataURL(file);
-                } else {
-                    $('#imagePreview').hide();
-                }
-            });
-
-            // Form submission handling
-            $('#createForm').on('submit', function() {
-                $('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
+            $('#editForm').on('submit', function() {
+                $('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
             });
         });
     </script>

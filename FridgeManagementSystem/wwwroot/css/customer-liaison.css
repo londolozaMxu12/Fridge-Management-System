@@ -1,0 +1,244 @@
+﻿/* Customer Liaison-specific styles */
+:root {
+    --liaison-primary: #198754;
+    --liaison-secondary: #6c757d;
+    --liaison-success: #198754;
+    --liaison-warning: #ffc107;
+    --liaison-danger: #dc3545;
+    --liaison-info: #0dcaf0;
+    --liaison-bg: #f8f9fa;
+}
+
+[data-bs-theme="dark"] {
+    --liaison-bg: #1a1d20;
+    --liaison-primary: #20c997;
+}
+
+/* Custom styles for Customer Liaison portal */
+.quick-stat-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: none;
+    border-radius: 0.5rem;
+}
+
+    .quick-stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+/* Navigation enhancements */
+.navbar-brand {
+    font-weight: 700;
+}
+
+.nav-link {
+    font-weight: 500;
+}
+
+/* Card styles */
+.liaison-card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.2s ease-in-out;
+}
+
+    .liaison-card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+/* Status badges */
+.status-badge {
+    font-size: 0.75em;
+    padding: 0.35em 0.65em;
+}
+
+.status-active {
+    background-color: var(--liaison-success);
+    color: white;
+}
+
+.status-pending {
+    background-color: var(--liaison-warning);
+    color: black;
+}
+
+.status-inactive {
+    background-color: var(--liaison-secondary);
+    color: white;
+}
+
+.status-urgent {
+    background-color: var(--liaison-danger);
+    color: white;
+}
+
+/* DataTables customization */
+.dataTables_wrapper {
+    margin-top: 1rem;
+}
+
+.dataTables_filter input {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+}
+
+/* Select2 customization */
+.select2-container--bootstrap-5 .select2-selection {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+}
+
+/* Action buttons */
+.btn-action {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Customer type indicators */
+.customer-type-spaza {
+    border-left: 4px solid #0d6efd;
+}
+
+.customer-type-shebeen {
+    border-left: 4px solid #6f42c1;
+}
+
+.customer-type-other {
+    border-left: 4px solid #fd7e14;
+}
+
+/* Allocation status */
+.allocation-status-active {
+    background-color: #d1e7dd;
+    border-left: 4px solid var(--liaison-success);
+}
+
+.allocation-status-pending {
+    background-color: #fff3cd;
+    border-left: 4px solid var(--liaison-warning);
+}
+
+.allocation-status-expired {
+    background-color: #f8d7da;
+    border-left: 4px solid var(--liaison-danger);
+}
+
+/* Inventory levels */
+.stock-level-high {
+    color: var(--liaison-success);
+    font-weight: bold;
+}
+
+.stock-level-medium {
+    color: var(--liaison-warning);
+    font-weight: bold;
+}
+
+.stock-level-low {
+    color: var(--liaison-danger);
+    font-weight: bold;
+}
+
+.stock-level-critical {
+    color: var(--liaison-danger);
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .navbar-nav {
+        margin-top: 1rem;
+    }
+
+    .quick-stat-card .fs-2 {
+        font-size: 1.5rem !important;
+    }
+}
+
+/* Print styles */
+@media print {
+    .navbar, .bg-light, footer, .btn {
+        display: none !important;
+    }
+
+    .container-fluid {
+        width: 100% !important;
+        max-width: none !important;
+    }
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+    .loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 2rem;
+        height: 2rem;
+        margin: -1rem 0 0 -1rem;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid var(--liaison-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Notification styles */
+.notification-item {
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.75rem 1rem;
+    transition: background-color 0.2s ease;
+}
+
+    .notification-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .notification-item.unread {
+        background-color: #e7f1ff;
+    }
+
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+
+.notification-time {
+    font-size: 0.75rem;
+    color: #6c757d;
+}

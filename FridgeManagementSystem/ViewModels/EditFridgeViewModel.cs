@@ -1,9 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace FridgeManagementSystem.ViewModels
+namespace FridgeManagementSystem.Models
 {
-    public class FridgeViewModel
+    public class EditFridgeViewModel
     {
         public int FridgeId { get; set; }
 
@@ -25,11 +24,11 @@ namespace FridgeManagementSystem.ViewModels
         [Required(ErrorMessage = "Acquisition Date is required")]
         [Display(Name = "Acquisition Date")]
         [DataType(DataType.Date)]
-        public DateTime AcquisitionDate { get; set; } = DateTime.Now;
+        public DateTime AcquisitionDate { get; set; }
 
         [Required(ErrorMessage = "Status is required")]
         [Display(Name = "Status")]
-        public string Status { get; set; } = "Available";
+        public string Status { get; set; }
 
         [Required(ErrorMessage = "Fridge Type is required")]
         [Display(Name = "Fridge Type")]
@@ -47,13 +46,12 @@ namespace FridgeManagementSystem.ViewModels
         [DataType(DataType.Date)]
         public DateTime? ServiceDate { get; set; }
 
-        [Required(ErrorMessage = "Please upload an image")]
         [Display(Name = "Fridge Image")]
-        public IFormFile ImageFileName { get; set; }
+        public IFormFile? ImageFileName { get; set; }
 
-        public string? ExistingImagePath { get; set; }
+        public string ExistingImagePath { get; set; }
 
         [Display(Name = "Selected Fridge Type")]
-        public string? SelectedFridgeTypeDisplay { get; set; }
+        public string SelectedFridgeTypeDisplay { get; set; }
     }
 }

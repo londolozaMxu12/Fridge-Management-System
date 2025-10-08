@@ -64,14 +64,18 @@ namespace FridgeManagementSystem.Models
         [ForeignKey("CustomerId")]
         public Customer Customer { get; set; }
 
+        [Required] 
         [Display(Name = "Supplier")]
-        public int? SupplierId { get; set; }
+        public int SupplierId { get; set; }
 
         [ForeignKey("SupplierId")]
         public Supplier Supplier { get; set; }
 
+        [Required] 
         [Display(Name = "FridgeType")]
-        public int? FridgeTypeId { get; set; }
+        public int FridgeTypeId { get; set; } 
+
+        [ForeignKey("FridgeTypeId")]
         public FridgeType FridgeType { get; set; }
 
         public Allocation CurrentAllocation { get; set; }

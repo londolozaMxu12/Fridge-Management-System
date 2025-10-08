@@ -1,12 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace FridgeManagementSystem.ViewModels
+namespace FridgeManagementSystem.Models
 {
-    public class FridgeViewModel
+    public class CreateFridgeViewModel
     {
-        public int FridgeId { get; set; }
-
         [Required(ErrorMessage = "Price is required")]
         [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
         [Display(Name = "Price")]
@@ -17,9 +14,8 @@ namespace FridgeManagementSystem.ViewModels
         [Display(Name = "Description")]
         public string Description { get; set; }
 
-        [Required(ErrorMessage = "Serial Number is required")]
-        [StringLength(100, ErrorMessage = "Serial Number cannot exceed 100 characters")]
         [Display(Name = "Serial Number")]
+        [StringLength(100, ErrorMessage = "Serial Number cannot exceed 100 characters")]
         public string SerialNumber { get; set; }
 
         [Required(ErrorMessage = "Acquisition Date is required")]
@@ -50,10 +46,5 @@ namespace FridgeManagementSystem.ViewModels
         [Required(ErrorMessage = "Please upload an image")]
         [Display(Name = "Fridge Image")]
         public IFormFile ImageFileName { get; set; }
-
-        public string? ExistingImagePath { get; set; }
-
-        [Display(Name = "Selected Fridge Type")]
-        public string? SelectedFridgeTypeDisplay { get; set; }
     }
 }

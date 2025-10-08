@@ -1,18 +1,19 @@
 ﻿@model IEnumerable<FridgeManagementSystem.Models.Fridge>
 
 @{
+    ViewData["Title"] = "Fridges Management";
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Fridges";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Fridge Management</h1>
+    <h1>Fridges Management</h1>
     <div>
-        <a asp-action="AddFridge" class="btn btn-primary">
-            <i class="fas fa-plus m-1"></i>Add New Fridge
-            
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus m-1"></i> Create New
         </a>
-        <a asp-action="Inactive" class="btn btn-outline-secondary">View Inactive Fridges</a>
+        <a asp-action="Inactive" class="btn btn-outline-secondary">
+            <i class="fas fa-archive m-1"></i> View Inactive
+        </a>
     </div>
 </div>
 
@@ -34,14 +35,16 @@
 
 <div class="card">
     <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="fas fa-list"></i> List Of Active Fridges</h5>
+        <h5 class="mb-0"><i class="fas fa-list m-1"></i>List Of Active Friges</h5>
     </div>
     <div class="card-body">
         @if (!Model.Any())
         {
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> No Active Fridges found.
-                <a asp-action="AddFridge" class="alert-link">Add the first Fridge</a>.
+            <div class="text-center py-4">
+                <i class="fas fa-refrigerator fa-3x text-muted mb-3"></i>
+                <h5>No active fridges found</h5>
+                <p class="text-muted">Get started by adding your first fridge.</p>
+                <a asp-action="Create" class="btn btn-primary">Create First Fridge</a>
             </div>
         }
         else
@@ -52,7 +55,7 @@
                         <tr>
                             <th>Image</th>
                             <th>Serial Number</th>
-                            <th>Description</th>
+                            @* <th>Description</th> *@
                             <th>Type</th>
                             <th>Price</th>
                             <th>Status</th>
@@ -67,26 +70,72 @@
                                 <td>
                                     @if (!string.IsNullOrEmpty(item.ImageFile))
                                     {
-                                        <img src="@item.ImageFile" alt="Fridge Image" style="width: 60px; height: 60px; object-fit: cover;" />
+                                        <img src="@item.ImageFile" alt="Fridge Image"
+                                             style="width: 60px; height: 60px; object-fit: cover;"
+                                             class="rounded border"
+                                             data-bs-toggle="tooltip"
+                                             data-bs-title="View larger image"
+                                             onclick="showImageModal('@item.ImageFile', '@item.SerialNumber')"
+                                             style="cursor: pointer" />
                                     }
                                     else
                                     {
-                                        <span class="text-muted">No Image</span>
+                                        <div class="text-center text-muted">
+                                            <i class="fas fa-image fa-2x"></i>
+                                            <div class="small">No Image</div>
+                                        </div>
                                     }
                                 </td>
-                                <td>@item.SerialNumber</td>
-                                <td>@item.Description</td>
-                                <td>@item.FridgeType?.Name</td>
-                                <td>@item.Price.ToString("C")</td>
+                                <td>
+                                    <strong>@item.SerialNumber</strong>
+                                </td>
+                                @* <td>@item.Description</td> *@
+                                <td>
+                                    @if (item.FridgeType != null)
+                                    {
+                                        <small class="text-muted">@item.FridgeType.Brand</small>
+                            
+                                        <br />
+                                        <strong>@item.FridgeType.Name</strong>
+
+                                        <br />
+                                        <small class="text-muted">@item.FridgeType.Model</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger">Not set</span>
+                                    }
+                                </td>
+                                <td>
+                                    <strong class="text-success">@item.Price.ToString("C")</strong>
+                                </td>
                                 <td>
                                     <span class="badge @GetStatusBadgeClass(item.Status)">@item.Status</span>
                                 </td>
-                                <td>@item.Supplier?.User?.FullName</td>
+                                <td>
+                                    @if (item.Supplier?.User != null)
+                                    {
+                                        @item.Supplier.User.FullName
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">N/A</span>
+                                    }
+                                </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <a asp-action="FridgeDetails" asp-route-id="@item.FridgeId" class="btn btn-info m-1">Details</a>
-                                        <a asp-action="EditFridge" asp-route-id="@item.FridgeId" class="btn btn-warning m-1">Edit</a>
-                                        <a asp-action="DeleteFridge" asp-route-id="@item.FridgeId" class="btn btn-danger m-1">Delete</a>
+                                        <a asp-action="Details" asp-route-id="@item.FridgeId"
+                                           class="btn btn-info" data-bs-toggle="tooltip" title="View Details">
+                                            <i class="fas fa-eye m-1"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.FridgeId"
+                                           class="btn btn-warning" data-bs-toggle="tooltip" title="Edit">
+                                            <i class="fas fa-edit m-1"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.FridgeId"
+                                           class="btn btn-danger" data-bs-toggle="tooltip" title="Delete">
+                                            <i class="fas fa-trash m-1"></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
@@ -96,8 +145,38 @@
             </div>
         }
     </div>
-       
 </div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalTitle">Fridge Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Fridge Image" class="img-fluid rounded" style="max-height: 70vh;" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showImageModal(imageSrc, serialNumber) {
+            document.getElementById('modalImage').src = imageSrc;
+            document.getElementById('imageModalTitle').textContent = 'Fridge Image - ' + serialNumber;
+            new bootstrap.Modal(document.getElementById('imageModal')).show();
+        }
+
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    </script>
+}
 
 @functions {
     public string GetStatusBadgeClass(string status)

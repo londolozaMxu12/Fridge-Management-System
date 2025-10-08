@@ -1,0 +1,195 @@
+﻿@model FridgeManagementSystem.Models.Fridge
+
+@{
+    ViewData["Title"] = "Fridge Details";
+    Layout = "_AdminLayout";
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header text-white" style="background-color: #003366;">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-refrigerator m-1"></i> Fridge Details - @Model.SerialNumber
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6 text-center">
+                        @if (!string.IsNullOrEmpty(Model.ImageFile))
+                        {
+                            <img src="@Model.ImageFile" alt="Fridge Image" class="img-fluid rounded" style="max-height: 300px;" />
+                        }
+                        else
+                        {
+                            <div class="text-muted">
+                                <i class="fas fa-image fa-5x mb-3"></i>
+                                <p>No Image Available</p>
+                            </div>
+                        }
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="fw-bold text-primary">Serial Number:</label>
+                            <p class="fs-5">@Model.SerialNumber</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold text-primary">Description:</label>
+                            <p>@Model.Description</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold text-primary">Status:</label>
+                            <span class="badge @GetStatusBadgeClass(Model.Status) fs-6">@Model.Status</span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold text-primary">Price:</label>
+                            <p class="fs-5 text-success">@Model.Price.ToString("C")</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">Fridge Information</h6>
+                        <dl class="row">
+                            <dt class="col-sm-5">Fridge Type:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.FridgeType != null)
+                                {
+                                    <div>
+                                        <strong>@Model.FridgeType.Name</strong><br />
+                                        <small class="text-muted">@Model.FridgeType.Brand - @Model.FridgeType.Model</small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-danger">Not set</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-5">Supplier:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.Supplier?.User != null)
+                                {
+                                    @Model.Supplier.User.FullName
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-5">Acquisition Date:</dt>
+                            <dd class="col-sm-7">@Model.AcquisitionDate.ToString("yyyy-MM-dd")</dd>
+
+                            <dt class="col-sm-5">Purchase Date:</dt>
+                            <dd class="col-sm-7">@Model.PurchaseDate.ToString("yyyy-MM-dd")</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">Service Information</h6>
+                        <dl class="row">
+                            <dt class="col-sm-5">Next Service Date:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.NextServiceDate.HasValue)
+                                {
+                                    @Model.NextServiceDate.Value.ToString("yyyy-MM-dd")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Not scheduled</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-5">Last Service Date:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.ServiceDate.HasValue)
+                                {
+                                    @Model.ServiceDate.Value.ToString("yyyy-MM-dd")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Never serviced</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-5">Availability:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.IsAvailable)
+                                {
+                                    <span class="badge bg-success">Available</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Not Available</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-5">Active Status:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Inactive</span>
+                                }
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+
+                @if (Model.Customer != null)
+                {
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2">Customer Information</h6>
+                            <dl class="row">
+                                <dt class="col-sm-3">Customer:</dt>
+                                <dd class="col-sm-9">@Model.Customer.User.FullName</dd>
+
+                                <dt class="col-sm-3">Business Name:</dt>
+                                <dd class="col-sm-9">@Model.Customer.BusinessName</dd>
+
+                                <dt class="col-sm-3">Customer Type:</dt>
+                                <dd class="col-sm-9">@Model.Customer.CustomerType</dd>
+                            </dl>
+                        </div>
+                    </div>
+                }
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="btn-group">
+                            <a asp-action="Edit" asp-route-id="@Model.FridgeId" class="btn btn-warning">
+                                <i class="fas fa-edit m-1"></i> Edit
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@Model.FridgeId" class="btn btn-danger">
+                                <i class="fas fa-trash m-1"></i> Delete
+                            </a>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left m-1"></i> Back to List
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Available" => "bg-success",
+            "Allocated" => "bg-primary",
+            "InService" => "bg-warning",
+            "Scrapped" => "bg-danger",
+            "Maintenance" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+}

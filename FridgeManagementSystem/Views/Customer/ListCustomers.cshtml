@@ -1,8 +1,27 @@
 ﻿@using FridgeManagementSystem.Areas.Identity.Data
 @using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
 @model IEnumerable<ApplicationUser>
-@{
+@* @{
     Layout = "_AdminLayout";
+}
+ *@
+@{
+    var user = await UserManager.GetUserAsync(User);
+    var roles = await UserManager.GetRolesAsync(user);
+
+    if (roles.Contains("Admin"))
+    {
+        Layout = "_AdminLayout";
+    }
+    else if (roles.Contains("Employee") && user.Employees?.EmployeeType?.Name == "CustomerLiaison")
+    {
+        Layout = "_CustomerLiaisonLayout";
+    }
+    else
+    {
+        Layout = "_AdminLayout"; // default fallback
+    }
 }
 
     <!DOCTYPE html>
@@ -84,9 +103,9 @@
                 <th>@Html.DisplayNameFor(model => model.Address)</th>
                 <th>@Html.DisplayNameFor(model => model.PostalCode)</th> *@
 
-                    <th width="600px">
+                    @* <th width="600px">
                         Id
-                    </th>
+                    </th> *@
                     <th width="600px">
                         Email
                     </th>
@@ -116,9 +135,9 @@
                     <td>@Html.DisplayFor(modelitem => item.City)</td>
                     <td>@Html.DisplayFor(modelitem => item.Address)</td>
                     <td>@Html.DisplayFor(modelitem => item.PostalCode)</td> *@
-                        <td width="800px">
+                        @* <td width="800px">
                             @item.Id
-                        </td>
+                        </td> *@
                         <td width="600px">
                             @item.Email
                         </td>

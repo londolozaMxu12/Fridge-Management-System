@@ -10,10 +10,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -119,22 +121,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 
-                //var user = await _userManager.FindByEmailAsync(Input.Email);
-
-                //if (user != null)
-                //{
-                //    if (user.ApprovalStatus != "Approved")
-                //    {
-                //        ModelState.AddModelError(string.Empty, "Your account is pending approval. Please wait for administrator approval.");
-                //        return Page();
-                //    }
-
-                //    if (!user.IsActive)
-                //    {
-                //        ModelState.AddModelError(string.Empty, "Your account has been deactivated. Please contact administrator.");
-                //        return Page();
-                //    }
-                //}
+                
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
@@ -144,7 +131,19 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                     //var role = await _userManager.GetRolesAsync(user);
                     
                     _logger.LogInformation("User logged in.");
-                    var user = await _userManager.FindByEmailAsync(Input.Email);
+                    //var user = await _userManager.FindByEmailAsync(Input.Email);
+
+                    var user = await _userManager.Users
+                .Include(u => u.Employees)
+                    .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Email == Input.Email);
+
+                    if (user == null)
+                    {
+                        ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                        return Page();
+                    }
+
                     if (user != null)
                     {
                         // Check if user exists and is approved
@@ -161,7 +160,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                         }
 
                         var role = await _userManager.GetRolesAsync(user);
-                        var primaryRole = role.FirstOrDefault();
+                        //var primaryRole = role.FirstOrDefault();
 
                         // Redirect based on primary role
                         //return primaryRole?.ToLower() switch
@@ -182,22 +181,48 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                         {
                             return RedirectToAction("Index", "Customer");
                         }
-                        else if (role.Contains("Customer Management"))
+                        else if (role.Contains("Employee"))
                         {
-                            return RedirectToAction("Index", "CustomerManagement");
+                            var empType = user.Employees?.EmployeeType?.Name;
+
+                            if (empType == "FaultTechnician")
+                            {
+                                return RedirectToAction("Index", "FaultManagement", new { area = "" });
+                            }
+                            else if (empType == "MaintenanceTechnician")
+                            {
+                                return RedirectToAction("Index", "MaintenanceManagement", new { area = "" });
+                            }
+                            else if (empType == "PurchasingManager")
+                            {
+                                return RedirectToAction("Index", "PurchasingManagement", new { area = "" });
+                            }
+                            else if (empType == "CustomerLiaison")
+                            {
+                                return RedirectToAction("Index", "CustomerManagement", new { area = "" });
+                            }
+                            else
+                            {
+                                // Default employee dashboard
+                                return RedirectToAction("Index", "Employee");
+                            }
                         }
-                        else if (role.Contains("Fault Technician"))
-                        {
-                            return RedirectToAction("Index", "FaultManagement");
-                        }
-                        else if (role.Contains("Maintenance Technician"))
-                        {
-                            return RedirectToAction("Index", "MaintenanceManagement");
-                        }
-                        else if (role.Contains("Purchasing Management"))
-                        {
-                            return RedirectToAction("Index", "PurchasingManagement");
-                        }
+                        //else if (role.Contains("Customer Management"))
+                        //{
+                        //    return RedirectToAction("Index", "CustomerManagement");
+                        //}
+                        //else if (role.Contains("Fault Technician"))
+                        //{
+                        //    return RedirectToAction("Index", "FaultManagement");
+                        //}
+                        //else if (role.Contains("Maintenance Technician"))
+                        //{
+                        //    return RedirectToAction("Index", "MaintenanceManagement");
+                        //}
+                        //else if (role.Contains("Purchasing Management"))
+                        //{
+                        //    return RedirectToAction("Index", "PurchasingManagement");
+                        //}
                     }
 
                     return LocalRedirect(returnUrl);

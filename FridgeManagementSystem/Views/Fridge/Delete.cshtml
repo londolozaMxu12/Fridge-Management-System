@@ -1,0 +1,120 @@
+﻿@model FridgeManagementSystem.Models.Fridge
+
+@{
+    ViewData["Title"] = "Delete Fridge";
+    Layout = "_AdminLayout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle m-1"></i> @ViewData["Title"]
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-circle m-1"></i> Warning!
+                    </h6>
+                    <p class="mb-0">You are about to delete this fridge. This action will set the fridge as inactive.</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        @if (!string.IsNullOrEmpty(Model.ImageFile))
+                        {
+                            <img src="@Model.ImageFile" alt="Fridge Image" class="img-fluid rounded" style="max-height: 200px;" />
+                        }
+                        else
+                        {
+                            <div class="text-muted">
+                                <i class="fas fa-image fa-3x mb-2"></i>
+                                <p>No Image</p>
+                            </div>
+                        }
+                    </div>
+                    <div class="col-md-8">
+                        <h6>Fridge Details:</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">Serial Number:</dt>
+                            <dd class="col-sm-8"><strong>@Model.SerialNumber</strong></dd>
+
+                            <dt class="col-sm-4">Description:</dt>
+                            <dd class="col-sm-8">@Model.Description</dd>
+
+                            <dt class="col-sm-4">Type:</dt>
+                            <dd class="col-sm-8">
+                                @if (Model.FridgeType != null)
+                                {
+                                    @Model.FridgeType.DisplayName
+                                }
+                                else
+                                {
+                                    <span class="text-danger">Not set</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-4">Price:</dt>
+                            <dd class="col-sm-8">@Model.Price.ToString("C")</dd>
+
+                            <dt class="col-sm-4">Status:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge @GetStatusBadgeClass(Model.Status)">@Model.Status</span>
+                            </dd>
+
+                            <dt class="col-sm-4">Supplier:</dt>
+                            <dd class="col-sm-8">
+                                @if (Model.Supplier?.User != null)
+                                {
+                                    @Model.Supplier.User.FullName
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle"></i> Note
+                    </h6>
+                    <p class="mb-0">
+                        The fridge will be marked as inactive but can be restored later from the "Inactive Fridges" page.
+                    </p>
+                </div>
+
+                <form asp-action="Delete" method="post">
+                    <input type="hidden" asp-for="FridgeId" />
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-danger me-2">
+                            <i class="fas fa-trash m-1"></i> Confirm Delete
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left m-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Available" => "bg-success",
+            "Allocated" => "bg-primary",
+            "InService" => "bg-warning",
+            "Scrapped" => "bg-danger",
+            "Maintenance" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+}

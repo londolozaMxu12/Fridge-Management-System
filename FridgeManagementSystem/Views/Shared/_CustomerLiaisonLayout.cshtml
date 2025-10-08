@@ -1,0 +1,524 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Fridge Management System | Customer Liaison</title>
+
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">   
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"> 
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/customer-liaison.css" asp-append-version="true" />
+
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        main {
+            flex: 1; /* Pushes footer to bottom */
+        }
+
+        footer {
+            margin-top: auto;
+        }
+    </style>
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- Header -->
+    <header class="navbar navbar-expand-lg navbar-dark bg-success sticky-top">
+        <div class="container-fluid">
+            <!-- Brand -->
+            <a class="navbar-brand d-flex align-items-center" asp-area="CustomerLiaison" asp-controller="CustomerManagement" asp-action="Index">
+                <i class="bi bi-people-fill me-2 fs-4"></i>
+                <span class="fw-bold">Customer Liaison Portal</span>
+            </a>
+
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#liaisonNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navigation -->
+            <div class="collapse navbar-collapse" id="liaisonNavbar">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="CustomerLiaison" asp-controller="CustomerManagement" asp-action="Index">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
+                    </li>
+
+                    <!-- Customer Management -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-badge me-1"></i>Customer Management
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Customer" asp-action="ListCustomers">
+                                    <i class="bi bi-list-ul me-2"></i>All Customers
+                                </a>
+                            </li>
+                            @* <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Customers" asp-action="Create">
+                                    <i class="bi bi-person-plus me-2"></i>Add New Customer
+                                </a>
+                            </li> *@
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Customers" asp-action="Active">
+                                    <i class="bi bi-person-check me-2"></i>Active Customers
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Customers" asp-action="Inactive">
+                                    <i class="bi bi-person-x me-2"></i>Inactive Customers
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Fridge Allocation -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-refrigerator me-1"></i>Fridge Allocation
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="FridgeAllocations" asp-action="Index">
+                                    <i class="bi bi-list-check me-2"></i>All Allocations
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="FridgeAllocations" asp-action="Create">
+                                    <i class="bi bi-plus-circle me-2"></i>New Allocation
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="FridgeAllocations" asp-action="Pending">
+                                    <i class="bi bi-clock me-2"></i>Pending Allocations
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="FridgeAllocations" asp-action="Active">
+                                    <i class="bi bi-check-circle me-2"></i>Active Allocations
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Inventory Management -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-clipboard-data me-1"></i>Inventory
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Inventory" asp-action="Index">
+                                    <i class="bi bi-box-seam me-2"></i>Fridge Stock
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Inventory" asp-action="LowStock">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>Low Stock Alert
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="PurchaseRequests" asp-action="Index">
+                                    <i class="bi bi-cart-plus me-2"></i>Purchase Requests
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="PurchaseRequests" asp-action="Create">
+                                    <i class="bi bi-plus-circle me-2"></i>New Purchase Request
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Reports -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-graph-up me-1"></i>Reports
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Reports" asp-action="CustomerDistribution">
+                                    <i class="bi bi-pie-chart me-2"></i>Customer Distribution
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Reports" asp-action="FridgeUtilization">
+                                    <i class="bi bi-bar-chart me-2"></i>Fridge Utilization
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Reports" asp-action="AllocationHistory">
+                                    <i class="bi bi-clock-history me-2"></i>Allocation History
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <!-- User Menu -->
+                <ul class="navbar-nav">
+                    <partial name="_LoginPartial" />
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container-fluid px-0">
+        <!-- Alert Container -->
+        <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1050; margin-top: 80px;">
+            <!-- Alerts will be inserted here dynamically -->
+        </div>
+
+        <!-- Notifications Panel -->
+        <div id="notificationsPanel" class="position-fixed end-0 top-0 mt-5 me-3" style="z-index: 1045; display: none; width: 400px;">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-bell-fill me-2"></i>Notifications</h6>
+                    <button type="button" class="btn-close btn-close-white" id="closeNotifications"></button>
+                </div>
+                <div class="card-body p-0">
+                    <div id="notificationList" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Notifications will be loaded here -->
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="#" class="btn btn-sm btn-outline-primary">View All Notifications</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Header -->
+        <div class="bg-light border-bottom py-3 mb-4">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h1 class="h3 mb-0">
+                            <i class="bi @ViewData["PageIcon"] me-2 text-success"></i>@ViewData["Title"]
+                        </h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a asp-area="CustomerLiaison" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                                @if (ViewData["Breadcrumb"] != null)
+                                {
+                                    @Html.Raw(ViewData["Breadcrumb"])
+                                }
+                                <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="col-auto">
+                        @RenderSection("HeaderActions", required: false)
+
+                        <!-- Global Search -->
+                        <div class="input-group input-group-sm" style="width: 300px;">
+                            <input type="text" id="globalSearch" class="form-control" placeholder="Search customers, fridges, allocations...">
+                            <button class="btn btn-outline-success" type="button" id="globalSearchBtn">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Bar -->
+        <div class="container-fluid mb-4">
+            <div class="row g-3" id="quickStats">
+                <!-- Quick stats will be loaded dynamically -->
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="container-fluid">
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light">
+        <div class="container py-4">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5 class="fw-bold">
+                        <i class="bi bi-refrigerator me-2"></i>Fridge Management System
+                    </h5>
+                    <p class="mb-2">Ensuring proper refrigeration for your beverages</p>
+
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <h6 class="fw-bold">Support</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-telephone me-2"></i>+27 12 345 6789</li>
+                        <li><i class="bi bi-envelope me-2"></i>nmdesignhub@gmail.com</li>
+                        <li><i class="bi bi-clock me-2"></i>Mon-Fri: 8:00-17:00</li>
+                    </ul>
+                </div>
+
+            </div>
+            <hr class="my-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2024 Fridge Management System. All rights reserved.</p>
+                </div>
+
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/customer-liaison.js" asp-append-version="true"></script>
+
+    <!-- Customer Liaison JavaScript -->
+    <script>
+        
+        // Notifications Toggle
+        document.getElementById('notificationsToggle')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            const panel = document.getElementById('notificationsPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        });
+
+        document.getElementById('closeNotifications')?.addEventListener('click', function() {
+            document.getElementById('notificationsPanel').style.display = 'none';
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            
+
+            // Load quick stats
+            loadQuickStats();
+
+            // Load notifications
+            loadNotifications();
+
+            // Initialize global search
+            initializeGlobalSearch();
+
+            // Initialize DataTables
+            initializeDataTables();
+        });
+                
+        async function loadQuickStats() {
+            try {
+                const response = await fetch('/CustomerLiaison/Dashboard/GetQuickStats');
+                if (response.ok) {
+                    const stats = await response.json();
+                    updateQuickStats(stats);
+                }
+            } catch (error) {
+                console.error('Failed to load quick stats:', error);
+            }
+        }
+
+        function updateQuickStats(stats) {
+            const quickStatsHTML = `
+                <div class="col-xl-2 col-md-4 col-sm-6">
+                    <div class="card quick-stat-card bg-primary text-white">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h4 class="mb-0">${stats.totalCustomers || 0}</h4>
+                                    <small>Total Customers</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-people-fill fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-2 col-md-4 col-sm-6">
+                    <div class="card quick-stat-card bg-success text-white">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h4 class="mb-0">${stats.allocatedFridges || 0}</h4>
+                                    <small>Allocated Fridges</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-refrigerator fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-2 col-md-4 col-sm-6">
+                    <div class="card quick-stat-card bg-warning text-dark">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h4 class="mb-0">${stats.pendingAllocations || 0}</h4>
+                                    <small>Pending Allocations</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-clock fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-2 col-md-4 col-sm-6">
+                    <div class="card quick-stat-card bg-info text-white">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h4 class="mb-0">${stats.availableFridges || 0}</h4>
+                                    <small>Available Fridges</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-box-seam fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-2 col-md-4 col-sm-6">
+                    <div class="card quick-stat-card bg-danger text-white">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h4 class="mb-0">${stats.lowStockItems || 0}</h4>
+                                    <small>Low Stock Items</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-exclamation-triangle fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-2 col-md-4 col-sm-6">
+                    <div class="card quick-stat-card bg-secondary text-white">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h4 class="mb-0">${stats.pendingRequests || 0}</h4>
+                                    <small>Pending Requests</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-cart-plus fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('quickStats').innerHTML = quickStatsHTML;
+        }
+
+        function initializeGlobalSearch() {
+            const searchInput = document.getElementById('globalSearch');
+            const searchBtn = document.getElementById('globalSearchBtn');
+
+            if (searchInput && searchBtn) {
+                searchBtn.addEventListener('click', performGlobalSearch);
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        performGlobalSearch();
+                    }
+                });
+            }
+        }
+
+        function performGlobalSearch() {
+            const query = document.getElementById('globalSearch').value.trim();
+            if (query) {
+                // Redirect to search results page or show modal
+                window.location.href = `/CustomerLiaison/Search/Results?query=${encodeURIComponent(query)}`;
+            }
+        }
+
+        function initializeDataTables() {
+            // Initialize DataTables on tables with the 'data-table' class
+            $('table[data-table]').DataTable({
+                responsive: true,
+                pageLength: 25,
+                language: {
+                    search: "Search:",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    infoEmpty: "Showing 0 to 0 of 0 entries",
+                    infoFiltered: "(filtered from _MAX_ total entries)"
+                }
+            });
+        }
+
+        // Global function to show alerts
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert-' + Date.now();
+
+            const alertHTML = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-${getAlertIcon(type)} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        function getAlertIcon(type) {
+            const icons = {
+                'success': 'check-circle-fill',
+                'danger': 'exclamation-triangle-fill',
+                'warning': 'exclamation-triangle-fill',
+                'info': 'info-circle-fill'
+            };
+            return icons[type] || 'info-circle-fill';
+        }
+
+        // Quick stock check functionality
+        document.getElementById('quickStockCheck')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Implement quick stock check modal or redirect
+            showAlert('Opening stock level dashboard...', 'info');
+            setTimeout(() => {
+                window.location.href = '/CustomerLiaison/Inventory/LowStock';
+            }, 1000);
+        });
+        
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+
