@@ -18,6 +18,7 @@ namespace FridgeManagementSystem.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly FridgeManagementSystemContext _context;
+
         public AdminController(RoleManager<IdentityRole> roleManager,
             UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context)
         {
