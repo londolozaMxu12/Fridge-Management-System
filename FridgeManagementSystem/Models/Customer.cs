@@ -30,6 +30,6 @@ namespace FridgeManagementSystem.Models
         public ICollection<Fault> Faults { get; set; }
         public ICollection<FridgeRequest> FridgeRequests { get; set; }
         public ICollection<Quotation> Quotations { get; set; }
-        public ICollection<Allocation> Allocations { get; set; }
+        public ICollection<Allocation> Allocations { get; set; } = new List<Allocation>();
     }
 }

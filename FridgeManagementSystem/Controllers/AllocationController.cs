@@ -1,238 +1,351 @@
-﻿//using FridgeManagementSystem.Data;
+﻿//using FridgeManagementSystem.Areas.Identity.Data;
+//using FridgeManagementSystem.Data;
 //using FridgeManagementSystem.Models;
 //using FridgeManagementSystem.ViewModels;
+//using Microsoft.AspNetCore.Authorization;
+//using Microsoft.AspNetCore.Identity;
 //using Microsoft.AspNetCore.Mvc;
 //using Microsoft.AspNetCore.Mvc.Rendering;
 //using Microsoft.EntityFrameworkCore;
 //using System.Security.Claims;
 
-//namespace FridgeManagementSystem.Controllers
+//[Authorize(Roles = "Admin,CustomerLiaison")]
+//public class AllocationController : Controller
 //{
-//    public class AllocationController : Controller
+//    private readonly FridgeManagementSystemContext _context;
+//    private readonly UserManager<ApplicationUser> _userManager;
+//    private readonly INotificationService _notificationService;
+
+//    public AllocationController(FridgeManagementSystemContext context, UserManager<ApplicationUser> userManager,
+//                              INotificationService notificationService)
+
 //    {
-//        private readonly FridgeManagementSystemContext _context;
-//        public AllocationController(FridgeManagementSystemContext context)
-//        { 
-//            _context = context;
-//        }
-//        // GET: FridgeAllocations
-//        public async Task<IActionResult> Index()
+//        _context = context;
+//        _userManager = userManager;
+//        _notificationService = notificationService;
+//    }
+
+//    // GET: Allocation/Index - Show allocated fridges
+//    public async Task<IActionResult> Index()
+//    {
+//        var allocations = await _context.Allocations
+//            .Include(a => a.Customer)
+//            .ThenInclude(c => c.User)
+//            .Include(a => a.Fridge)
+//            .ThenInclude(f => f.FridgeType)
+//            .Include(a => a.AllocatedBy)
+//            .Where(a => a.IsActive)
+//            .OrderByDescending(a => a.AllocationDate)
+//            .ToListAsync();
+
+//        return View(allocations);
+//    }
+
+//    GET: Allocation/PendingOrders - Show orders waiting for allocation
+//    public async Task<IActionResult> PendingOrders()
+//    {
+//        var pendingOrders = await _context.CustomerOrders
+//            .Include(o => o.User)
+//            .Include(o => o.OrderItems)
+//            .ThenInclude(oi => oi.Fridge)
+//            .ThenInclude(f => f.FridgeType)
+//            .Where(o => o.Status == "Processing" && o.PaymentStatus == "Paid")
+//            .OrderBy(o => o.OrderDate)
+//            .ToListAsync();
+
+//        var viewModel = pendingOrders.Select(order => new PendingAllocationViewModel
 //        {
-//            var allocations = await _context.Allocations
-//                .Include(f => f.Fridge)
-//                .Include(f => f.Customer)
-//                .ThenInclude(c => c.User)
-//                .Include(f => f.AllocatedBy)
-//                .Where(f => f.IsActive)
-//                .OrderByDescending(f => f.AllocationDate)
-//                .ToListAsync();
+//            CustomerOrderId = order.CustomerOrderId,
+//            CustomerName = order.User.FullName,
+//            CustomerEmail = order.User.Email,
+//            CustomerPhone = order.User.PhoneNumber,
+//            OrderDate = order.OrderDate,
+//            TotalAmount = order.TotalAmount,
+//            OrderItems = order.OrderItems.Select(oi => new OrderItemViewModel
+//            {
+//                FridgeId = oi.FridgeId,
+//                SerialNumber = oi.Fridge.SerialNumber,
+//                Description = oi.Fridge.Description,
+//                Price = oi.UnitPrice,
+//                FridgeType = $"{oi.Fridge.FridgeType.Brand} {oi.Fridge.FridgeType.Name}",
+//                IsAllocated = oi.Fridge.Status == "Allocated"
+//            }).ToList()
+//        }).ToList();
 
-//            return View(allocations);
+//        return View(viewModel);
+//    }
+
+//    // GET: Allocation/Allocate/{orderId}
+//    public async Task<IActionResult> Allocate(int orderId)
+//    {
+//        var order = await _context.CustomerOrders
+//            .Include(o => o.User)
+//            .Include(o => o.OrderItems)
+//            .ThenInclude(oi => oi.Fridge)
+//            .ThenInclude(f => f.FridgeType)
+//            .FirstOrDefaultAsync(o => o.CustomerOrderId == orderId);
+
+//        if (order == null)
+//        {
+//            TempData["Error"] = "Order not found";
+//            return RedirectToAction(nameof(PendingOrders));
 //        }
 
-//        // GET: FridgeAllocations/Allocate/5
-//        public async Task<IActionResult> Allocate(int? id)
+//        // Get or create customer
+//        var customer = await _context.Customers
+//            .FirstOrDefaultAsync(c => c.UserId == order.UserId);
+
+//        if (customer == null)
 //        {
-//            if (id == null)
+//            // Create customer record if it doesn't exist
+//            customer = new Customer
 //            {
-//                return NotFound();
-//            }
-
-//            var fridge = await _context.Fridges
-//                .Include(f => f.Customer)
-//                .ThenInclude(c => c.User)
-//                .FirstOrDefaultAsync(f => f.FridgeId == id && f.IsActive);
-
-//            if (fridge == null)
-//            {
-//                return NotFound();
-//            }
-
-//            if (fridge.Status == "Assigned")
-//            {
-//                TempData["ErrorMessage"] = "This fridge is already allocated to a customer.";
-//                return RedirectToAction(nameof(Index));
-//            }
-
-//            ViewBag.Customers = await _context.Customers
-//                .Where(c => c.User.IsActive && c.User.ApprovalStatus == "Approved")
-//                .Select(c => new SelectListItem
-//                {
-//                    Value = c.Id.ToString(),
-//                    Text = $"{c.BusinessName} - {c.User.FullName}"
-//                })
-//                .ToListAsync();
-
-//            var model = new FridgeAllocationViewModel
-//            {
-//                FridgeId = fridge.FridgeId,
-//                FridgeSerialNumber = fridge.SerialNumber,
-//                FridgeModel = fridge.Model
+//                UserId = order.UserId,
+//                BusinessName = $"{order.User.FullName}'s Business",
+//                CustomerType = "Other",
+//                IsActive = true,
+//                CreatedAt = DateTime.UtcNow,
+//                CreatedByFullName = User.Identity.Name,
+//                CreatedById = User.FindFirstValue(ClaimTypes.NameIdentifier)
 //            };
-
-//            return View(model);
+//            _context.Customers.Add(customer);
+//            await _context.SaveChangesAsync();
 //        }
 
-//        // POST: FridgeAllocations/Allocate
-//        [HttpPost]
-//        [ValidateAntiForgeryToken]
-//        public async Task<IActionResult> Allocate(FridgeAllocationViewModel model)
+//        var availableFridges = order.OrderItems
+//            .Where(oi => oi.Fridge.Status == "Available" || oi.Fridge.Status == "Processing")
+//            .Select(oi => oi.Fridge)
+//            .ToList();
+
+//        if (!availableFridges.Any())
 //        {
-//            if (ModelState.IsValid)
+//            TempData["Error"] = "No available fridges found in this order";
+//            return RedirectToAction(nameof(PendingOrders));
+//        }
+
+//        ViewBag.OrderId = orderId;
+//        ViewBag.CustomerId = customer.Id;
+//        ViewBag.CustomerName = order.User.FullName;
+//        ViewBag.CustomerBusiness = customer.BusinessName;
+
+//        var fridgeList = availableFridges.Select(f => new SelectListItem
+//        {
+//            Value = f.FridgeId.ToString(),
+//            Text = $"{f.FridgeType.Brand} {f.FridgeType.Name} - {f.SerialNumber} - {f.Price:C}"
+//        }).ToList();
+
+//        ViewBag.FridgeList = new SelectList(fridgeList, "Value", "Text");
+
+//        var model = new AllocationViewModel
+//        {
+//            CustomerId = customer.Id,
+//            CustomerName = order.User.FullName,
+//            CustomerBusiness = customer.BusinessName
+//        };
+
+//        return View(model);
+//    }
+
+//    // POST: Allocation/Allocate
+//    [HttpPost]
+//    [ValidateAntiForgeryToken]
+//    public async Task<IActionResult> Allocate(AllocationViewModel model)
+//    {
+//        if (ModelState.IsValid)
+//        {
+//            try
 //            {
-//                var fridge = await _context.Fridges.FindAsync(model.FridgeId);
-//                if (fridge == null || !fridge.IsActive)
+//                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+//                var currentUser = await _userManager.FindByIdAsync(currentUserId);
+
+//                // Verify customer exists and is active
+//                var customer = await _context.Customers
+//                    .Include(c => c.User)
+//                    .FirstOrDefaultAsync(c => c.Id == model.CustomerId && c.IsActive);
+
+//                if (customer == null)
 //                {
-//                    return NotFound();
+//                    ModelState.AddModelError("CustomerId", "Customer not found or inactive");
+//                    return View(model);
 //                }
 
-//                // Update fridge status and allocation info
-//                fridge.Status = "Assigned";
-//                fridge.CustomerId = model.CustomerId;
-//                fridge.AllocationDate = DateTime.UtcNow;
-//                fridge.ServiceDate = model.ServiceDate;
+//                // Verify fridge exists and is available
+//                var fridge = await _context.Fridges
+//                    .Include(f => f.FridgeType)
+//                    .FirstOrDefaultAsync(f => f.FridgeId == model.FridgeId &&
+//                                            f.IsActive &&
+//                                            (f.Status == "Available" || f.Status == "Processing"));
 
-//                // Create allocation record
+//                if (fridge == null)
+//                {
+//                    ModelState.AddModelError("FridgeId", "Fridge not found, inactive, or already allocated");
+//                    return View(model);
+//                }
+
+//                // Create allocation
 //                var allocation = new Allocation
 //                {
+//                    CustomerId = model.CustomerId,
 //                    FridgeId = model.FridgeId,
-//                    CustomerId = model.CustomerId.Value,
-//                    AllocatedById = User.FindFirstValue(ClaimTypes.NameIdentifier),
-//                    AllocationDate = DateTime.UtcNow,
+//                    AllocatedById = currentUserId,
+//                    AllocationDate = DateTime.Now,
 //                    ServiceDate = model.ServiceDate,
-                    
 //                    IsActive = true
 //                };
 
 //                _context.Allocations.Add(allocation);
+
+//                // Update fridge status
+//                fridge.Status = "Allocated";
+//                fridge.IsAvailable = false;
+//                fridge.AllocationDate = DateTime.Now;
+//                fridge.CustomerId = model.CustomerId;
+
 //                _context.Fridges.Update(fridge);
 
-//                // Create notification for the customer
-//                var customer = await _context.Customers
-//                    .Include(c => c.User)
-//                    .FirstOrDefaultAsync(c => c.Id == model.CustomerId);
+//                // Update order status if all items are allocated
+//                var order = await _context.CustomerOrders
+//                    .Include(o => o.OrderItems)
+//                    .FirstOrDefaultAsync(o => o.UserId == customer.UserId &&
+//                                            o.Status == "Processing" &&
+//                                            o.OrderItems.Any(oi => oi.FridgeId == model.FridgeId));
 
-//                if (customer != null)
+//                if (order != null)
 //                {
-//                    var notification = new Notification
-//                    {
-//                        UserId = customer.UserId,
-//                        Title = "Fridge Allocated to Your Business",
-//                        Message = $"A fridge (Serial: {fridge.SerialNumber}, Model: {fridge.Model}) has been allocated to your business. Service date: {model.ServiceDate:yyyy-MM-dd}",
-//                        Link = $"/Customer/MyFridges"
-//                    };
+//                    var unallocatedItems = order.OrderItems
+//                        .Where(oi => oi.Fridge.Status != "Allocated")
+//                        .Count();
 
-//                    _context.Notifications.Add(notification);
+//                    if (unallocatedItems == 0)
+//                    {
+//                        order.Status = "Completed";
+//                        _context.CustomerOrders.Update(order);
+//                    }
 //                }
 
 //                await _context.SaveChangesAsync();
 
-//                TempData["SuccessMessage"] = "Fridge allocated successfully. Customer has been notified.";
-//                return RedirectToAction(nameof(Index));
+//                // Send notifications
+//                await _notificationService.NotifyFridgeAllocationAsync(allocation, currentUser.FullName);
+
+//                TempData["Success"] = $"Fridge {fridge.SerialNumber} successfully allocated to {customer.User.FullName}";
+//                return RedirectToAction(nameof(Details), new { id = allocation.AllocationId });
 //            }
-
-//            ViewBag.Customers = await _context.Customers
-//                .Where(c => c.User.IsActive && c.User.ApprovalStatus == "Approved")
-//                .Select(c => new SelectListItem
-//                {
-//                    Value = c.Id.ToString(),
-//                    Text = $"{c.BusinessName} - {c.User.FullName}"
-//                })
-//                .ToListAsync();
-
-//            return View(model);
+//            catch (Exception ex)
+//            {
+//                ModelState.AddModelError("", $"An error occurred: {ex.Message}");
+//            }
 //        }
 
-//        // GET: FridgeAllocations/Deallocate/5
-//        public async Task<IActionResult> Deallocate(int? id)
+//        // Reload view data if validation fails
+//        await LoadAllocationViewData(model.CustomerId, model.FridgeId);
+//        return View(model);
+//    }
+
+//    // GET: Allocation/Details/5
+//    public async Task<IActionResult> Details(int id)
+//    {
+//        var allocation = await _context.Allocations
+//            .Include(a => a.Customer)
+//            .ThenInclude(c => c.User)
+//            .Include(a => a.Fridge)
+//            .ThenInclude(f => f.FridgeType)
+//            .Include(a => a.AllocatedBy)
+//            .FirstOrDefaultAsync(a => a.AllocationId == id);
+
+//        if (allocation == null)
 //        {
-//            if (id == null)
-//            {
-//                return NotFound();
-//            }
-
-//            var allocation = await _context.Allocations
-//                .Include(f => f.Fridge)
-//                .Include(f => f.Customer)
-//                .ThenInclude(c => c.User)
-//                .FirstOrDefaultAsync(f => f.FridgeId == id && f.IsActive);
-
-//            if (allocation == null)
-//            {
-//                return NotFound();
-//            }
-
-//            return View(allocation);
+//            TempData["Error"] = "Allocation not found";
+//            return RedirectToAction(nameof(Index));
 //        }
 
-//        // POST: FridgeAllocations/Deallocate/5
-//        [HttpPost, ActionName("Deallocate")]
-//        [ValidateAntiForgeryToken]
-//        public async Task<IActionResult> DeallocateConfirmed(int id)
-//        {
-//            var allocation = await _context.Allocations.FindAsync(id);
-//            if (allocation == null)
-//            {
-//                return NotFound();
-//            }
+//        return View(allocation);
+//    }
 
+//    // GET: Allocation/Deallocate/5
+//    [Authorize(Roles = "Admin")]
+//    public async Task<IActionResult> Deallocate(int id)
+//    {
+//        var allocation = await _context.Allocations
+//            .Include(a => a.Customer)
+//            .ThenInclude(c => c.User)
+//            .Include(a => a.Fridge)
+//            .ThenInclude(f => f.FridgeType)
+//            .FirstOrDefaultAsync(a => a.AllocationId == id && a.IsActive);
+
+//        if (allocation == null)
+//        {
+//            TempData["Error"] = "Allocation not found or already deallocated";
+//            return RedirectToAction(nameof(Index));
+//        }
+
+//        return View(allocation);
+//    }
+
+//    // POST: Allocation/Deallocate/5
+//    [HttpPost, ActionName("Deallocate")]
+//    [ValidateAntiForgeryToken]
+//    [Authorize(Roles = "Admin")]
+//    public async Task<IActionResult> DeallocateConfirmed(int id)
+//    {
+//        var allocation = await _context.Allocations
+//            .Include(a => a.Fridge)
+//            .Include(a => a.Customer)
+//            .ThenInclude(c => c.User)
+//            .FirstOrDefaultAsync(a => a.AllocationId == id && a.IsActive);
+
+//        if (allocation != null)
+//        {
+//            // Deactivate allocation
 //            allocation.IsActive = false;
 
-//            // Update fridge status
-//            var fridge = await _context.Fridges.FindAsync(allocation.FridgeId);
-//            if (fridge != null)
-//            {
-//                fridge.Status = "Available";
-//                fridge.CustomerId = null;
-//                fridge.AllocationDate = null;
-//                fridge.ServiceDate = null;
+//            // Reset fridge status
+//            var fridge = allocation.Fridge;
+//            fridge.Status = "Available";
+//            fridge.IsAvailable = true;
+//            fridge.AllocationDate = null;
+//            fridge.CustomerId = null;
 
-//                _context.Fridges.Update(fridge);
-//            }
+//            _context.Allocations.Update(allocation);
+//            _context.Fridges.Update(fridge);
 
 //            await _context.SaveChangesAsync();
 
-//            TempData["SuccessMessage"] = "Fridge deallocated successfully.";
-//            return RedirectToAction(nameof(Index));
+//            // Send notification
+//            await _notificationService.CreateNotificationAsync(
+//                allocation.Customer.UserId,
+//                "Fridge Deallocated",
+//                $"Your fridge {fridge.SerialNumber} has been deallocated from your business.",
+//                "/Customer/MyFridges"
+//            );
+
+//            TempData["Success"] = $"Fridge {fridge.SerialNumber} deallocated from {allocation.Customer.User.FullName}";
 //        }
-//        //public async Task<IActionResult> Create()
-//        //{
-//        //    ViewBag.Customers = await _db.Customers.ToListAsync();
-//        //    ViewBag.Fridges = await _db.Fridges.Where(f => f.Status == Status.Available).ToListAsync();
-//        //    return View();
-//        //}
 
-//        //[HttpPost]
-//        //public async Task<IActionResult> Create(int customerId, int fridgeId)
-//        //{
-//        //    var fridge = await _db.Fridges.FindAsync(fridgeId);
-//        //    if (fridge == null || fridge.Status != FridgeStatus.Available) return BadRequest("Fridge not available");
+//        return RedirectToAction(nameof(Index));
+//    }
 
-//        //    var allocation = new Allocation { CustomerId = customerId, FridgeId = fridgeId, StartDate = DateTime.UtcNow, Status = AllocationStatus.Active };
-//        //    fridge.Status = FridgeStatus.Allocated;
+//    private async Task LoadAllocationViewData(int customerId, int fridgeId)
+//    {
+//        var customer = await _context.Customers
+//            .Include(c => c.User)
+//            .FirstOrDefaultAsync(c => c.Id == customerId);
 
-//        //    _db.Allocations.Add(allocation);
-//        //    _db.Fridges.Update(fridge);
-//        //    await _db.SaveChangesAsync();
-//        //    return RedirectToAction("Details", "Customers", new { id = customerId });
-//        //}
+//        var fridge = await _context.Fridges
+//            .Include(f => f.FridgeType)
+//            .FirstOrDefaultAsync(f => f.FridgeId == fridgeId);
 
-//        //[HttpPost]
-//        //public async Task<IActionResult> Return(int allocationId)
-//        //{
-//        //    var allocation = await _db.Allocations.Include(a => a.Fridge).FirstOrDefaultAsync(a => a.AllocationId == allocationId);
-//        //    if (allocation == null) return NotFound();
+//        if (customer != null)
+//        {
+//            ViewBag.CustomerName = customer.User.FullName;
+//            ViewBag.CustomerBusiness = customer.BusinessName;
+//        }
 
-//        //    allocation.EndDate = DateTime.UtcNow;
-//        //    allocation.Status = AllocationStatus.Returned;
-//        //    allocation.Fridge.Status = FridgeStatus.Available;
-
-//        //    _db.Update(allocation);
-//        //    _db.Update(allocation.Fridge);
-//        //    await _db.SaveChangesAsync();
-
-//        //    return RedirectToAction("Details", "Customers", new { id = allocation.CustomerId });
-//        //}
-
+//        if (fridge != null)
+//        {
+//            ViewBag.FridgeDescription = fridge.Description;
+//            ViewBag.FridgeSerialNumber = fridge.SerialNumber;
+//            ViewBag.FridgePrice = fridge.Price;
+//        }
 //    }
 //}
