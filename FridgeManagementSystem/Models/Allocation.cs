@@ -30,7 +30,7 @@ namespace FridgeManagementSystem.Models
         [Required]
         [Display(Name = "Allocation Date")]
         public DateTime AllocationDate { get; set; }=DateTime.Now;
-        //public DateTime? EndDate { get; set; }
+        
         [Display(Name = "Service Date")]
         [DataType(DataType.Date)]
         public DateTime? ServiceDate { get; set; }
