@@ -1,0 +1,157 @@
+﻿@model FridgeManagementSystem.ViewModels.UserViewModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "User Details";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fas fa-user"></i> @ViewData["Title"]</h3>
+    
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-id-card"></i> Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">User ID:</dt>
+                    <dd class="col-sm-8"><strong>@Model.Id</strong></dd>
+
+                    <dt class="col-sm-4">Full Name:</dt>
+                    <dd class="col-sm-8">@Model.FullName</dd>
+
+                    <dt class="col-sm-4">Email:</dt>
+                    <dd class="col-sm-8">@Model.Email</dd>
+
+                    <dt class="col-sm-4">Contact Number:</dt>
+                    <dd class="col-sm-8">@Model.ContactNo</dd>
+                    <dt class="col-sm-4">Status:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(Model.IsActive ? "bg-success" : "bg-danger")">
+                            @Model.StatusDisplay
+                        </span>
+                    </dd>
+
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-cogs"></i> System Information</h5>
+            </div>
+            <div class="card-body">
+
+                <dl class="row">
+
+                    <dt class="col-sm-4">Approval Status:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(Model.ApprovalStatus == "Approved" ? "bg-success" : Model.ApprovalStatus == "Rejected" ? "bg-danger" : "bg-warning")">
+                            @Model.ApprovalStatus
+                        </span>
+                    </dd>
+                    <dt>Roles:</dt>
+                    <dd>
+                        <div class="role-badges">
+                            @foreach (var role in Model.Roles)
+                            {
+                                <span class="badge @GetRoleBadgeClass(role) me-1">@role</span>
+                            }
+                            @if (!Model.Roles.Any())
+                            {
+                                <span class="badge bg-secondary">No Roles</span>
+                            }
+                        </div>
+                    </dd>
+                    <dt class="col-sm-4">Approved By:</dt>
+                    <dd class="col-sm-8">@(Model.ApprovedBy ?? "N/A")</dd>
+
+                    <dt class="col-sm-4">Approved Date:</dt>
+                    <dd class="col-sm-8">@Model.ApprovedAtDisplay</dd>
+
+                    <dt class="col-sm-4">Created Date:</dt>
+                    <dd class="col-sm-8">@Model.CreatedAtDisplay</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-address-book"></i> Address Information</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Address:</dt>
+                    <dd class="col-sm-8">@Model.Address</dd>
+
+                    <dt class="col-sm-4">Suburb:</dt>
+                    <dd class="col-sm-8">@Model.Suburb</dd>
+
+                    <dt class="col-sm-4">City:</dt>
+                    <dd class="col-sm-8">@Model.City</dd>
+
+                    <dt class="col-sm-4">Postal Code:</dt>
+                    <dd class="col-sm-8">@Model.PostalCode</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+</div>
+    
+    
+    <div class="card-body">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+            <i class="fas fa-edit me-1"></i>Edit User
+        </a>
+        
+        @if (Model.IsActive)
+        {
+            <form asp-action="Deactivate" method="post" class="d-inline">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('Are you sure you want to deactivate this user?')">
+                    <i class="fas fa-user-slash me-1"></i>Deactivate
+                </button>
+            </form>
+        }
+        else
+        {
+            <form asp-action="Activate" method="post" class="d-inline">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-success"
+                        onclick="return confirm('Are you sure you want to activate this user?')">
+                    <i class="fas fa-undo m-1"></i>Activate
+                </button>
+            </form>
+        }
+
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to List
+        </a>
+    </div>
+    
+
+
+@{
+    string GetRoleBadgeClass(string role)
+    {
+        return role?.ToLower() switch
+        {
+            "admin" => "bg-danger",
+            "customer" => "bg-success",
+            "employee" => "bg-primary",
+            "supplier" => "bg-warning text-dark",
+            _ => "bg-info"
+        };
+    }
+}

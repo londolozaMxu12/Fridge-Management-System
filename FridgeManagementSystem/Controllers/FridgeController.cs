@@ -29,18 +29,124 @@ namespace FridgeManagementSystem.Controllers
         }
 
         // GET: Fridge
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 5, string sortBy = "PurchaseDate",
+            string sortOrder = "desc",
+            string searchString = "",
+            string statusFilter = "",
+            string brandFilter = "",
+            string supplierFilter = "",
+            decimal? minPrice = null,
+            decimal? maxPrice = null)
         {
-            var fridges = await _context.Fridges
+            var query = _context.Fridges
                 .Include(f => f.FridgeType)
                 .Include(f => f.Supplier)
                 .ThenInclude(s => s.User)
                 .Include(f => f.CreatedBy)
                 .Where(f => f.IsActive)
-                .OrderByDescending(f => f.PurchaseDate)
+                .AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(f =>
+                    f.SerialNumber.Contains(searchString) ||
+                    f.Description.Contains(searchString) ||
+                    f.FridgeType.Brand.Contains(searchString) ||
+                    f.FridgeType.Name.Contains(searchString) ||
+                    f.FridgeType.Model.Contains(searchString) ||
+                    (f.Supplier.User.FullName != null && f.Supplier.User.FullName.Contains(searchString)) ||
+                    (f.Supplier.CompanyName != null && f.Supplier.CompanyName.Contains(searchString)));
+            }
+
+            // Apply status filter
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                query = query.Where(f => f.Status == statusFilter);
+            }
+
+            // Apply brand filter
+            if (!string.IsNullOrEmpty(brandFilter))
+            {
+                query = query.Where(f => f.FridgeType.Brand == brandFilter);
+            }
+
+            // Apply supplier filter
+            if (!string.IsNullOrEmpty(supplierFilter))
+            {
+                query = query.Where(f => f.Supplier.User.FullName == supplierFilter || f.Supplier.CompanyName == supplierFilter);
+            }
+
+            // Apply price range filter
+            if (minPrice.HasValue)
+            {
+                query = query.Where(f => f.Price >= minPrice.Value);
+            }
+
+            if (maxPrice.HasValue)
+            {
+                query = query.Where(f => f.Price <= maxPrice.Value);
+            }
+
+            // Apply sorting
+            query = sortBy.ToLower() switch
+            {
+                "serialnumber" => sortOrder == "desc" ? query.OrderByDescending(f => f.SerialNumber) : query.OrderBy(f => f.SerialNumber),
+                "price" => sortOrder == "desc" ? query.OrderByDescending(f => f.Price) : query.OrderBy(f => f.Price),
+                "brand" => sortOrder == "desc" ? query.OrderByDescending(f => f.FridgeType.Brand) : query.OrderBy(f => f.FridgeType.Brand),
+                "status" => sortOrder == "desc" ? query.OrderByDescending(f => f.Status) : query.OrderBy(f => f.Status),
+                "supplier" => sortOrder == "desc" ? query.OrderByDescending(f => f.Supplier.User.FullName ?? f.Supplier.CompanyName) : query.OrderBy(f => f.Supplier.User.FullName ?? f.Supplier.CompanyName),
+                "acquisitiondate" => sortOrder == "desc" ? query.OrderByDescending(f => f.AcquisitionDate) : query.OrderBy(f => f.AcquisitionDate),
+                _ => sortOrder == "desc" ? query.OrderByDescending(f => f.PurchaseDate) : query.OrderBy(f => f.PurchaseDate)
+            };
+
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var fridges = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return View(fridges);
+            // Get filter options for dropdowns
+            var brands = await _context.FridgeType
+                .Where(ft => ft.IsActive)
+                .Select(ft => ft.Brand)
+                .Distinct()
+                .OrderBy(b => b)
+                .ToListAsync();
+
+            var suppliers = await _context.Suppliers
+                .Include(s => s.User)
+                .Where(s => s.User.IsActive)
+                .Select(s => s.User.FullName ?? s.CompanyName)
+                .Distinct()
+                .OrderBy(s => s)
+                .ToListAsync();
+
+            var statuses = new List<string> { "Available", "Allocated", "InService", "Scrapped", "Maintenance" };
+
+            var viewModel = new FridgeManagementViewModel
+            {
+                Fridges = fridges,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                SortBy = sortBy,
+                SortOrder = sortOrder,
+                SearchString = searchString,
+                StatusFilter = statusFilter,
+                BrandFilter = brandFilter,
+                SupplierFilter = supplierFilter,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice
+            };
+
+            ViewBag.Brands = brands;
+            ViewBag.Suppliers = suppliers;
+            ViewBag.Statuses = statuses;
+
+            return View(viewModel);
         }
 
         // GET: Fridge/Inactive
