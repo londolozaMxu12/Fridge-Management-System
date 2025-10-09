@@ -55,12 +55,16 @@ namespace FridgeManagementSystem.Controllers
 
             return View(customer);
         }
-        public async Task<IActionResult> ListCustomers()
+        public async Task<IActionResult> ListCustomers(string searchString)
         {
 
             //var user = userManager.Users.ToList();
             var customer = await _userManager.GetUsersInRoleAsync("Customer");
-           
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                customer = customer.Where(n => n.FullName.Contains(searchString)
+                || n.Email.Contains(searchString)).ToList();
+            }
             return View(customer);
         }
 

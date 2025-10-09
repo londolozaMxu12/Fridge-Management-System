@@ -1,0 +1,128 @@
+﻿@using FridgeManagementSystem.Areas.Identity.Data
+@using Microsoft.AspNetCore.Identity
+@model IEnumerable<ApplicationUser>
+@using System.Linq
+
+<!DOCTYPE html>
+<head>
+    <style>
+        body {
+            color: black;
+
+        }
+        a {
+            color: purple;
+            font-weight: bold;
+        }
+
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 16px;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+
+        }
+
+        thead {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        h1{
+            align-content:center;
+        }
+
+    </style>
+</head>
+<body>
+
+
+    <div>
+        <a onclick="location.href='@Url.Action("Index")'" style="float: left   " class="btn btn-primary">BACK</a>
+
+    </div>
+    <div></div>
+    <div></div>
+
+
+    <div class="row" style="align-content: center">   <h2>CUSTOMERS</h2></div>
+    <div class="row">
+        <div class="col-md-3">
+            <form class="d-flex" asp-action="CustomerList" asp-controller="MaintenanceManagement">
+                <input name="searchString" class="form-control ne-1" type="search" placeholder="Search by Full Name" aria-label="Search" />
+                <button class="btn btn-dark" type="submit">Search</button>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <a asp-action="CustomerList" class="text-dark">Back to full List</a>
+        </div>
+    </div>
+    <table id="customerTable">
+        <thead>
+            <tr>
+
+
+                <th width="600px">
+                    Email
+                </th>
+
+                <th width="600px">
+                    Full Name
+                </th>
+                <th width="600px">
+                    Fride Type
+                </th>
+                <th width="600px">
+                    Allocation Date
+                </th>
+
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+
+
+                    <td>
+                        @item.Email
+                    </td>
+                    <td>
+                        @item.FullName
+                    </td>
+                    <td width="600px">
+                    </td>
+                    <td width="600px">
+                    </td>
+
+                    <td width="800px">
+
+                        <a asp-action="EditUser" asp-route-Id="@item.Id">View History</a>
+
+
+                        <a asp-controller="RepairSchedule" asp-action="Index" asp-route-Id="@item.Id">Schedule Visit</a>
+
+
+                    </td>
+
+                </tr>
+
+
+
+
+            }
+        </tbody>
+    </table>
+
+</body>
+</html>
