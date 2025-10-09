@@ -190,17 +190,100 @@ namespace FridgeManagementSystem.Controllers
             return View("ApproveCustomer", user);
         }
 
-        // GET: Admin/EmployeeManagement
+        //// GET: Admin/EmployeeManagement
+        //[Authorize(Roles = "Admin")]
+        //public async Task<IActionResult> EmployeeManagement()
+        //{
+        //    var employees = await _userManager.Users
+        //        .Where(u => u.Employees != null)
+        //        .Include(u => u.Employees)
+        //        .ThenInclude(e => e.EmployeeType)
+        //        .ToListAsync();
+
+        //    return View(employees);
+        //}
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> EmployeeManagement()
+        public async Task<IActionResult> EmployeeManagement(int pageNumber = 1, int pageSize = 5, string sortBy = "EmployeeNo",
+            string sortOrder = "asc",
+            string searchString = "",
+            string employeeTypeFilter = "",
+            string statusFilter = "active")
         {
-            var employees = await _userManager.Users
+            var query = _userManager.Users
                 .Where(u => u.Employees != null)
                 .Include(u => u.Employees)
                 .ThenInclude(e => e.EmployeeType)
+                .AsQueryable();
+
+            // Apply status filter
+            if (statusFilter == "active")
+            {
+                query = query.Where(u => u.IsActive);
+            }
+            else if (statusFilter == "inactive")
+            {
+                query = query.Where(u => !u.IsActive);
+            }
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(u =>
+                    u.FullName.Contains(searchString) ||
+                    u.Employees.EmployeeNo.Contains(searchString) ||
+                    u.Email.Contains(searchString) ||
+                    u.ContactNo.Contains(searchString) ||
+                    u.Employees.JobTitle.Contains(searchString) ||
+                    u.Employees.EmployeeType.Name.Contains(searchString));
+            }
+
+            // Apply employee type filter
+            if (!string.IsNullOrEmpty(employeeTypeFilter))
+            {
+                query = query.Where(u => u.Employees.EmployeeType.Name == employeeTypeFilter);
+            }
+
+            // Apply sorting
+            query = sortBy.ToLower() switch
+            {
+                "name" => sortOrder == "desc" ? query.OrderByDescending(u => u.FullName) : query.OrderBy(u => u.FullName),
+                "email" => sortOrder == "desc" ? query.OrderByDescending(u => u.Email) : query.OrderBy(u => u.Email),
+                "contactno" => sortOrder == "desc" ? query.OrderByDescending(u => u.ContactNo) : query.OrderBy(u => u.ContactNo),
+                "employeetype" => sortOrder == "desc" ? query.OrderByDescending(u => u.Employees.EmployeeType.Name) : query.OrderBy(u => u.Employees.EmployeeType.Name),
+                "status" => sortOrder == "desc" ? query.OrderByDescending(u => u.ApprovalStatus) : query.OrderBy(u => u.ApprovalStatus),
+                _ => sortOrder == "desc" ? query.OrderByDescending(u => u.Employees.EmployeeNo) : query.OrderBy(u => u.Employees.EmployeeNo)
+            };
+
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var employees = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return View(employees);
+            // Get employee types for filter dropdown
+            var employeeTypes = await _context.EmployeeTypes
+                .Where(et => et.IsActive)
+                .Select(et => et.Name)
+                .Distinct()
+                .ToListAsync();
+
+            var viewModel = new EmployeeManagementViewModel
+            {
+                Employees = employees,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                SortBy = sortBy,
+                SortOrder = sortOrder,
+                SearchString = searchString,
+                EmployeeTypeFilter = employeeTypeFilter,
+                StatusFilter = statusFilter
+            };
+
+            ViewBag.EmployeeTypes = employeeTypes;
+            return View(viewModel);
         }
 
         // GET: Admin/EmployeeDetails/5
