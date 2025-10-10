@@ -1,0 +1,171 @@
+﻿@model FridgeManagementSystem.Models.Customer
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Customer Details";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-user"></i> Customer Details</h1>
+    <div>
+        <a asp-action="CustomerManagement" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+        <a asp-action="EditCustomer" asp-route-id="@Model.Id" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit Customer
+        </a>
+    </div>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Basic Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Full Name:</div>
+                    <div class="col-sm-8">@Model.User.FullName</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Email:</div>
+                    <div class="col-sm-8">@Model.User.Email</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Contact Number:</div>
+                    <div class="col-sm-8">@Model.User.ContactNo</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Business Name:</div>
+                    <div class="col-sm-8">@Model.BusinessName</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Customer Type:</div>
+                    <div class="col-sm-8">
+                        <span class="badge @GetCustomerTypeBadgeClass(Model.CustomerType)">@Model.CustomerType</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> Address Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Address:</div>
+                    <div class="col-sm-8">@Model.User.Address</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">City:</div>
+                    <div class="col-sm-8">@Model.User.City</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Suburb:</div>
+                    <div class="col-sm-8">@Model.User.Suburb</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Postal Code:</div>
+                    <div class="col-sm-8">@Model.User.PostalCode</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Status Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Status:</div>
+                    <div class="col-sm-8">
+                        <span class="badge @(Model.IsActive && Model.User.IsActive ? "bg-success" : "bg-danger")">
+                            @((Model.IsActive && Model.User.IsActive) ? "Active" : "Inactive")
+                        </span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Approval Status:</div>
+                    <div class="col-sm-8">
+                        <span class="badge @(Model.User.ApprovalStatus == "Approved" ? "bg-success" : Model.User.ApprovalStatus == "Rejected" ? "bg-danger" : "bg-warning")">
+                            @Model.User.ApprovalStatus
+                        </span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 fw-bold">Created Date:</div>
+                    <div class="col-sm-8">@Model.CreatedAt.ToString("MM/dd/yyyy")</div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.User.ApprovedById))
+                {
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Approved By:</div>
+                        <div class="col-sm-8">@Model.User.ApprovedBy?.FullName</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Approved Date:</div>
+                        <div class="col-sm-8">@Model.User.ApprovedAt?.ToString("MM/dd/yyyy")</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-6 fw-bold">Total Fridges:</div>
+                    <div class="col-sm-6">@Model.Fridges?.Count()</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-6 fw-bold">Active Requests:</div>
+                   @*  <div class="col-sm-6">@Model.FridgeRequests?.Count(r => r.Status != "Completed")</div> *@
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-6 fw-bold">Total Faults:</div>
+                    <div class="col-sm-6">@Model.Faults?.Count()</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-6 fw-bold">Quotations:</div>
+                    <div class="col-sm-6">@Model.Quotations?.Count()</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-6 fw-bold">Allocations:</div>
+                    <div class="col-sm-6">@Model.Allocations?.Count()</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetCustomerTypeBadgeClass(string customerType)
+    {
+        return customerType?.ToLower() switch
+        {
+            "spazashop" => "bg-primary",
+            "liquor" => "bg-success",
+            "other" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+}

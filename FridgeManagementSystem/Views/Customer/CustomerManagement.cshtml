@@ -169,9 +169,8 @@
                                 </a>
                             </th>
                             <th>Contact No</th>
-                            <th>
-                                Status
-                            </th>
+                            <th>Status</th>
+                                
                             <th>Approval</th>
                             <th>Actions</th>
                         </tr>
@@ -231,6 +230,7 @@
                                         @customer.ApprovalStatus
                                     </span>
                                 </td>
+                                
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <a asp-action="CustomerDetails" asp-route-id="@customer.Id" class="btn btn-info" title="View Details">
@@ -241,20 +241,27 @@
                                         </a>
                                         @if (customer.IsActive)
                                         {
-                                            <button type="button" class="btn btn-danger" title="Deactivate"
-                                                    onclick="confirmDeactivate('@customer.Id', '@customer.BusinessName')">
-                                                <i class="fas fa-user-slash"></i>
-                                            </button>
+                                            <form asp-action="DeactivateCustomer" asp-route-id="@customer.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-danger" title="Deactivate"
+                                                        onclick="return confirm('Are you sure you want to deactivate @customer.FullName ...?')">
+                                                    <i class="fas fa-user-slash"></i>
+                                                </button>
+                                            </form>
                                         }
                                         else
                                         {
-                                            <button type="button" class="btn btn-success" title="Activate"
-                                                    onclick="confirmActivate('@customer.Id', '@customer.BusinessName')">
-                                                <i class="fas fa-user-check"></i>
-                                            </button>
+                                            <form asp-action="ActivateCustomer" asp-route-id="@customer.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-success" title="Activate"
+                                                        onclick="return confirm('Are you sure you want to activate @customer.FullName ...?')">
+                                                    <i class="fas fa-undo m-1"></i>
+                                                </button>
+                                            </form>
                                         }
                                     </div>
                                 </td>
+                                
                             </tr>
                         }
                     </tbody>
@@ -347,47 +354,7 @@
 
 
 @section Scripts {
-    <script>
-                function confirmDeactivate(customerId, businessName) {
-            if (confirm(`Are you sure you want to deactivate ${businessName}?`)) {
-                // Create a form and submit it for POST request
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `@Url.Action("DeactivateCustomer", "Admin")/${customerId}`;
-
-                // Add anti-forgery token
-                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-                const tokenInput = document.createElement('input');
-                tokenInput.type = 'hidden';
-                tokenInput.name = '__RequestVerificationToken';
-                tokenInput.value = token;
-                form.appendChild(tokenInput);
-
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-
-        function confirmActivate(customerId, businessName) {
-            if (confirm(`Are you sure you want to activate ${businessName}?`)) {
-                // Create a form and submit it for POST request
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `@Url.Action("ActivateCustomer", "Admin")/${customerId}`;
-
-                // Add anti-forgery token
-                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-                const tokenInput = document.createElement('input');
-                tokenInput.type = 'hidden';
-                tokenInput.name = '__RequestVerificationToken';
-                tokenInput.value = token;
-                form.appendChild(tokenInput);
-
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-    </script>
+    
 
     <style>
         .avatar-circle {

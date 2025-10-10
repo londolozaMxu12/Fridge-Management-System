@@ -206,6 +206,37 @@ namespace FridgeManagementSystem.Controllers
                 return View(new CustomerManagementViewModel { Customers = new List<CustomerViewModel>() });
             }
         }
+        // GET: Admin/CustomerDetails/5
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CustomerDetails(int id)
+        {
+            try
+            {
+                var customer = await _context.Customers
+                    .Include(c => c.User)
+                    .Include(c => c.CreatedBy)
+                    .Include(c => c.Fridges)
+                    .Include(c => c.FridgeRequests)
+                    .Include(c => c.Faults)
+                    .Include(c => c.Quotations)
+                    .Include(c => c.Allocations)
+                    .FirstOrDefaultAsync(c => c.Id == id);
+
+                if (customer == null)
+                {
+                    TempData["Error"] = "Customer not found.";
+                    return RedirectToAction(nameof(CustomerManagement));
+                }
+
+                return View(customer);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading customer details for ID: {CustomerId}", id);
+                TempData["Error"] = "An error occurred while loading customer details.";
+                return RedirectToAction(nameof(CustomerManagement));
+            }
+        }
         [Authorize(Roles = "Admin")]
 public async Task<IActionResult> EditCustomer(int id)
 {
@@ -367,7 +398,7 @@ public async Task<IActionResult> EditCustomer(int id, EditCustomerViewModel mode
                 _context.Customers.Update(customer);
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = $"Customer {customer.BusinessName} has been deactivated successfully.";
+                TempData["SuccessMessage"] = $"Customer {customer.User.FullName} has been deactivated successfully.";
                 return RedirectToAction(nameof(CustomerManagement));
             }
             catch (Exception ex)
@@ -402,7 +433,7 @@ public async Task<IActionResult> EditCustomer(int id, EditCustomerViewModel mode
                 _context.Customers.Update(customer);
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = $"Customer {customer.BusinessName} has been activated successfully.";
+                TempData["SuccessMessage"] = $"Customer {customer.User.FullName} has been activated successfully.";
                 return RedirectToAction(nameof(CustomerManagement));
             }
             catch (Exception ex)
