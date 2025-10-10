@@ -92,32 +92,11 @@
     </head>
     <body>
     <a onclick="location.href='@Url.Action("Index","Admin")'" style="float: left  , background-color:lime " class="btn btn-primary">BACK</a>
-    <div>
-        <div class="row">
-            <div class="col-md-3">
-                <form class="d-flex" asp-action="ListCustomers" asp-controller="Customer">
-                    <input name="searchString" class="form-control ne-1" type="search" placeholder="Search by Full Name" aria-label="Search" />
-                    <button class="btn btn-dark" type="submit">Search</button>
-                </form>
-            </div>
-            <div class="col-md-4">
-                <a asp-action="ListCustomers" class="text-dark">Back to full List</a>
-            </div>
-        </div>
-    <div>
+    
         <table class="table table-bordered">
         <thead>
             <tr>
-                @* <th>@Html.DisplayNameFor(model => model.Id)</th>
-                <th>@Html.DisplayNameFor(model => model.Email)</th>
-                <th>@Html.DisplayNameFor(model => model.FullName)</th>
-                <th>@Html.DisplayNameFor(model => model.City)</th>
-                <th>@Html.DisplayNameFor(model => model.Address)</th>
-                <th>@Html.DisplayNameFor(model => model.PostalCode)</th> *@
-
-                    @* <th width="600px">
-                        Id
-                    </th> *@
+                
                     <th width="600px">
                         Email
                     </th>
@@ -141,15 +120,7 @@
             @foreach (var item in Model)
             {
                 <tr>
-                   @*  <td>@Html.DisplayFor(modelitem => item.Id)</td>
-                    <td>@Html.DisplayFor(modelitem => item.Email)</td>
-                    <td>@Html.DisplayFor(modelitem => item.FullName)</td>
-                    <td>@Html.DisplayFor(modelitem => item.City)</td>
-                    <td>@Html.DisplayFor(modelitem => item.Address)</td>
-                    <td>@Html.DisplayFor(modelitem => item.PostalCode)</td> *@
-                        @* <td width="800px">
-                            @item.Id
-                        </td> *@
+                   
                         <td width="600px">
                             @item.Email
                         </td>

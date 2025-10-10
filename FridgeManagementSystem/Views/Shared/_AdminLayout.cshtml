@@ -41,9 +41,10 @@
                                 <i class="bi bi-person-circle"></i> <span class="d-none d-sm-inline ms-2">Manage Users</span>
                             </a>
 
-                            <a class="nav-link text-white" style="white-space:nowrap" href='@Url.Action("ListCustomers", "Customer")'>
+                            <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Customer" asp-action="CustomerManagement">
                                 <i class="bi bi-people"></i> <span class="d-none d-sm-inline ms-2">Manage Customers</span>
                             </a>
+                            
                             <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Admin" asp-action="EmployeeManagement">
                                 <i class="bi bi-person-gear"></i><span class="d-none d-sm-inline ms-2">Manage Employees</span>
                             </a>
