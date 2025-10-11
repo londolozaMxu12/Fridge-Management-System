@@ -8,10 +8,15 @@ namespace FridgeManagementSystem.Controllers
         {
             return View();
         }
+        [HttpPost]
         public IActionResult Index(string selectedDate)
         {
             DateTime dt = Convert.ToDateTime(selectedDate);
             ViewBag.Message = "Selected Date: " + dt.ToShortDateString();
+            return View();
+        }
+        public IActionResult CreateSchedule()
+        {
             return View();
         }
     }

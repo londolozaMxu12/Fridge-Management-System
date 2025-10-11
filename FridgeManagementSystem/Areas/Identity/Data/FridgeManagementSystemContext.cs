@@ -53,6 +53,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     
     public DbSet<FaultReport> FaultReports { get; set; }
     public DbSet<Allocation> Allocations { get; set; }
+    public DbSet<ScheduleMaintenance> ScheduleMaintenances { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -159,7 +159,7 @@ namespace FridgeManagementSystem.Migrations
                     b.HasIndex("FridgeId")
                         .IsUnique();
 
-                    b.ToTable("Allocations", (string)null);
+                    b.ToTable("Allocations");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.CartDetails", b =>
@@ -187,7 +187,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("ShoppingCartId");
 
-                    b.ToTable("CartDetails", (string)null);
+                    b.ToTable("CartDetails");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.City", b =>
@@ -210,7 +210,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("ProvinceId");
 
-                    b.ToTable("Cities", (string)null);
+                    b.ToTable("Cities");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Customer", b =>
@@ -259,7 +259,7 @@ namespace FridgeManagementSystem.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Customers", (string)null);
+                    b.ToTable("Customers");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.CustomerData", b =>
@@ -283,7 +283,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("CustomerDataId");
 
-                    b.ToTable("CustomerDatas", (string)null);
+                    b.ToTable("CustomerDatas");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.CustomerLiaison", b =>
@@ -310,7 +310,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("CustomerLiaisonId");
 
-                    b.ToTable("CustomerLiaisons", (string)null);
+                    b.ToTable("CustomerLiaisons");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Employee", b =>
@@ -360,7 +360,7 @@ namespace FridgeManagementSystem.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Employees", (string)null);
+                    b.ToTable("Employees");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.EmployeeType", b =>
@@ -384,7 +384,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EmployeeTypes", (string)null);
+                    b.ToTable("EmployeeTypes");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Fault", b =>
@@ -423,7 +423,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("FridgeId");
 
-                    b.ToTable("Faults", (string)null);
+                    b.ToTable("Faults");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.FaultReport", b =>
@@ -454,7 +454,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("MaintenanceRecordId");
 
-                    b.ToTable("FaultReports", (string)null);
+                    b.ToTable("FaultReports");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.FaultTechnician", b =>
@@ -481,7 +481,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("FaultTechnicianId");
 
-                    b.ToTable("FaultTechnicians", (string)null);
+                    b.ToTable("FaultTechnicians");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Fridge", b =>
@@ -509,7 +509,7 @@ namespace FridgeManagementSystem.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("FridgeTypeId")
+                    b.Property<int>("FridgeTypeId")
                         .HasColumnType("int");
 
                     b.Property<string>("ImageFile")
@@ -546,7 +546,7 @@ namespace FridgeManagementSystem.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int?>("SupplierId")
+                    b.Property<int>("SupplierId")
                         .HasColumnType("int");
 
                     b.HasKey("FridgeId");
@@ -559,7 +559,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("SupplierId");
 
-                    b.ToTable("Fridges", (string)null);
+                    b.ToTable("Fridges");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.FridgeInventory", b =>
@@ -593,7 +593,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("FridgeIventoryId");
 
-                    b.ToTable("FridgeInventories", (string)null);
+                    b.ToTable("FridgeInventories");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.FridgeRequest", b =>
@@ -622,7 +622,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("FridgeRequests", (string)null);
+                    b.ToTable("FridgeRequests");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.FridgeType", b =>
@@ -643,7 +643,8 @@ namespace FridgeManagementSystem.Migrations
 
                     b.Property<string>("Model")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -652,7 +653,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("FridgeTypeId");
 
-                    b.ToTable("FridgeType", (string)null);
+                    b.ToTable("FridgeType");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.InventoryLiaison", b =>
@@ -679,7 +680,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("InventoryLiaisonId");
 
-                    b.ToTable("InventoryLiaisons", (string)null);
+                    b.ToTable("InventoryLiaisons");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.MaintenanceRecord", b =>
@@ -716,7 +717,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("FridgeId");
 
-                    b.ToTable("MaintenanceRecords", (string)null);
+                    b.ToTable("MaintenanceRecords");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.MaintenanceTech", b =>
@@ -743,7 +744,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("MaintenanceTechId");
 
-                    b.ToTable("MaintenanceTechs", (string)null);
+                    b.ToTable("MaintenanceTechs");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Notification", b =>
@@ -782,7 +783,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.OrderStatus", b =>
@@ -800,7 +801,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("OrderStatusId");
 
-                    b.ToTable("OrderStatus", (string)null);
+                    b.ToTable("OrderStatus");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Province", b =>
@@ -818,7 +819,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("ProvinceId");
 
-                    b.ToTable("Provinces", (string)null);
+                    b.ToTable("Provinces");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.PurchaseRequest", b =>
@@ -867,7 +868,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("EmployeeId");
 
-                    b.ToTable("PurchaseRequests", (string)null);
+                    b.ToTable("PurchaseRequests");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.PurchasingManager", b =>
@@ -894,7 +895,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("PurchasingManagerId");
 
-                    b.ToTable("PurchasingManagers", (string)null);
+                    b.ToTable("PurchasingManagers");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.PurchasingOrder", b =>
@@ -939,7 +940,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PurchasingOrders", (string)null);
+                    b.ToTable("PurchasingOrders");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.PurchasingOrderDetails", b =>
@@ -971,7 +972,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("PurchasingOrderId");
 
-                    b.ToTable("PurchasingOrderDetails", (string)null);
+                    b.ToTable("PurchasingOrderDetails");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Quotation", b =>
@@ -997,7 +998,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("Quotations", (string)null);
+                    b.ToTable("Quotations");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.RepairSchedule", b =>
@@ -1024,8 +1025,10 @@ namespace FridgeManagementSystem.Migrations
                     b.HasIndex("FaultId")
                         .IsUnique();
 
-                    b.ToTable("RepairSchedules", (string)null);
+                    b.ToTable("RepairSchedules");
                 });
+
+           
 
             modelBuilder.Entity("FridgeManagementSystem.Models.ShoppingCart", b =>
                 {
@@ -1046,7 +1049,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ShoppingCart", (string)null);
+                    b.ToTable("ShoppingCart");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.StockLevel", b =>
@@ -1075,7 +1078,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("StockLevelId");
 
-                    b.ToTable("StockLevels", (string)null);
+                    b.ToTable("StockLevels");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Suburb", b =>
@@ -1102,7 +1105,7 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("CityId");
 
-                    b.ToTable("Suburbs", (string)null);
+                    b.ToTable("Suburbs");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Supplier", b =>
@@ -1140,7 +1143,7 @@ namespace FridgeManagementSystem.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Suppliers", (string)null);
+                    b.ToTable("Suppliers");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1439,11 +1442,15 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasOne("FridgeManagementSystem.Models.FridgeType", "FridgeType")
                         .WithMany("Fridges")
-                        .HasForeignKey("FridgeTypeId");
+                        .HasForeignKey("FridgeTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("FridgeManagementSystem.Models.Supplier", "Supplier")
                         .WithMany("Fridges")
-                        .HasForeignKey("SupplierId");
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("CreatedBy");
 
@@ -1580,6 +1587,17 @@ namespace FridgeManagementSystem.Migrations
                         .IsRequired();
 
                     b.Navigation("Fault");
+                });
+
+            modelBuilder.Entity("FridgeManagementSystem.Models.ScheduleMaintenance", b =>
+                {
+                    b.HasOne("FridgeManagementSystem.Models.MaintenanceTech", "MaintenanceTech")
+                        .WithOne("ScheduleMaintenance")
+                        .HasForeignKey("FridgeManagementSystem.Models.ScheduleMaintenance", "MaintenanceTechId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MaintenanceTech");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.ShoppingCart", b =>
@@ -1741,6 +1759,12 @@ namespace FridgeManagementSystem.Migrations
             modelBuilder.Entity("FridgeManagementSystem.Models.MaintenanceRecord", b =>
                 {
                     b.Navigation("FaultReports");
+                });
+
+            modelBuilder.Entity("FridgeManagementSystem.Models.MaintenanceTech", b =>
+                {
+                    b.Navigation("ScheduleMaintenance")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Province", b =>

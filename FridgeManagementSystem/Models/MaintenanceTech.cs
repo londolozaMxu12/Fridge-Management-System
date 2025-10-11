@@ -17,6 +17,6 @@ namespace FridgeManagementSystem.Models
         [Display(Name = "Contact Number")]
         public string ContactNo { get; set; }
 
-        
+        public ScheduleMaintenance ScheduleMaintenance { get; set; }
     }
 }

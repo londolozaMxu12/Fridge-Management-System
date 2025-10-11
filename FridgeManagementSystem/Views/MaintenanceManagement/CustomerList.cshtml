@@ -7,8 +7,9 @@
 <head>
     <style>
         body {
-            color: black;
-
+            font-family: Arial, Helvetica, sans-serif;
+            color:black;
+            background-color: rgba(0, 123, 255, 0.5);
         }
         a {
             color: purple;
@@ -46,15 +47,16 @@
 <body>
 
 
-    <div>
+    <div class="btn">
         <a onclick="location.href='@Url.Action("Index")'" style="float: left   " class="btn btn-primary">BACK</a>
-
+       
     </div>
     <div></div>
+    
+
+
+     <h2>CUSTOMERS</h2>
     <div></div>
-
-
-    <div class="row" style="align-content: center">   <h2>CUSTOMERS</h2></div>
     <div class="row">
         <div class="col-md-3">
             <form class="d-flex" asp-action="CustomerList" asp-controller="MaintenanceManagement">
@@ -110,7 +112,7 @@
                         <a asp-action="EditUser" asp-route-Id="@item.Id">View History</a>
 
 
-                        <a asp-controller="RepairSchedule" asp-action="Index" asp-route-Id="@item.Id">Schedule Visit</a>
+                        <a asp-controller="ScheduleMaintenance" asp-action="CreateMaintenanceSchedule">Schedule Visit</a>
 
 
                     </td>
