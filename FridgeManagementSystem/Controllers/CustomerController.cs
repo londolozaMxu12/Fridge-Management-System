@@ -236,7 +236,7 @@ namespace FridgeManagementSystem.Controllers
                     .Include(c => c.CreatedBy)
                     .Include(c => c.Fridges)
                     .Include(c => c.FridgeRequests)
-                    .Include(c => c.Faults)
+                    .Include(c => c.ReportedFaults)
                     .Include(c => c.Quotations)
                     .Include(c => c.Allocations)
                     .FirstOrDefaultAsync(c => c.Id == id);

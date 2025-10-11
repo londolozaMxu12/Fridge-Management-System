@@ -4,16 +4,30 @@ namespace FridgeManagementSystem.Models
 {
     public enum FaultStatus
     {
-        Pending,       // just reported and as a default
-        InProgress,    // technician assigned
-        Resolved      // repaired
-              
+        Reported,       
+        Scheduled,
+        InProgress,
+        Completed,
+        Cancelled
+    }
+
+    public enum FaultPriority
+    {
+        Low,
+        Medium,
+        High,
+        Critical
     }
 
     public class Fault
     {
         [Key]
         public int FaultId { get; set; }
+
+        [Required]
+        [Display(Name = "Fault Title")]
+        [StringLength(200)]
+        public string Title { get; set; }
 
         [Required, StringLength(200)]
         public string Description { get; set; }
@@ -23,19 +37,39 @@ namespace FridgeManagementSystem.Models
         public DateTime ReportedDate { get; set; } = DateTime.Now;
 
         [Required]
-        public FaultStatus Status { get; set; } = FaultStatus.Pending;
+        [Display(Name = "Priority")]
+        public FaultPriority Priority { get; set; } = FaultPriority.Medium;
 
-        // Foreign Keys
-        public int CustomerId { get; set; }
-        public Customer Customer { get; set; }
+        [Required]
+        [Display(Name = "Status")]
+        public FaultStatus Status { get; set; } = FaultStatus.Reported;
+
+        [Display(Name = "Scheduled Date")]
+        [DataType(DataType.DateTime)]
+        public DateTime? ScheduledDate { get; set; }
+
+        [Display(Name = "Assigned Technician")]
+        public int? AssignedTechnicianId { get; set; }
+        public Employee AssignedTechnician { get; set; }
+
+        [Display(Name = "Resolution Notes")]
+        [StringLength(1000)]
+        public string ResolutionNotes { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+
+        [Required]
+        [Display(Name = "Reported By")]
+        public int ReportedById { get; set; }
+        public Customer ReportedBy { get; set; }
 
         public int? FridgeId { get; set; }
         public Fridge? Fridge { get; set; }
 
-        [Display(Name = "Fault Technician")]
-        public int? EmployeeId { get; set; }
-        public Employee FaultTechnician { get; set; }
-        
-        public RepairSchedule RepairSchedule { get; set; }
+        public ICollection<RepairSchedule> RepairSchedules { get; set; }
+        public ICollection<MaintenanceRecord> MaintenanceRecords { get; set; }
+
     }
+
 }

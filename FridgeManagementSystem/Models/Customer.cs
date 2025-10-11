@@ -27,7 +27,7 @@ namespace FridgeManagementSystem.Models
         public string? CreatedById { get; set; }
         public ApplicationUser? CreatedBy { get; set; }
         public ICollection<Fridge> Fridges { get; set; }
-        public ICollection<Fault> Faults { get; set; }
+        public ICollection<Fault> ReportedFaults { get; set; }
         public ICollection<FridgeRequest> FridgeRequests { get; set; }
         public ICollection<Quotation> Quotations { get; set; }
         public ICollection<Allocation> Allocations { get; set; } = new List<Allocation>();

@@ -13,8 +13,12 @@ namespace FridgeManagementSystem.Models
         [Display(Name = "ScheduledDate")]
         public DateTime ScheduledDate { get; set; }
 
-        public int MaintenanceTechId { get; set; }
-        public MaintenanceTech MaintenanceTech { get; set; }
-       
+        [Required]
+        [Display(Name = "Maintenance Technician")]
+        public int MaintenanceTechnicianId { get; set; }
+        public Employee MaintenanceTechnician { get; set; }
+
+        public ICollection<MaintenanceRecord> MaintenanceRecords { get; set; }
+
     }
 }

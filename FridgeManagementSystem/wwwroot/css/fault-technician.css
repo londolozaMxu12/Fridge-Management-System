@@ -58,3 +58,7 @@ main {
         padding-bottom: 0 !important;
     }
 }
+.nm-design-text {
+    color: #001f3f;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
