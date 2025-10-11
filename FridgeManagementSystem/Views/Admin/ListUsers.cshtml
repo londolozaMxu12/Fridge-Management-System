@@ -1,4 +1,5 @@
-﻿@{
+﻿
+@* @{
     Layout = "_AdminLayout";
 }
 
@@ -78,28 +79,34 @@
         </style>
     </head>
     <body>
-    <h1>List Of Users</h1>
-
+    
+    <div class="d-flex justify-content-between align-items-center mb-4 text-light">
+        <h1><i class="fas fa-users"></i> List Of Users</h1>
+        
+    </div>
 
     <p>
-        @* <button type="button" onclick="location.href='/Identity/Account/Register' ">
+        <button type="button" onclick="location.href='/Identity/Account/Register' ">
             ADD NEW USERS
         </button>
         <a asp-action="Register" asp-controller="Account"
-           class="btn btn-primary mb-3" style="width:auto">Add new User</a> *@
+           class="btn btn-primary mb-3" style="width:auto">Add new User</a>
         <a href="/Identity/Account/Register" class="btn btn-primary mb-3" style="width:auto">Add new User</a>
     </p>
 
     <table>
         <thead>
             <tr>
+                
                 <th width="600px">
-                    Id
+                    Full Name
                 </th>
                 <th width="600px">
                     Email
                 </th>
-
+                <th width="600px">
+                    Contact No
+                </th>
                 <th></th>
             </tr>
         </thead>
@@ -107,13 +114,16 @@
             @foreach (var user in Model)
             {
                 <tr>
+                    
                     <td width="600px">
-                        @user.Id
+                        @user.FullName
                     </td>
                     <td width="600px">
                         @user.Email
                     </td>
-
+                    <td width="600px">
+                        @user.ContactNo
+                    </td>
                     <td width="400px">
                         <a asp-action="EditUser" asp-route-Id="@user.Id">Edit</a>
                         <a asp-action="DetailUser" asp-route-Id="@user.Id">Details</a>
@@ -128,8 +138,4 @@
     </body>
 </html>
 
-
-
-   
-
-  
+ *@

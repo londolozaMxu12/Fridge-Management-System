@@ -1,0 +1,60 @@
+﻿/* Fixed Footer Styles */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1 0 auto;
+    padding-bottom: 60px; /* Space for footer */
+}
+
+.fixed-footer {
+    flex-shrink: 0;
+    background-color: #212529;
+    color: white;
+    padding: 1rem 0;
+    margin-top: auto;
+    position: relative;
+    width: 100%;
+    border-top: 1px solid #444;
+}
+
+/* Ensure content doesn't get hidden behind footer */
+.container-fluid {
+    padding-bottom: 20px;
+}
+
+/* Responsive adjustments for fixed footer */
+@media (max-width: 768px) {
+    main {
+        padding-bottom: 80px; /* More space on mobile */
+    }
+
+    .fixed-footer {
+        padding: 0.75rem 0;
+    }
+
+        .fixed-footer .container-fluid {
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+}
+
+/* Print styles - hide footer when printing */
+@media print {
+    .fixed-footer {
+        display: none !important;
+    }
+
+    main {
+        padding-bottom: 0 !important;
+    }
+}

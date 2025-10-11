@@ -18,29 +18,17 @@ namespace FridgeManagementSystem.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly FridgeManagementSystemContext _context;
+        private readonly ILogger<AdminController> _logger;
 
         public AdminController(RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context)
+            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context, ILogger<AdminController> logger)
         {
             _roleManager = roleManager;
             _userManager = userManager;
             _context = context;
+            _logger = logger;
         }
-        //private readonly FridgeManagementSystemContext _context;
 
-        //public AdminController(FridgeManagementSystemContext context)
-        //{
-        //    _context = context;
-        //}
-        [HttpGet]
-        public IActionResult ListUsers()
-        {
-            var users = _userManager.Users.ToList();
-            return View(users);
-           
-           
-
-        }
         // GET: Admin/PendingApprovals
         public async Task<IActionResult> PendingApprovals()
         {
@@ -190,18 +178,6 @@ namespace FridgeManagementSystem.Controllers
             return View("ApproveCustomer", user);
         }
 
-        //// GET: Admin/EmployeeManagement
-        //[Authorize(Roles = "Admin")]
-        //public async Task<IActionResult> EmployeeManagement()
-        //{
-        //    var employees = await _userManager.Users
-        //        .Where(u => u.Employees != null)
-        //        .Include(u => u.Employees)
-        //        .ThenInclude(e => e.EmployeeType)
-        //        .ToListAsync();
-
-        //    return View(employees);
-        //}
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> EmployeeManagement(int pageNumber = 1, int pageSize = 5, string sortBy = "EmployeeNo",
             string sortOrder = "asc",

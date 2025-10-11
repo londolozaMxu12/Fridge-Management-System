@@ -1,8 +1,13 @@
-﻿@model IEnumerable<FridgeManagementSystem.Models.Fridge>
-
+﻿@using FridgeManagementSystem.ViewModels
+@model FridgeManagementViewModel
 @{
     ViewData["Title"] = "Fridges Management";
     Layout = "_AdminLayout";
+
+    // Calculate pagination variables
+    var totalPages = (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize);
+    var prevDisabled = Model.PageNumber <= 1 ? "disabled" : "";
+    var nextDisabled = Model.PageNumber >= totalPages ? "disabled" : "";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -33,12 +38,73 @@
     </div>
 }
 
-<div class="card">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="fas fa-list m-1"></i>List Of Active Friges</h5>
+<!-- Filter Section -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-filter"></i> Filters & Search</h5>
     </div>
     <div class="card-body">
-        @if (!Model.Any())
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="SearchString" class="form-label">Search</label>
+                <input type="text" class="form-control" id="SearchString" name="searchString"
+                       value="@Model.SearchString" placeholder="Search serial, description, brand...">
+            </div>
+            <div class="col-md-2">
+                <label for="StatusFilter" class="form-label">Status</label>
+                <select class="form-select" id="StatusFilter" name="statusFilter">
+                    <option value="">All Status</option>
+                    @foreach (var status in ViewBag.Statuses)
+                    {
+                        <option value="@status" selected="@(Model.StatusFilter == status)">@status</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="BrandFilter" class="form-label">Brand</label>
+                <select class="form-select" id="BrandFilter" name="brandFilter">
+                    <option value="">All Brands</option>
+                    @foreach (var brand in ViewBag.Brands)
+                    {
+                        <option value="@brand" selected="@(Model.BrandFilter == brand)">@brand</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="SupplierFilter" class="form-label">Supplier</label>
+                <select class="form-select" id="SupplierFilter" name="supplierFilter">
+                    <option value="">All Suppliers</option>
+                    @foreach (var supplier in ViewBag.Suppliers)
+                    {
+                        <option value="@supplier" selected="@(Model.SupplierFilter == supplier)">@supplier</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Price Range</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" name="minPrice" value="@Model.MinPrice" placeholder="Min" step="0.01">
+                    <span class="input-group-text">-</span>
+                    <input type="number" class="form-control" name="maxPrice" value="@Model.MaxPrice" placeholder="Max" step="0.01">
+                </div>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Search...
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Clear Filters</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-list m-1"></i>List Of Active Fridges</h5>
+        <span class="badge bg-light text-dark">Total: @Model.TotalCount</span>
+    </div>
+    <div class="card-body">
+        @if (!Model.Fridges.Any())
         {
             <div class="text-center py-4">
                 <i class="fas fa-refrigerator fa-3x text-muted mb-3"></i>
@@ -54,17 +120,121 @@
                     <thead class="table-primary">
                         <tr>
                             <th>Image</th>
-                            <th>Serial Number</th>
-                            @* <th>Description</th> *@
-                            <th>Type</th>
-                            <th>Price</th>
-                            <th>Status</th>
-                            <th>Supplier</th>
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortBy="SerialNumber"
+                                   asp-route-sortOrder="@(Model.SortBy == "SerialNumber" && Model.SortOrder == "asc" ? "desc" : "asc")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-brandFilter="@Model.BrandFilter"
+                                   asp-route-supplierFilter="@Model.SupplierFilter"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice"
+                                   class="text-decoration-none text-dark">
+                                    Serial Number
+                                    @if (Model.SortBy == "SerialNumber")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-sort"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortBy="Brand"
+                                   asp-route-sortOrder="@(Model.SortBy == "Brand" && Model.SortOrder == "asc" ? "desc" : "asc")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-brandFilter="@Model.BrandFilter"
+                                   asp-route-supplierFilter="@Model.SupplierFilter"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice"
+                                   class="text-decoration-none text-dark">
+                                    Type/Brand
+                                    @if (Model.SortBy == "Brand")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-sort"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortBy="Price"
+                                   asp-route-sortOrder="@(Model.SortBy == "Price" && Model.SortOrder == "asc" ? "desc" : "asc")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-brandFilter="@Model.BrandFilter"
+                                   asp-route-supplierFilter="@Model.SupplierFilter"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice"
+                                   class="text-decoration-none text-dark">
+                                    Price
+                                    @if (Model.SortBy == "Price")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-sort"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortBy="Status"
+                                   asp-route-sortOrder="@(Model.SortBy == "Status" && Model.SortOrder == "asc" ? "desc" : "asc")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-brandFilter="@Model.BrandFilter"
+                                   asp-route-supplierFilter="@Model.SupplierFilter"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice"
+                                   class="text-decoration-none text-dark">
+                                    Status
+                                    @if (Model.SortBy == "Status")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-sort"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortBy="Supplier"
+                                   asp-route-sortOrder="@(Model.SortBy == "Supplier" && Model.SortOrder == "asc" ? "desc" : "asc")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-brandFilter="@Model.BrandFilter"
+                                   asp-route-supplierFilter="@Model.SupplierFilter"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice"
+                                   class="text-decoration-none text-dark">
+                                    Supplier
+                                    @if (Model.SortBy == "Supplier")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-sort"></i>
+                                    }
+                                </a>
+                            </th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model)
+                        @foreach (var item in Model.Fridges)
                         {
                             <tr>
                                 <td>
@@ -89,15 +259,12 @@
                                 <td>
                                     <strong>@item.SerialNumber</strong>
                                 </td>
-                                @* <td>@item.Description</td> *@
                                 <td>
                                     @if (item.FridgeType != null)
                                     {
                                         <small class="text-muted">@item.FridgeType.Brand</small>
-                            
                                         <br />
                                         <strong>@item.FridgeType.Name</strong>
-
                                         <br />
                                         <small class="text-muted">@item.FridgeType.Model</small>
                                     }
@@ -142,6 +309,99 @@
                         }
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (totalPages > 1)
+            {
+                <nav aria-label="Fridge pagination">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @prevDisabled">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-pageNumber="@(Model.PageNumber - 1)"
+                               asp-route-pageSize="@Model.PageSize"
+                               asp-route-sortBy="@Model.SortBy"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-statusFilter="@Model.StatusFilter"
+                               asp-route-brandFilter="@Model.BrandFilter"
+                               asp-route-supplierFilter="@Model.SupplierFilter"
+                               asp-route-minPrice="@Model.MinPrice"
+                               asp-route-maxPrice="@Model.MaxPrice">
+                                Previous
+                            </a>
+                        </li>
+
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-pageNumber="@i"
+                                   asp-route-pageSize="@Model.PageSize"
+                                   asp-route-sortBy="@Model.SortBy"
+                                   asp-route-sortOrder="@Model.SortOrder"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-brandFilter="@Model.BrandFilter"
+                                   asp-route-supplierFilter="@Model.SupplierFilter"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice">
+                                    @i
+                                </a>
+                            </li>
+                        }
+
+                        <li class="page-item @nextDisabled">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-pageNumber="@(Model.PageNumber + 1)"
+                               asp-route-pageSize="@Model.PageSize"
+                               asp-route-sortBy="@Model.SortBy"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-statusFilter="@Model.StatusFilter"
+                               asp-route-brandFilter="@Model.BrandFilter"
+                               asp-route-supplierFilter="@Model.SupplierFilter"
+                               asp-route-minPrice="@Model.MinPrice"
+                               asp-route-maxPrice="@Model.MaxPrice">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+
+            <div class="row align-items-center mt-3">
+                <div class="col-md-6">
+                    <span class="text-muted">
+                        Showing @((Model.PageNumber - 1) * Model.PageSize + 1) to
+                        @Math.Min(Model.PageNumber * Model.PageSize, Model.TotalCount) of @Model.TotalCount entries
+                    </span>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group">
+                        <span class="me-2">Page size:</span>
+                        @foreach (var size in new[] { 5, 10, 20, 50 })
+                        {
+                            <a class="btn btn-outline-secondary btn-sm @(Model.PageSize == size ? "active" : "")"
+                               asp-action="Index"
+                               asp-route-pageNumber="1"
+                               asp-route-pageSize="@size"
+                               asp-route-sortBy="@Model.SortBy"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-statusFilter="@Model.StatusFilter"
+                               asp-route-brandFilter="@Model.BrandFilter"
+                               asp-route-supplierFilter="@Model.SupplierFilter"
+                               asp-route-minPrice="@Model.MinPrice"
+                               asp-route-maxPrice="@Model.MaxPrice">
+                                @size
+                            </a>
+                        }
+                    </div>
+                </div>
             </div>
         }
     </div>

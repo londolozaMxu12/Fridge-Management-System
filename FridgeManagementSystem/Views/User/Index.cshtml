@@ -1,0 +1,416 @@
+﻿@using FridgeManagementSystem.ViewModels
+@model UserManagementViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Users Management";
+
+    // Calculate pagination variables
+    var totalPages = (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize);
+    var prevDisabled = Model.PageNumber <= 1 ? "disabled" : "";
+    var nextDisabled = Model.PageNumber >= totalPages ? "disabled" : "";
+
+    string GetRoleBadgeClass(string role)
+    {
+        return role?.ToLower() switch
+        {
+            "admin" => "bg-danger",
+            "customer" => "bg-success",
+            "employee" => "bg-primary",
+            "supplier" => "bg-warning",
+            _ => "bg-info"
+        };
+    }
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-users"></i> @ViewData["Title"]</h1>
+</div>
+
+<!-- Success/Error Messages -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Filter Section -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-filter"></i> Filters & Search</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="SearchString" class="form-label">Search</label>
+                <input type="text" class="form-control" id="SearchString" name="searchString"
+                       value="@Model.SearchString" placeholder="Search by name, email, city...">
+            </div>
+            <div class="col-md-2">
+                <label for="RoleFilter" class="form-label">Role</label>
+                <select class="form-select" id="RoleFilter" name="roleFilter">
+                    <option value="">All Roles</option>
+                    @foreach (var role in ViewBag.Roles)
+                    {
+                        <option value="@role" selected="@(Model.RoleFilter == role)">@role</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="StatusFilter" class="form-label">Status</label>
+                <select class="form-select" id="StatusFilter" name="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="active" selected="@(Model.StatusFilter == "active")">Active</option>
+                    <option value="inactive" selected="@(Model.StatusFilter == "inactive")">Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="ApprovalFilter" class="form-label">Approval</label>
+                <select class="form-select" id="ApprovalFilter" name="approvalFilter">
+                    <option value="">All Approval</option>
+                    @foreach (var status in ViewBag.ApprovalStatuses)
+                    {
+                        <option value="@status" selected="@(Model.ApprovalFilter == status)">@status</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search"></i> Search...
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-person-lines-fill m-1"></i> All Users</h5>
+        <span class="badge bg-light text-dark">Total: @Model.TotalCount</span>
+    </div>
+    <div class="card-body">
+        @if (!Model.Users.Any())
+        {
+            <div class="text-center py-4">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5>No users found</h5>
+                <p class="text-muted">No users match your current filters.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortBy="FullName"
+                                   asp-route-sortOrder="@(Model.SortBy == "FullName" && Model.SortOrder == "asc" ? "desc" : "asc")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-approvalFilter="@Model.ApprovalFilter"
+                                   class="text-decoration-none text-dark">
+                                    Full Name
+                                    @if (Model.SortBy == "FullName")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-sort"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>Roles</th>
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortBy="Status"
+                                   asp-route-sortOrder="@(Model.SortBy == "Status" && Model.SortOrder == "asc" ? "desc" : "asc")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-approvalFilter="@Model.ApprovalFilter"
+                                   class="text-decoration-none text-dark">
+                                    Status
+                                    @if (Model.SortBy == "Status")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-sort"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortBy="Approval"
+                                   asp-route-sortOrder="@(Model.SortBy == "Approval" && Model.SortOrder == "asc" ? "desc" : "asc")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-approvalFilter="@Model.ApprovalFilter"
+                                   class="text-decoration-none text-dark">
+                                    Approval
+                                    @if (Model.SortBy == "Approval")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-sort"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortBy="CreatedAt"
+                                   asp-route-sortOrder="@(Model.SortBy == "CreatedAt" && Model.SortOrder == "asc" ? "desc" : "asc")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-approvalFilter="@Model.ApprovalFilter"
+                                   class="text-decoration-none text-dark">
+                                    Created Date
+                                    @if (Model.SortBy == "CreatedAt")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-sort"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.Users)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            @if (!string.IsNullOrEmpty(user.FullName))
+                                            {
+                                                var nameParts = user.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                                if (nameParts.Length >= 2)
+                                                {
+                                                    <text>@(nameParts[0][0].ToString().ToUpper() + nameParts[1][0].ToString().ToUpper())</text>
+                                                }
+                                                else if (nameParts.Length == 1 && nameParts[0].Length > 0)
+                                                {
+                                                    <text>@(nameParts[0][0].ToString().ToUpper())</text>
+                                                }
+                                                else
+                                                {
+                                                    <i class="fas fa-user"></i>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-user"></i>
+                                            }
+                                        </div>
+                                        <div>
+                                            <strong>@user.FullName</strong>
+                                            @if (!string.IsNullOrEmpty(user.City))
+                                            {
+                                                <br />
+                                                <small class="text-muted">@user.City, @user.Suburb, @user.Email</small>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="role-badges">
+                                        @foreach (var role in user.Roles)
+                                        {
+                                            <span class="badge @GetRoleBadgeClass(role) me-1">@role</span>
+                                        }
+                                        @if (!user.Roles.Any())
+                                        {
+                                            <span class="badge bg-secondary">No Roles</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge @(user.IsActive ? "bg-success" : "bg-danger")">
+                                        @user.StatusDisplay
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge @(user.ApprovalStatus == "Approved" ? "bg-success" : user.ApprovalStatus == "Rejected" ? "bg-danger" : "bg-warning")">
+                                        @user.ApprovalStatus
+                                    </span>
+                                    @if (!string.IsNullOrEmpty(user.ApprovedBy))
+                                    {
+                                        <br />
+                                        <small class="text-muted">By: @user.ApprovedBy</small>
+                                        <br />
+                                        <small class="text-muted">On: @user.ApprovedAtDisplay</small>
+                                    }
+                                </td>
+                                <td>@user.CreatedAtDisplay</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-warning" title="Edit User">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+
+                                        @if (user.IsActive)
+                                        {
+                                            <form asp-action="Deactivate" method="post" class="d-inline">
+                                                <input type="hidden" name="id" value="@user.Id" />
+                                                <button type="submit" class="btn btn-danger"
+                                                        onclick="return confirm('Are you sure you want to deactivate @user.FullName?');"
+                                                        title="Deactivate">
+                                                    <i class="fas fa-user-slash"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="Activate" method="post" class="d-inline">
+                                                <input type="hidden" name="id" value="@user.Id" />
+                                                <button type="submit" class="btn btn-success"
+                                                        onclick="return confirm('Are you sure you want to activate @user.FullName?');"
+                                                        title="Activate">
+                                                    <i class="fas fa-undo m-1"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (totalPages > 1)
+            {
+                <nav aria-label="User pagination">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @prevDisabled">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-pageNumber="@(Model.PageNumber - 1)"
+                               asp-route-pageSize="@Model.PageSize"
+                               asp-route-sortBy="@Model.SortBy"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-roleFilter="@Model.RoleFilter"
+                               asp-route-statusFilter="@Model.StatusFilter"
+                               asp-route-approvalFilter="@Model.ApprovalFilter">
+                                Previous
+                            </a>
+                        </li>
+
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-pageNumber="@i"
+                                   asp-route-pageSize="@Model.PageSize"
+                                   asp-route-sortBy="@Model.SortBy"
+                                   asp-route-sortOrder="@Model.SortOrder"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-approvalFilter="@Model.ApprovalFilter">
+                                    @i
+                                </a>
+                            </li>
+                        }
+
+                        <li class="page-item @nextDisabled">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-pageNumber="@(Model.PageNumber + 1)"
+                               asp-route-pageSize="@Model.PageSize"
+                               asp-route-sortBy="@Model.SortBy"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-roleFilter="@Model.RoleFilter"
+                               asp-route-statusFilter="@Model.StatusFilter"
+                               asp-route-approvalFilter="@Model.ApprovalFilter">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+
+            <div class="row align-items-center mt-3">
+                <div class="col-md-6">
+                    <span class="text-muted">
+                        Showing @((Model.PageNumber - 1) * Model.PageSize + 1) to
+                        @Math.Min(Model.PageNumber * Model.PageSize, Model.TotalCount) of @Model.TotalCount entries
+                    </span>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group">
+                        <span class="me-2">Page size:</span>
+                        @foreach (var size in new[] { 5, 10, 20, 50 })
+                        {
+                            <a class="btn btn-outline-secondary btn-sm @(Model.PageSize == size ? "active" : "")"
+                               asp-action="Index"
+                               asp-route-pageNumber="1"
+                               asp-route-pageSize="@size"
+                               asp-route-sortBy="@Model.SortBy"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-roleFilter="@Model.RoleFilter"
+                               asp-route-statusFilter="@Model.StatusFilter"
+                               asp-route-approvalFilter="@Model.ApprovalFilter">
+                                @size
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    
+    <style>
+        .avatar-circle {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .role-badges .badge {
+            font-size: 0.75em;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.075);
+        }
+
+        .page-item.active .page-link {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+    </style>
+}
