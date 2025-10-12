@@ -38,7 +38,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IEmailSender, DummyEmailSender>();
 builder.Services.AddRazorPages();
 builder.Services.AddTransient<IHomeRepository, HomeRepository>();
-//builder.Services.AddTransient<ICartRepository, CartRepository>();
+builder.Services.AddTransient<ICartRepository, CartRepository>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

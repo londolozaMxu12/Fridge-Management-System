@@ -1,0 +1,49 @@
+﻿@model ShoppingCart
+@{
+    Layout = "_CustomerLayout";
+}
+
+<div style="width:90%;margin:auto" class="mt-2">
+    
+
+    @if (Model != null && Model.CartDetails != null && Model.CartDetails.Count > 0)
+    {
+        <h3>My Cart</h3>
+        <table class="table table-striped">
+            <tr>
+                <th>Fridge</th>
+                <th>Image</th>
+                <th>Fridge Description</th>
+                <th>Serial No</th>
+                <th>Unit Price(INR)</th>
+                <th>Total Price</th>
+            </tr>
+            @foreach (var item in Model.CartDetails)
+            {
+                <tr>
+                    <td>@item.Fridge.FridgeType.Name</td>
+                    <td><img src="@item.Fridge.ImageFile" style="width:80px;height:100px"/></td>
+                    <td>@item.Fridge.Description</td>
+                    <td>@item.Fridge.SerialNumber</td>
+                    <td>@item.Fridge.Price X @item.Quantity</td>
+                    <td>@(item.Fridge.Price*item.Quantity)</td>
+                    <td>
+                        <a class="btn btn-info" href="/Cart/AddItem?fridgeId=@item.FridgeId&&redirect=1">+</a>
+                        <a class="btn btn-info" href="/Cart/RemoveItem?fridgeId=@item.FridgeId">-</a>
+                    </td>
+                </tr>
+            }
+        </table>
+        <div class="my-2">
+            <h5>Total(INR): </h5> @(Model.CartDetails.Select(item => item.Fridge.Price * item.Quantity).Sum())
+        </div>
+
+        <div class="my-2">
+            <a class="btn btn-primary" href="#">Checkout</a>
+        </div>
+    }
+    else
+    {
+        <h3>Cart is empty</h3>
+    }
+</div>
