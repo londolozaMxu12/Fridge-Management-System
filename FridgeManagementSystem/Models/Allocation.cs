@@ -35,6 +35,5 @@ namespace FridgeManagementSystem.Models
         [DataType(DataType.Date)]
         public DateTime? ServiceDate { get; set; }
 
-        
     }
 }

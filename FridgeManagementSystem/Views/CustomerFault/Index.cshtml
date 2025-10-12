@@ -1,0 +1,159 @@
+﻿@using Humanizer
+@model IEnumerable<FridgeManagementSystem.Models.Fault>
+
+@{
+    ViewData["Title"] = "My Reported Faults";
+    Layout = "_CustomerLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center text-light mb-4">
+    <h1>
+        <i class="bi-clipboard-data"></i> My Reported Faults
+    </h1>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Report New Fault
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="text-center text-light py-4">
+        <i class="fas fa-exclamation-triangle fa-3x text-light mb-3"></i>
+        <h5>No faults reported</h5>
+        <p class="text-light">You haven't reported any faults yet.</p>
+        <a asp-action="Create" class="btn btn-primary">Report Your First Fault</a>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>Fault Title</th>
+                            <th>Fridge</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Reported Date</th>
+                            <th>Assigned Technician</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var fault in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@fault.Title</strong>
+                                    <br />
+                                    <small class="text-muted">@fault.Description.Truncate(50)</small>
+                                </td>
+                                <td>
+                                    @if (fault.Fridge != null)
+                                    {
+                                        <div>
+                                            <strong>@fault.Fridge.FridgeType.Brand @fault.Fridge.FridgeType.Name</strong>
+                                            <br />
+                                            <small class="text-muted">SN: @fault.Fridge.SerialNumber</small>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No specific fridge</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge @GetPriorityBadgeClass(fault.Priority)">@fault.Priority</span>
+                                </td>
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(fault.Status)">@fault.Status</span>
+                                </td>
+                                <td>@fault.ReportedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    @if (fault.FaultTechnician != null)
+                                    {
+                                        @fault.FaultTechnician.User.FullName
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Not assigned</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" asp-route-id="@fault.FaultId"
+                                           class="btn btn-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@functions {
+    public string GetPriorityBadgeClass(FaultPriority priority)
+    {
+        return priority switch
+        {
+            FaultPriority.Critical => "bg-danger",
+            FaultPriority.High => "bg-warning",
+            FaultPriority.Medium => "bg-info",
+            FaultPriority.Low => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    public string GetStatusBadgeClass(FaultStatus status)
+    {
+        return status switch
+        {
+            FaultStatus.Reported => "bg-warning",
+            FaultStatus.Scheduled => "bg-info",
+            FaultStatus.InProgress => "bg-primary",
+            FaultStatus.Completed => "bg-success",
+            FaultStatus.Cancelled => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        // Add truncate function to String prototype
+        String.prototype.Truncate = function (length) {
+            return this.length > length ? this.substring(0, length) + '...' : this;
+        };
+
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+}

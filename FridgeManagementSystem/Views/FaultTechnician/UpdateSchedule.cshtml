@@ -1,0 +1,209 @@
+﻿@model FridgeManagementSystem.ViewModels.UpdateRepairScheduleViewModel
+@{
+    ViewData["Title"] = "Update Repair Schedule";
+    Layout = "_FaultTechnicianLayout";
+
+    var schedule = ViewBag.OriginalSchedule as FridgeManagementSystem.Models.RepairSchedule;
+}
+
+<div class="d-flex justify-content-between align-items-center text-light mb-4">
+    <h1>
+        <i class="fas fa-edit"></i> Update Repair Schedule
+    </h1>
+    <div>
+        <a asp-action="MySchedule" class="btn btn-outline-secondary text-light">
+            <i class="fas fa-arrow-left"></i> Back to Schedule
+        </a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>Schedule Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="UpdateSchedule" method="post">
+                    <input type="hidden" asp-for="RepairScheduleId" />
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="ScheduledDate" class="form-label">Scheduled Date *</label>
+                                <input asp-for="ScheduledDate" type="datetime-local" class="form-control" />
+                                <span asp-validation-for="ScheduledDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="EstimatedHours" class="form-label">Estimated Hours *</label>
+                                <input asp-for="EstimatedHours" type="number" class="form-control" min="0.5" step="0.5" />
+                                <span asp-validation-for="EstimatedHours" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Status" class="form-label">Status *</label>
+                        <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<FridgeManagementSystem.Models.ScheduleStatus>()">
+                            <option value="">Select Status</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label">Notes</label>
+                        <textarea asp-for="Notes" class="form-control" rows="4" placeholder="Enter any notes about the repair..."></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update Schedule
+                        </button>
+                        <a asp-action="MySchedule" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Fault Information Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Fault Information
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (schedule?.Fault != null)
+                {
+                    <h6>@schedule.Fault.Title</h6>
+                    <p class="text-muted">@schedule.Fault.Description</p>
+
+                    <div class="mt-3">
+                        <small class="text-muted">Reported On:</small>
+                        <p class="mb-2">@schedule.Fault.ReportedDate.ToString("yyyy-MM-dd HH:mm")</p>
+
+                        <small class="text-muted">Priority:</small>
+                        @{
+                            var priorityClass = schedule.Fault.Priority.ToString() switch
+                            {
+                                "Low" => "bg-success",
+                                "Medium" => "bg-warning",
+                                "High" => "bg-danger",
+                                "Critical" => "bg-danger",
+                                _ => "bg-secondary"
+                            };
+                        }
+                        <p><span class="badge @priorityClass">@schedule.Fault.Priority</span></p>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">Fault information not available</p>
+                }
+            </div>
+        </div>
+
+        <!-- Customer Information Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user me-2"></i>Customer Information
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (schedule?.Fault?.ReportedBy?.User != null)
+                {
+                    <h6>@schedule.Fault.ReportedBy.User.FullName</h6>
+                    <p class="mb-1">
+                        <i class="fas fa-envelope me-2"></i>@schedule.Fault.ReportedBy.User.Email
+                    </p>
+                    <p class="mb-1">
+                        <i class="fas fa-phone me-2"></i>@schedule.Fault.ReportedBy.User.ContactNo
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-map-marker-alt me-2"></i>@schedule.Fault.ReportedBy.User.Address, @schedule.Fault.ReportedBy.User.City, @schedule.Fault.ReportedBy.User.Suburb
+                    </p>
+                }
+                else
+                {
+                    <p class="text-light">Customer information not available</p>
+                }
+            </div>
+        </div>
+
+        <!-- Fridge Information Card -->
+        <div class="card">
+            <div class="card-header bg-success  text-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-refrigerator me-2"></i>Fridge Information
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (schedule?.Fault?.Fridge != null)
+                {
+                    <h6>@schedule.Fault.Fridge.FridgeType?.Name</h6>
+                    <p class="mb-1">
+                        <strong>Model:</strong> @schedule.Fault.Fridge.FridgeType?.Model
+                    </p>
+                    <p class="mb-1">
+                        <strong>Brand:</strong> @schedule.Fault.Fridge.FridgeType?.Brand
+                    </p>
+                    <p class="mb-1">
+                        <strong>Serial:</strong> @schedule.Fault.Fridge.SerialNumber
+                    </p>
+                }
+                else
+                {
+                    <p class="text-muted">Fridge information not available</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Set minimum datetime to current time
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const localDateTime = now.toISOString().slice(0, 16);
+            const scheduledDateInput = document.getElementById('ScheduledDate');
+
+            // Set min attribute to current datetime
+            if (scheduledDateInput) {
+                scheduledDateInput.min = localDateTime;
+            }
+        });
+    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

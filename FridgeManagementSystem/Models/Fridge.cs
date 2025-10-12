@@ -85,5 +85,6 @@ namespace FridgeManagementSystem.Models
         public ICollection<CartDetails> CartDetails { get; set; }
 
         public ICollection<PurchasingOrderDetails> OrderDetails { get; set; }
+
     }
 }

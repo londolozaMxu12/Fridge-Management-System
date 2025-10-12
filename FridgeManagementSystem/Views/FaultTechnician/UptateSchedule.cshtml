@@ -1,0 +1,216 @@
+﻿@model FridgeManagementSystem.Models.RepairSchedule
+
+@{
+    ViewData["Title"] = "Update Repair Schedule";
+    Layout = "_FaultTechnicianLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="fas fa-edit m-1"></i> Update Repair Schedule
+    </h1>
+    <div>
+        <a asp-action="MySchedule" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left m-1"></i> Back to My Schedule
+        </a>
+    </div>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>Schedule Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="UpdateSchedule" method="post">
+                    <input type="hidden" asp-for="RepairScheduleId" />
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="RepairScheduleId" class="form-label">Scheduled Date</label>
+                                <input asp-for="RepairScheduleId" class="form-control" readonly />
+
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="ScheduledDate" class="form-label">Scheduled Date</label>
+                                <input asp-for="ScheduledDate" type="datetime-local" class="form-control" />
+                                <span asp-validation-for="ScheduledDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="EstimatedHours" class="form-label">Estimated Hours</label>
+                                <input asp-for="EstimatedHours" type="number" class="form-control" min="0.5" step="0.5" />
+                                <span asp-validation-for="EstimatedHours" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Status" class="form-label">Status</label>
+                        <select asp-for="Status" asp-items="Html.GetEnumSelectList<FridgeManagementSystem.Models.ScheduleStatus>()" class="form-select">
+                            <option value="">Select Status</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label">Notes</label>
+                        <textarea asp-for="Notes" class="form-control" rows="4" placeholder="Comment..."></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update Schedule
+                        </button>
+                        <a asp-action="MySchedule" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Fault Information Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Fault Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>@Model.Fault?.Title</h6>
+                <p class="text-muted">@Model.Fault?.Description</p>
+
+                <div class="mt-3">
+                    <small class="text-muted">Reported On:</small>
+                    <p class="mb-2">@Model.Fault?.ReportedDate.ToString("yyyy-MM-dd HH:mm")</p>
+
+                    <small class="text-muted">Priority:</small>
+                    @{
+                        var priorityClass = Model.Fault?.Priority.ToString() switch
+                        {
+                            "Low" => "bg-success",
+                            "Medium" => "bg-warning",
+                            "High" => "bg-danger",
+                            _ => "bg-secondary"
+                        };
+                    }
+                    <p><span class="badge @priorityClass">@Model.Fault?.Priority</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Information Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user me-2"></i>Customer Information
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Fault?.ReportedBy?.User != null)
+                {
+                    <h6>@Model.Fault.ReportedBy.User.FullName</h6>
+                    <p class="mb-1">
+                        <i class="fas fa-envelope me-2"></i>@Model.Fault.ReportedBy.User.Email
+                    </p>
+                    <p class="mb-1">
+                        <i class="fas fa-phone me-2"></i>@Model.Fault.ReportedBy.User.ContactNo
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-map-marker-alt me-2"></i>@Model.Fault.ReportedBy.User.Address @Model.Fault.ReportedBy.User.City
+                        @Model.Fault.ReportedBy.User.Suburb
+                    </p>
+                }
+                else
+                {
+                    <p class="text-muted">Customer information not available</p>
+                }
+            </div>
+        </div>
+
+        <!-- Fridge Information Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-refrigerator me-2"></i>Fridge Information
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Fault?.Fridge != null)
+                {
+                    <h6>@Model.Fault.Fridge.FridgeType?.Name</h6>
+                    <p class="mb-1">
+                        <strong>Model:</strong> @Model.Fault.Fridge.FridgeType?.Model
+                    </p>
+                    <p class="mb-1">
+                        <strong>Model:</strong> @Model.Fault.Fridge.FridgeType?.Brand
+                    </p>
+                    <p class="mb-1">
+                        <strong>Serial:</strong> @Model.Fault.Fridge.SerialNumber
+                    </p>
+
+                }
+                else
+                {
+                    <p class="text-muted">Fridge information not available</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form for quick status updates -->
+<form id="quickStatusUpdateForm" asp-action="UpdateScheduleStatus" method="post">
+    <input type="hidden" id="quickScheduleId" name="id" />
+    <input type="hidden" id="quickScheduleStatus" name="status" />
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script>
+        function updateScheduleStatus(scheduleId, status) {
+            if (confirm('Are you sure you want to update the status of this repair schedule?')) {
+                document.getElementById('quickScheduleId').value = scheduleId;
+                document.getElementById('quickScheduleStatus').value = status;
+                document.getElementById('quickStatusUpdateForm').submit();
+            }
+        }
+
+        // Set minimum datetime to current time
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const localDateTime = now.toISOString().slice(0, 16);
+            const scheduledDateInput = document.getElementById('ScheduledDate');
+
+            // Set min attribute to current datetime
+            scheduledDateInput.min = localDateTime;
+        });
+    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

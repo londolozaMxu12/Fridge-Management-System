@@ -127,8 +127,9 @@
                             <a class="dropdown-item" style="white-space:nowrap" asp-controller="Notifications" asp-action="Index" id="notificationsToggle">
                                 <i class="bi bi-bell me-2"></i>
                                 Notifications
-                                <span class="badge bg-danger" id="notificationCount">0</span>
+                                <span class="badge bg-danger text-light" id="notificationCount"></span>
                                 @await Component.InvokeAsync("Notifications")
+                                
                             </a>
 
                         </li>

@@ -98,8 +98,8 @@ namespace FridgeManagementSystem.Controllers
                 {
                     UserId = user.Id,
                     Title = "Account Approved",
-                    Message = "Your account has been approved. You can now log in to Fridge Management system and access all features.",
-                    Link = "/Identity/Account/Login"
+                    Message = "Your account has been approved. You can now access all the features.",
+                    Link = $"/Customers/Index/{user.Customers?.Id}"
                 };
 
                 _context.Notifications.Add(notification);

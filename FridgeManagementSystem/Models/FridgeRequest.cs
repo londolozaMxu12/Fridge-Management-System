@@ -6,7 +6,9 @@ namespace FridgeManagementSystem.Models
     {
         Pending,
         Approved,
-        Declined
+        Rejected,
+        InProgress,
+        Completed
     }
 
     public class FridgeRequest

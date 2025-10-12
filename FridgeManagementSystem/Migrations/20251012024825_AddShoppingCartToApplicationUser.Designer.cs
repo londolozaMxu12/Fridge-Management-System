@@ -4,6 +4,7 @@ using FridgeManagementSystem.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FridgeManagementSystem.Migrations
 {
     [DbContext(typeof(FridgeManagementSystemContext))]
-    partial class FridgeManagementSystemContextModelSnapshot : ModelSnapshot
+    [Migration("20251012024825_AddShoppingCartToApplicationUser")]
+    partial class AddShoppingCartToApplicationUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -395,6 +398,9 @@ namespace FridgeManagementSystem.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FaultId"));
 
+                    b.Property<int?>("AssignedTechnicianId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -403,7 +409,7 @@ namespace FridgeManagementSystem.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<int?>("FaultTechnicianId")
+                    b.Property<int?>("EmployeeId")
                         .HasColumnType("int");
 
                     b.Property<int?>("FridgeId")
@@ -419,6 +425,7 @@ namespace FridgeManagementSystem.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ResolutionNotes")
+                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -438,13 +445,50 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("FaultId");
 
-                    b.HasIndex("FaultTechnicianId");
+                    b.HasIndex("AssignedTechnicianId");
+
+                    b.HasIndex("EmployeeId");
 
                     b.HasIndex("FridgeId");
 
                     b.HasIndex("ReportedById");
 
                     b.ToTable("Faults");
+                });
+
+            modelBuilder.Entity("FridgeManagementSystem.Models.FaultAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("AssignedHours")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("RepairScheduleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TechnicianId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RepairScheduleId");
+
+                    b.HasIndex("TechnicianId");
+
+                    b.ToTable("FaultAssignments");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.FaultReport", b =>
@@ -1040,6 +1084,9 @@ namespace FridgeManagementSystem.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RepairScheduleId"));
 
+                    b.Property<int>("AssignedTechnicianId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1052,9 +1099,6 @@ namespace FridgeManagementSystem.Migrations
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<int>("FaultId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("FaultTechnicianId")
                         .HasColumnType("int");
 
                     b.Property<string>("Notes")
@@ -1073,11 +1117,11 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasKey("RepairScheduleId");
 
+                    b.HasIndex("AssignedTechnicianId");
+
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("FaultId");
-
-                    b.HasIndex("FaultTechnicianId");
 
                     b.ToTable("RepairSchedules");
                 });
@@ -1475,10 +1519,14 @@ namespace FridgeManagementSystem.Migrations
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Fault", b =>
                 {
-                    b.HasOne("FridgeManagementSystem.Models.Employee", "FaultTechnician")
-                        .WithMany("ReportedFaults")
-                        .HasForeignKey("FaultTechnicianId")
+                    b.HasOne("FridgeManagementSystem.Models.Employee", "AssignedTechnician")
+                        .WithMany("AssignedFaults")
+                        .HasForeignKey("AssignedTechnicianId")
                         .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FridgeManagementSystem.Models.Employee", null)
+                        .WithMany("ReportedFaults")
+                        .HasForeignKey("EmployeeId");
 
                     b.HasOne("FridgeManagementSystem.Models.Fridge", "Fridge")
                         .WithMany()
@@ -1490,11 +1538,30 @@ namespace FridgeManagementSystem.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.Navigation("FaultTechnician");
+                    b.Navigation("AssignedTechnician");
 
                     b.Navigation("Fridge");
 
                     b.Navigation("ReportedBy");
+                });
+
+            modelBuilder.Entity("FridgeManagementSystem.Models.FaultAssignment", b =>
+                {
+                    b.HasOne("FridgeManagementSystem.Models.RepairSchedule", "RepairSchedule")
+                        .WithMany("FaultAssignments")
+                        .HasForeignKey("RepairScheduleId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("FridgeManagementSystem.Models.Employee", "Technician")
+                        .WithMany("FaultAssignments")
+                        .HasForeignKey("TechnicianId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("RepairSchedule");
+
+                    b.Navigation("Technician");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.FaultReport", b =>
@@ -1668,6 +1735,12 @@ namespace FridgeManagementSystem.Migrations
 
             modelBuilder.Entity("FridgeManagementSystem.Models.RepairSchedule", b =>
                 {
+                    b.HasOne("FridgeManagementSystem.Models.Employee", "AssignedTechnician")
+                        .WithMany("AssignedFaultSchedules")
+                        .HasForeignKey("AssignedTechnicianId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedById")
@@ -1680,17 +1753,11 @@ namespace FridgeManagementSystem.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("FridgeManagementSystem.Models.Employee", "FaultTechnician")
-                        .WithMany("FaultSchedules")
-                        .HasForeignKey("FaultTechnicianId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                    b.Navigation("AssignedTechnician");
 
                     b.Navigation("CreatedBy");
 
                     b.Navigation("Fault");
-
-                    b.Navigation("FaultTechnician");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.ScheduleMaintenance", b =>
@@ -1831,7 +1898,11 @@ namespace FridgeManagementSystem.Migrations
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Employee", b =>
                 {
-                    b.Navigation("FaultSchedules");
+                    b.Navigation("AssignedFaultSchedules");
+
+                    b.Navigation("AssignedFaults");
+
+                    b.Navigation("FaultAssignments");
 
                     b.Navigation("MaintenanceRecords");
 
@@ -1881,6 +1952,11 @@ namespace FridgeManagementSystem.Migrations
             modelBuilder.Entity("FridgeManagementSystem.Models.PurchasingOrder", b =>
                 {
                     b.Navigation("OrderDetails");
+                });
+
+            modelBuilder.Entity("FridgeManagementSystem.Models.RepairSchedule", b =>
+                {
+                    b.Navigation("FaultAssignments");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.ScheduleMaintenance", b =>

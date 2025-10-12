@@ -1,0 +1,110 @@
+﻿@model FridgeManagementSystem.ViewModels.CreateFaultViewModel
+
+@{
+    ViewData["Title"] = "Report New Fault";
+    Layout = "_CustomerLayout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> @ViewData["Title"]
+                </h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" id="createFaultForm">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Title" class="form-label fw-bold"></label>
+                        <input asp-for="Title" class="form-control" placeholder="Enter a brief title for the fault" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                        <div class="form-text">e.g., "Fridge not cooling", "Strange noise from compressor"</div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Description" class="form-label fw-bold"></label>
+                        <textarea asp-for="Description" class="form-control" rows="4"
+                                  placeholder="Describe the fault in details..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                        <div class="form-text">Provide as much detail as possible to help technicians diagnose the issue.</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Priority" class="form-label fw-bold"></label>
+                                <select asp-for="Priority" class="form-select" asp-items="Html.GetEnumSelectList<FaultPriority>()">
+                                </select>
+                                <span asp-validation-for="Priority" class="text-danger small"></span>
+                                <div class="form-text">
+                                    <small>
+                                        <strong>Critical:</strong> Complete breakdown<br />
+                                        <strong>High:</strong> Major issue affecting operation<br />
+                                        <strong>Medium:</strong> Moderate issue<br />
+                                        <strong>Low:</strong> Minor issue
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="FridgeId" class="form-label fw-bold"></label>
+                                <select asp-for="FridgeId" class="form-select">
+                                    <option value="">-- Select Fridge (Optional) --</option>
+                                    @foreach (var fridge in Model.CustomerFridges)
+                                    {
+                                        <option value="@fridge.FridgeId">
+                                            @fridge.FridgeType - @fridge.SerialNumber (@fridge.Status)
+                                        </option>
+                                    }
+                                </select>
+                                <span asp-validation-for="FridgeId" class="text-danger small"></span>
+                                <div class="form-text">Select the specific fridge if the fault is related to a particular unit.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.CustomerFridges.Any())
+                    {
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-refrigerator"></i> Your Fridges
+                            </h6>
+                            <div class="row">
+                                @foreach (var fridge in Model.CustomerFridges)
+                                {
+                                    <div class="col-md-6 mb-2">
+                                        <div class="border rounded p-2">
+                                            <strong>@fridge.FridgeType</strong><br />
+                                            <small class="text-muted">SN: @fridge.SerialNumber</small><br />
+                                            <span class="badge bg-success">@fridge.Status</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-paper-plane m-1"></i> Report Fault
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left m-1"></i> Back 
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+}

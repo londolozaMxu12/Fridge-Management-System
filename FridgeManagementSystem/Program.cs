@@ -46,6 +46,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
 
+builder.Services.AddScoped<IFaultNotificationRepository, FaultNotificationRepository>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

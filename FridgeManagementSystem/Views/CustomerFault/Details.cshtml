@@ -1,0 +1,149 @@
+﻿@model FridgeManagementSystem.ViewModels.FaultDetailsViewModel
+
+@{
+    ViewData["Title"] = "Fault Details";
+    Layout = "_CustomerLayout";
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Fault Details: @Model.Title
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Fault Information</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">Title:</dt>
+                            <dd class="col-sm-8">@Model.Title</dd>
+
+                            <dt class="col-sm-4">Description:</dt>
+                            <dd class="col-sm-8">@Model.Description</dd>
+
+                            <dt class="col-sm-4">Priority:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge @GetPriorityBadgeClass(Model.Priority)">@Model.Priority</span>
+                            </dd>
+
+                            <dt class="col-sm-4">Status:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge @GetStatusBadgeClass(Model.Status)">@Model.Status</span>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Reporting Details</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">Reported By:</dt>
+                            <dd class="col-sm-8">@Model.ReportedBy</dd>
+
+                            <dt class="col-sm-4">Business Name:</dt>
+                            <dd class="col-sm-8">@Model.BusinessName</dd>
+
+                            <dt class="col-sm-4">Reported Date:</dt>
+                            <dd class="col-sm-8">@Model.ReportedDate.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                            <dt class="col-sm-4">Fridge:</dt>
+                            <dd class="col-sm-8">@Model.FridgeInfo</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.ResolutionNotes))
+                {
+                    <div class="mt-4">
+                        <h6>Resolution Notes</h6>
+                        <div class="alert alert-success">
+                            <i class="fas fa-clipboard-check"></i>
+                            <strong>Technician Notes:</strong>
+                            <p class="mb-0 mt-2">@Model.ResolutionNotes</p>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.RepairSchedules.Any())
+                {
+                    <div class="mt-4">
+                        <h6>Repair Schedule</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Scheduled Date</th>
+                                        <th>Technician</th>
+                                        <th>Status</th>
+                                        <th>Estimated Hours</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var schedule in Model.RepairSchedules)
+                                    {
+                                        <tr>
+                                            <td>@schedule.ScheduledDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                            <td>@schedule.Technician</td>
+                                            <td>
+                                                <span class="badge @GetScheduleStatusBadgeClass(schedule.Status)">@schedule.Status</span>
+                                            </td>
+                                            <td>@schedule.EstimatedHours hours</td>
+                                            <td>@schedule.Notes</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="card-footer">
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left m-1"></i> Back to Faults
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetPriorityBadgeClass(FaultPriority priority)
+    {
+        return priority switch
+        {
+            FaultPriority.Critical => "bg-danger",
+            FaultPriority.High => "bg-warning",
+            FaultPriority.Medium => "bg-info",
+            FaultPriority.Low => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    public string GetStatusBadgeClass(FaultStatus status)
+    {
+        return status switch
+        {
+            FaultStatus.Reported => "bg-warning",
+            FaultStatus.Scheduled => "bg-info",
+            FaultStatus.InProgress => "bg-primary",
+            FaultStatus.Completed => "bg-success",
+            FaultStatus.Cancelled => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    public string GetScheduleStatusBadgeClass(ScheduleStatus status)
+    {
+        return status switch
+        {
+            ScheduleStatus.Scheduled => "bg-info",
+            ScheduleStatus.InProgress => "bg-primary",
+            ScheduleStatus.Completed => "bg-success",
+            ScheduleStatus.Cancelled => "bg-danger",
+            ScheduleStatus.Rescheduled => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+}

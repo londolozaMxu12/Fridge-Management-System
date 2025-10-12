@@ -28,7 +28,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     public DbSet<Fault> Faults { get; set; }
     public DbSet<FaultTechnician> FaultTechnicians { get; set; }
     public DbSet<RepairSchedule> RepairSchedules { get; set; }
-    public DbSet<FaultAssignment> FaultAssignments { get; set; }
+   
     public DbSet<FridgeRequest> FridgeRequests { get; set; }
     public DbSet<City> Cities { get; set; }
     public DbSet<CustomerData> CustomerDatas { get; set; }
@@ -77,6 +77,12 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
         //.HasForeignKey(m => m.MaintenanceTechnicianId)
         //.OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<ShoppingCart>()
+            .HasOne(e => e.User)
+            .WithOne(u => u.ShoppingCart)
+            .HasForeignKey<ShoppingCart>(e => e.UserId)
+            .OnDelete(DeleteBehavior.NoAction);
+
         // Fault configuration
         builder.Entity<Fault>(entity =>
         {
@@ -96,12 +102,11 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.ReportedById)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            entity.HasOne(e => e.AssignedTechnician)
-                .WithMany(e => e.AssignedFaults)
-                .HasForeignKey(e => e.AssignedTechnicianId)
+            entity.HasOne(e => e.FaultTechnician)
+                .WithMany(e => e.ReportedFaults)
+                .HasForeignKey(e => e.FaultTechnicianId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            
         });
 
         // FaultSchedule configuration
@@ -118,9 +123,9 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.FaultId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            entity.HasOne(e => e.AssignedTechnician)
-                .WithMany(e => e.AssignedFaultSchedules)
-                .HasForeignKey(e => e.AssignedTechnicianId)
+            entity.HasOne(e => e.FaultTechnician)
+                .WithMany(e => e.FaultSchedules)
+                .HasForeignKey(e => e.FaultTechnicianId)
                 .OnDelete(DeleteBehavior.NoAction);
 
             entity.HasOne(e => e.CreatedBy)
@@ -129,25 +134,6 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.NoAction);
         });
 
-        // FaultAssignment configuration
-        builder.Entity<FaultAssignment>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-
-            entity.Property(e => e.AssignedHours)
-                .HasPrecision(5, 2);
-
-            // Relationships
-            entity.HasOne(e => e.RepairSchedule)
-            .WithMany(rs => rs.FaultAssignments)
-            .HasForeignKey(e => e.RepairScheduleId)
-            .OnDelete(DeleteBehavior.NoAction);
-
-            entity.HasOne(e => e.Technician)
-                .WithMany(e => e.FaultAssignments)
-                .HasForeignKey(e => e.TechnicianId)
-                .OnDelete(DeleteBehavior.NoAction);
-        });
 
         // ScheduleMaintenance configuration
         builder.Entity<ScheduleMaintenance>(entity =>

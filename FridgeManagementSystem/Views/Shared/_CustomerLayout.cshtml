@@ -22,6 +22,11 @@
         #cartCount{
             color: black;
         }
+
+        body {
+            
+            background-color: deepskyblue;
+        }
     </style>
 </head>
 <body>
@@ -63,7 +68,12 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li>
-                                <a class="dropdown-item" asp-area="Customer" asp-controller="FaultReports" asp-action="Index">
+                                <a class="dropdown-item" asp-area="Customer" asp-controller="CustomerFault" asp-action="Index">
+                                    <i class="bi-clipboard-data me-2"></i>My Reported Faults
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Customer" asp-controller="CustomerFault" asp-action="Create">
                                     <i class="bi bi-exclamation-triangle me-2"></i>Report Fault
                                 </a>
                             </li>
@@ -95,8 +105,9 @@
                     </li>
                     <li>
                         <a class="nav-item" href="/Cart/GetUserCart">
-                            <span class="badge text-bg-info" id="cartCount">0</span>
                             <i class="bi bi-cart text-white"></i>
+                            <span class="badge text-bg-info" id="cartCount">0</span>
+                            
                         </a>
                     </li>
                 </ul>
@@ -122,7 +133,7 @@
             <div class="container-fluid">
                 <div class="row align-items-center">
                     <div class="col">
-                        <h1 class="h3 mb-0">@ViewData["Title"]</h1>
+                        
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-0">
                                 <li class="breadcrumb-item"><a asp-area="Customer" asp-controller="Customer" asp-action="Index">Home</a></li>
@@ -153,7 +164,7 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <h5 class="fw-bold">
-                        <i class="bi bi-refrigerator me-2"></i>Fridge Management System
+                        <i class="bi bi-refrigerator me-2"></i>Fridge Management System - Customer 
                     </h5>
                     <p class="mb-2">Ensuring proper refrigeration for your beverages</p>
                   

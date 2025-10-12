@@ -1,0 +1,195 @@
+﻿@model IEnumerable<FridgeManagementSystem.Models.Fault>
+
+@{
+    ViewData["Title"] = "Faults Dashboard";
+    Layout = "_FaultTechnicianLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center text-light mb-4">
+    <h1>
+        <i class="fas fa-tools"></i> Faults Dashboard
+    </h1>
+    <div class="text-light">
+        @* @if (User.IsInRole("FaultTechnician"))
+        {
+            <a asp-action="MySchedule" class="btn btn-outline-primary">
+                <i class="fas fa-calendar"></i> My Schedule
+            </a>
+        } *@
+        <a asp-action="MySchedule" class="btn btn-outline-primary text-light">
+            <i class="fas fa-calendar m-1"></i> My Schedule
+        </a>
+    </div>
+</div>
+
+<!-- Status Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="btn-group" role="group">
+            <a asp-action="Index" asp-route-status="all"
+               class="btn @(ViewBag.CurrentStatus == "all" ? "btn-primary" : "btn-outline-primary")">
+                All Faults
+            </a>
+            <a asp-action="Index" asp-route-status="Critical"
+               class="btn @(ViewBag.CurrentPriority == "Critical" ? "btn-danger" : "btn-outline-danger")">
+                Critical (@Model.Count(f => f.Priority == FaultPriority.Critical || f.Priority == FaultPriority.High))
+            </a>
+            <a asp-action="Index" asp-route-status="Reported"
+               class="btn @(ViewBag.CurrentStatus == "Reported" ? "btn-warning" : "btn-outline-warning")">
+                Reported (@Model.Count(f => f.Status == FaultStatus.Reported))
+            </a>
+            <a asp-action="Index" asp-route-status="InProgress"
+               class="btn @(ViewBag.CurrentStatus == "InProgress" ? "btn-info" : "btn-outline-info")">
+                In Progress (@Model.Count(f => f.Status == FaultStatus.InProgress))
+            </a>
+            
+            <a asp-action="Index" asp-route-status="Completed"
+               class="btn @(ViewBag.CurrentStatus == "Completed" ? "btn-success" : "btn-outline-success")">
+                Completed (@Model.Count(f => f.Status == FaultStatus.Completed))
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center text-light py-4">
+        <i class="fas fa-times-circle fa-3x text-capitalize mb-3"></i>
+        <h5>No faults found</h5>
+        <p class="text-light">All faults are currently processed or no faults match your filter.</p>
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var fault in Model)
+        {
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 @(fault.FaultTechnicianId == null ? "border-warning" : fault.FaultTechnicianId == ViewBag.CurrentTechnicianId ? "border-primary" : "border-secondary")">
+                    <div class="card-header @GetFaultHeaderClass(fault) text-light">
+                        <h5 class="card-title mb-0">
+                            @fault.Title
+                            @if (fault.FaultTechnicianId == null)
+                            {
+                                <span class="badge bg-primary float-end">Un Attended</span>
+                            }
+                            else if (fault.FaultTechnicianId == ViewBag.CurrentTechnicianId)
+                            {
+                                <span class="badge bg-success float-end">Attended by you</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary float-end">Taken by @fault.FaultTechnician?.User?.FullName</span>
+                            }
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">@fault.Description</p>
+
+                        <div class="mb-2">
+                            <strong>Priority:</strong>
+                            <span class="badge @GetPriorityBadgeClass(fault.Priority)">@fault.Priority</span>
+                        </div>
+
+                        <div class="mb-2">
+                            <strong>Status:</strong>
+                            <span class="badge @GetStatusBadgeClass(fault.Status)">@fault.Status</span>
+                        </div>
+
+                        @if (fault.Fridge != null)
+                        {
+                            <div class="mb-2">
+                                <strong>Fridge:</strong>
+                                @fault.Fridge.FridgeType.Brand @fault.Fridge.FridgeType.Name - @fault.Fridge.SerialNumber
+                            </div>
+                        }
+
+                        <div class="mb-2">
+                            <strong>Reported By:</strong>
+                            @fault.ReportedBy.User.FullName (@fault.ReportedBy.BusinessName)
+                        </div>
+
+                        <div class="mb-2">
+                            <strong>Reported Date:</strong>
+                            @fault.ReportedDate.ToString("yyyy-MM-dd HH:mm")
+                        </div>
+
+                        @if (fault.FaultTechnicianId != null)
+                        {
+                            <div class="mb-2">
+                                <strong>Assigned Technician:</strong>
+                                @fault.FaultTechnician?.User?.FullName
+                            </div>
+                        }
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group btn-group-sm w-100">
+                            <a asp-action="Details" asp-route-id="@fault.FaultId"
+                               class="btn btn-info" title="View Details">
+                                <i class="fas fa-eye"></i> Details
+                            </a>
+
+                            @if (fault.FaultTechnicianId == null && ViewBag.IsFaultTechnician == true)
+                            {
+                                <form asp-action="AttendFault" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@fault.FaultId" />
+                                    <button type="submit" class="btn btn-success"
+                                            title="Attend this fault"
+                                            onclick="return confirm('Are you sure you want to attend this fault? Other technicians will be notified.')">
+                                        <i class="fas fa-user-check"></i> Attend
+                                    </button>
+                                </form>
+                            }
+                            else if (fault.FaultTechnicianId == ViewBag.CurrentTechnicianId)
+                            {
+                                <a asp-action="Update" asp-route-id="@fault.FaultId"
+                                   class="btn btn-warning" title="Update Fault">
+                                    <i class="fas fa-edit"></i> Update
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@functions {
+    public string GetFaultHeaderClass(Fault fault)
+    {
+        return fault.Priority switch
+        {
+            FaultPriority.Critical => "bg-danger",
+            FaultPriority.High => "bg-warning",
+            FaultPriority.Medium => "bg-info",
+            FaultPriority.Low => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+    
+    public string GetPriorityBadgeClass(FaultPriority priority)
+    {
+        return priority switch
+        {
+            FaultPriority.Critical => "bg-danger",
+            FaultPriority.High => "bg-warning",
+            FaultPriority.Medium => "bg-info",
+            FaultPriority.Low => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    public string GetStatusBadgeClass(FaultStatus status)
+    {
+        return status switch
+        {
+            FaultStatus.Reported => "bg-warning",
+            FaultStatus.Scheduled => "bg-info",
+            FaultStatus.InProgress => "bg-primary",
+            FaultStatus.Completed => "bg-success",
+            FaultStatus.Cancelled => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

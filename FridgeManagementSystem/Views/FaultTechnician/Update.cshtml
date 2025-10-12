@@ -1,0 +1,140 @@
+﻿@model FridgeManagementSystem.ViewModels.UpdateFaultViewModel
+
+@{
+    ViewData["Title"] = "Update Fault";
+    Layout = "_FaultTechnicianLayout";
+}
+@* <h2 class="text-light"><i class="fas fa-edit text-light m-1"></i> Update Fault</h2> *@
+<div class="d-flex justify-content-between align-items-center text-white mb-4">
+    <h1>
+        <i class="fas fa-edit text-light m-1"></i> @ViewData["Title"]
+    </h1>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row ">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h3 class="card-title text-light mb-0">
+                    Fault Details 
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle"></i> Updating Fault: @Model.Title
+                    </h6>
+                    <p class="mb-0">Please provide resolution notes and update the fault status.</p>
+                </div>
+
+                <form asp-action="Update" id="updateFaultForm">
+                    <input type="hidden" asp-for="FaultId" />
+                    <input type="hidden" asp-for="Title" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="FaultId" class="form-label fw-bold"></label>
+                        <input asp-for="FaultId" class="form-control" readonly />
+                        
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="ResolutionNotes" class="form-label fw-bold"></label>
+                        <textarea asp-for="ResolutionNotes" class="form-control" rows="5"
+                                  placeholder="Enter detailed resolution notes..."></textarea>
+                        <span asp-validation-for="ResolutionNotes" class="text-danger small"></span>
+                        <div class="form-text">
+                            Describe what was done to resolve the fault, parts replaced, tests performed, etc.
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Status" class="form-label fw-bold"></label>
+                                <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<FaultStatus>()">
+                                </select>
+                                <span asp-validation-for="Status" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <div class="form-check mt-4">
+                                    <input asp-for="MarkCompleted" class="form-check-input" />
+                                    <label asp-for="MarkCompleted" class="form-check-label fw-bold">
+                                        Mark as Completed
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <small>
+                                        Check this if the fault is fully resolved and the fridge is operational.
+                                        
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-warning me-2">
+                            <i class="fas fa-save m-1"></i> Update Fault
+                        </button>
+                        <a asp-action="Details" asp-route-id="@Model.FaultId" class="btn btn-info me-2">
+                            <i class="fas fa-eye m-1"></i> View Details
+                        </a>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left m-1"></i> Back
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            
+            // Auto-check "Mark as Completed" when status is set to Completed
+            $('#Status').change(function () {
+                if ($(this).val() === '4') { // Completed
+                    $('#MarkCompleted').prop('checked', true);
+                } else {
+                    $('#MarkCompleted').prop('checked', false);
+                }
+
+            });
+
+        });
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+    
+}

@@ -4,19 +4,19 @@ namespace FridgeManagementSystem.Models
 {
     public enum FaultStatus
     {
-        Reported,       
-        Scheduled,
-        InProgress,
-        Completed,
-        Cancelled
+        Reported = 1,
+        Scheduled = 2,
+        InProgress = 3,
+        Completed = 4,
+        Cancelled = 5
     }
 
     public enum FaultPriority
     {
-        Low,
-        Medium,
-        High,
-        Critical
+        Low = 1,
+        Medium = 2,
+        High = 3,
+        Critical = 4
     }
 
     public class Fault
@@ -48,13 +48,13 @@ namespace FridgeManagementSystem.Models
         [DataType(DataType.DateTime)]
         public DateTime? ScheduledDate { get; set; }
 
-        [Display(Name = "Assigned Technician")]
-        public int? AssignedTechnicianId { get; set; }
-        public Employee AssignedTechnician { get; set; }
+        [Display(Name = "Fault Technician")]
+        public int? FaultTechnicianId { get; set; }
+        public Employee FaultTechnician { get; set; }
 
         [Display(Name = "Resolution Notes")]
         [StringLength(1000)]
-        public string ResolutionNotes { get; set; }
+        public string? ResolutionNotes { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

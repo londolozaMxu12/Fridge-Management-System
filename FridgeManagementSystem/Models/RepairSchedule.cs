@@ -42,10 +42,10 @@ namespace FridgeManagementSystem.Models
         public Fault Fault { get; set; }
 
         [Required]
-        [Display(Name = "Assigned Technician")]
-        public int AssignedTechnicianId { get; set; }
-        public Employee AssignedTechnician { get; set; }
+        [Display(Name = "Fault Technician")]
+        public int FaultTechnicianId { get; set; }
+        public Employee FaultTechnician { get; set; }
 
-        public ICollection<FaultAssignment> FaultAssignments { get; set; }
+        
     }
 }

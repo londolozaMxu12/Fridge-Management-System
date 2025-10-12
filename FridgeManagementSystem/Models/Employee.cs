@@ -43,11 +43,12 @@ namespace FridgeManagementSystem.Models
         public ICollection<MaintenanceRecord> MaintenanceRecords { get; set; }
         public ICollection<ScheduleMaintenance> ScheduledMaintenances { get; set; }
         
-        //For Fault Scheduling
+        //For Fault Reporting and Scheduling
         public ICollection<Fault> ReportedFaults { get; set; }
-        public ICollection<Fault> AssignedFaults { get; set; }
-        public ICollection<RepairSchedule> AssignedFaultSchedules { get; set; }
-        public ICollection<FaultAssignment> FaultAssignments { get; set; }
+        
+        public ICollection<RepairSchedule> FaultSchedules { get; set; }
+        
 
     }
 }
+
