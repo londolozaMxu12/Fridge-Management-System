@@ -39,9 +39,11 @@
     <header class="navbar navbar-expand-lg navbar-dark bg-success sticky-top">
         <div class="container-fluid">
             <!-- Brand -->
-            <a class="navbar-brand d-flex align-items-center" asp-area="CustomerLiaison" asp-controller="CustomerManagement" asp-action="Index">
-                <i class="bi bi-people-fill me-2 fs-4"></i>
-                <span class="fw-bold">Customer Liaison Portal</span>
+            <a class="navbar-brand d-flex align-items-center" asp-area="#" asp-controller="#" asp-action="#">
+                <div class="d-flex flex-column align-items-center">
+                    <img src="~/Images/WhatsApp Image 2025-05-27 at 18.37.15_1c44df4a.jpg" height="50" width="100" />
+                    <span class="fw-bold mt-1" style="color: #001f3f; font-size: 0.9rem;">NM DESIGN HUB</span>
+                </div>
             </a>
 
             <!-- Mobile Toggle -->
@@ -293,7 +295,9 @@
     </footer>
 
     <!-- Notifications Modal -->
-    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
+    <div class="modal fade" id="notificationsModal" tabindex="-1"
+         aria-labelledby="notificationsModalLabel" aria-hidden="true"
+         data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
