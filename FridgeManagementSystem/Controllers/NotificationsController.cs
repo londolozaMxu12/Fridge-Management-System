@@ -34,6 +34,18 @@ namespace FridgeManagementSystem.Controllers
 
             return View(notifications);
         }
+        // GET: Notifications/GetNotificationsPartial
+        public async Task<IActionResult> GetNotificationsPartial()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var notifications = await _context.Notifications
+                .Where(n => n.UserId == userId)
+                .OrderByDescending(n => n.CreatedAt)
+                .ToListAsync();
+
+            return PartialView("_NotificationsPartial", notifications);
+        }
 
         // POST: Notifications/MarkAsRead/5
         [HttpPost]

@@ -1,0 +1,83 @@
+﻿@model IEnumerable<Notification>
+
+@if (!Model.Any())
+{
+    <div class="text-center py-4">
+        <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No Notifications</h5>
+        <p class="text-muted">You don't have any notifications at the moment.</p>
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <span class="badge bg-secondary">@Model.Count() total</span>
+            @{
+                var unreadCount = Model.Count(n => !n.IsRead);
+            }
+            @if (unreadCount > 0)
+            {
+                <span class="badge bg-warning">@unreadCount unread</span>
+            }
+        </div>
+    </div>
+
+    <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+        @foreach (var notification in Model)
+        {
+            <div class="list-group-item list-group-item-action @(!notification.IsRead ? "notification-unread bg-light border-start border-primary border-3" : "")">
+                <div class="d-flex w-100 justify-content-between align-items-start">
+                    <div class="flex-grow-1 me-3">
+                        <div class="d-flex align-items-center mb-1">
+                            @if (!notification.IsRead)
+                            {
+                                <span class="badge bg-primary me-2">NEW</span>
+                            }
+                            <h6 class="mb-0 @(!notification.IsRead ? "text-dark fw-bold" : "text-muted")">@notification.Title</h6>
+                        </div>
+                        <p class="mb-2">@notification.Message</p>
+
+                        <!-- Timestamp -->
+                        <small class="text-muted d-block mb-2">
+                            <i class="fas fa-clock me-1"></i>@notification.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                        </small>
+
+                        <!-- Compact Action Buttons -->
+                        <div class="d-flex gap-1 mt-2">
+                            @if (!notification.IsRead)
+                            {
+                                <form method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@notification.Id" />
+                                    <button type="button" class="btn btn-sm btn-outline-success mark-as-read-btn" title="Mark as read">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="btn btn-sm btn-outline-secondary disabled" title="Already read">
+                                    <i class="fas fa-check-double"></i>
+                                </span>
+                            }
+
+                            @if (!string.IsNullOrEmpty(notification.Link))
+                            {
+                                <a href="@notification.Link" class="btn btn-sm btn-outline-primary" title="View related item">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            }
+
+                            <form method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@notification.Id" />
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-notification-btn" title="Delete notification">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

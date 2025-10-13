@@ -69,11 +69,17 @@
                                 <i class="bi bi-hourglass-split"></i> <span class="d-none d-sm-inline ms-2">Pending Approvals</span>
                             </a>
 
-                            <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Notifications" asp-action="Index">
+                            @* <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Notifications" asp-action="Index">
                                 <i class="bi bi-bell"></i><span class="d-none d-sm-inline ms-2">Notifications</span>
                                 @await Component.InvokeAsync("Notifications")
+                            </a> *@
+
+                            <a class="nav-link text-white position-relative" style="white-space:nowrap" href="#" data-bs-toggle="modal" data-bs-target="#notificationsModal">
+                                <i class="bi bi-bell"></i>
+                                <span class="d-none d-sm-inline ms-2">Notifications</span>
+                                @await Component.InvokeAsync("Notifications")
                             </a>
-                            
+
                             <a class="nav-link text-white" style="white-space:nowrap" href="#">
                                 <i class="bi bi-person"></i> <span class="d-none d-sm-inline ms-2">Profile</span>
                             </a>
@@ -87,21 +93,7 @@
             <!-- Main Content -->
             <div class="col-10 col-sm-9 col-xl-10 p-0 m-0" style="background-color: skyblue">
                 <nav class="navbar navbar-expand-lg bg-body-tertiary mb-3 border-bottom">
-                   @*  @if (TempData["SuccessMessage"] != null)
-                    { 
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            @TempData["SuccessMessage"]
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    }
-
-                    @if (TempData["ErrorMessage"] != null)
-                    {
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            @TempData["ErrorMessage"]
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    } *@
+                   
                     <div class="container-fluid">
                         <span class="navbar-brand mb-0 h6">
                             <i class="fas fa-user-shield me-2"></i>ADMIN PORTAL
@@ -122,31 +114,204 @@
         </div>
 
     </div>
-    
+    <!-- Notifications Modal -->
+    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="notificationsModalLabel">
+                        <i class="fas fa-bell me-2"></i> Notifications
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="notificationsModalBody">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading notifications...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading notifications...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <form id="markAllAsReadForm" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-primary" id="markAllAsReadBtn" disabled>
+                            <i class="fas fa-check-double me-1"></i> Mark All as Read
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load notifications when modal is shown
+            const notificationsModal = document.getElementById('notificationsModal');
+            if (notificationsModal) {
+                notificationsModal.addEventListener('show.bs.modal', function () {
+                    console.log('Modal opened - loading notifications');
+                    loadNotifications();
+                });
+            }
+
+            // Initialize mark all as read form
+            const markAllForm = document.getElementById('markAllAsReadForm');
+            if (markAllForm) {
+                markAllForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    handleMarkAllAsRead();
+                });
+            }
+        });
+
+        // Function to load notifications via AJAX
+        function loadNotifications() {
+            console.log('Loading notifications...');
+            fetch('@Url.Action("GetNotificationsPartial", "Notifications")')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    console.log('Notifications loaded successfully');
+                    document.getElementById('notificationsModalBody').innerHTML = data;
+                    updateMarkAllButton();
+                    // Re-attach event listeners for dynamic content
+                    attachNotificationEventListeners();
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                    document.getElementById('notificationsModalBody').innerHTML =
+                        '<div class="alert alert-danger">Error loading notifications. Please try again.</div>';
+                });
+        }
+
+        // Update Mark All as Read button state
+        function updateMarkAllButton() {
+            const hasUnread = document.querySelectorAll('.notification-unread').length > 0;
+            const markAllBtn = document.getElementById('markAllAsReadBtn');
+            if (markAllBtn) {
+                markAllBtn.disabled = !hasUnread;
+            }
+        }
+
+        // Handle Mark All as Read
+        function handleMarkAllAsRead() {
+            console.log('Marking all as read...');
+            fetch('@Url.Action("MarkAllAsRead", "Notifications")', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('#markAllAsReadForm input[name="__RequestVerificationToken"]').value,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('All marked as read successfully');
+                    loadNotifications(); // Reload notifications
+                    updateNotificationBadge(0); // Update badge to zero
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Function to update notification badge
+        function updateNotificationBadge(count) {
+            const badge = document.querySelector('.notification-badge');
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        // Get current badge count
+        function getCurrentBadgeCount() {
+            const badge = document.querySelector('.notification-badge');
+            return badge ? parseInt(badge.textContent) || 0 : 0;
+        }
+
+        // Attach event listeners for notification actions
+        function attachNotificationEventListeners() {
+            // Mark single notification as read
+            document.querySelectorAll('.mark-as-read-btn').forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const form = this.closest('form');
+                    const notificationId = form.querySelector('input[name="id"]').value;
+                    markNotificationAsRead(notificationId);
+                });
+            });
+
+            // Delete notification
+            document.querySelectorAll('.delete-notification-btn').forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    if (!confirm('Are you sure you want to delete this notification?')) {
+                        return;
+                    }
+                    const form = this.closest('form');
+                    const notificationId = form.querySelector('input[name="id"]').value;
+                    deleteNotification(notificationId);
+                });
+            });
+        }
+
+        // Mark single notification as read
+        function markNotificationAsRead(notificationId) {
+            fetch('@Url.Action("MarkAsRead", "Notifications")', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `id=${notificationId}`
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadNotifications();
+                    // Update badge count
+                    const currentCount = getCurrentBadgeCount();
+                    const newCount = Math.max(0, currentCount - 1);
+                    updateNotificationBadge(newCount);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Delete notification
+        function deleteNotification(notificationId) {
+            fetch('@Url.Action("Delete", "Notifications")', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `id=${notificationId}`
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadNotifications();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
     @await RenderSectionAsync("Styles", required: false)
 </body>
 </html>
 
-@functions {
-    private async Task<int> GetUnreadNotificationCount()
-    {
-        var context = new FridgeManagementSystemContext(new Microsoft.EntityFrameworkCore.DbContextOptions<FridgeManagementSystemContext>());
-        var userManager = Context.RequestServices.GetService<UserManager<ApplicationUser>>();
 
-        if (User.Identity.IsAuthenticated)
-        {
-            var user = await userManager.GetUserAsync(User);
-            if (user != null)
-            {
-                return await context.Notifications
-                    .Where(n => n.UserId == user.Id && !n.IsRead)
-                    .CountAsync();
-            }
-        }
-        return 0;
-    }
-}

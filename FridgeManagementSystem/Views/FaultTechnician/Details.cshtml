@@ -149,12 +149,15 @@
                                 </tbody>
                             </table>
                         </div>
-                        
-                        <div class="text-light">
-                            <a asp-action="MySchedule" class="btn btn-outline-success">
-                                <i class="fas fa-calendar m-1"></i> My Schedule
-                            </a>
-                        </div>
+                        @if (Model.FaultTechnicianId != null && Model.FaultTechnicianId == ViewBag.CurrentTechnicianId)
+                        {
+                            <div class="text-light">
+                                <a asp-action="MySchedule" class="btn btn-outline-success">
+                                    <i class="fas fa-calendar m-1"></i> My Schedule
+                                </a>
+                            </div>
+                        }
+
                         
                     </div>
                 }
@@ -183,7 +186,7 @@
                 else if (Model.FaultTechnicianId != null)
                 {
                     <span class="text-muted small">
-                        <i class="fas fa-user-clock"></i> Attended by another technician.
+                        <i class="fas fa-user-clock m-2"></i>Already ttended by @Model.FaultTechnician?.User?.FullName, look for unattended faults
                     </span>
                 }
                 

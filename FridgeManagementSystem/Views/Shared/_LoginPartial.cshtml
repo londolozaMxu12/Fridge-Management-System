@@ -46,7 +46,7 @@
                         </li>
                         <li>
                             <a class="dropdown-item" asp-area="Admin" asp-controller="Profile" asp-action="Edit">
-                                <i class="bi bi-pencil-square me-2"></i>Update Details
+                                <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
                         </li>
 
@@ -54,7 +54,9 @@
                         <li class="nav-item">
 
                             <form id="logoutForm" class="dropdown-item text-danger" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">Logout</button>
+                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">
+                                    <i class="bi bi-box-arrow-left me-2"></i>Logout
+                                </button>
                             </form>
 
                         </li>
@@ -83,7 +85,7 @@
                         </li>
                         <li>
                             <a class="dropdown-item" asp-area="Customer" asp-controller="Profile" asp-action="Edit">
-                                <i class="bi bi-pencil-square me-2"></i>Update Details
+                                <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
                         </li>
 
@@ -91,7 +93,9 @@
                         <li class="nav-item">
 
                             <form id="logoutForm" class="dropdown-item text-danger" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">Logout</button>
+                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">
+                                    <i class="bi bi-box-arrow-left me-2"></i>Logout
+                                </button>
                             </form>
 
                         </li>
@@ -119,26 +123,17 @@
                         </li>
                         <li>
                             <a class="dropdown-item" asp-area="FaultTechnician" asp-controller="Profile" asp-action="Edit">
-                                <i class="bi bi-pencil-square me-2"></i>Update Details
+                                <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
-                        </li>
-
-                        <li>
-                            <a class="dropdown-item" style="white-space:nowrap" asp-controller="Notifications" asp-action="Index" id="notificationsToggle">
-                                <i class="bi bi-bell me-2"></i>
-                                Notifications
-                                <span class="badge bg-danger text-light" id="notificationCount"></span>
-                                @await Component.InvokeAsync("Notifications")
-                                
-                            </a>
-
                         </li>
 
                         <li><hr class="dropdown-divider"></li>
                         <li class="nav-item">
 
                             <form id="logoutForm" class="dropdown-item text-danger" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">Logout</button>
+                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">
+                                    <i class="bi bi-box-arrow-left me-2"></i>Logout
+                                </button>
                             </form>
 
                         </li>
@@ -165,7 +160,7 @@
                         </li>
                         <li>
                             <a class="dropdown-item" asp-area="MaintenanceTechnician" asp-controller="Profile" asp-action="Edit">
-                                <i class="bi bi-pencil-square me-2"></i>Update Details
+                                <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
                         </li>
 
@@ -173,7 +168,9 @@
                         <li class="nav-item">
 
                             <form id="logoutForm" class="dropdown-item text-danger" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">Logout</button>
+                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">
+                                    <i class="bi bi-box-arrow-left me-2"></i>Logout
+                                </button>
                             </form>
 
                         </li>
@@ -200,7 +197,7 @@
                         </li>
                         <li>
                             <a class="dropdown-item" asp-area="InventoryLiaison" asp-controller="Profile" asp-action="Edit">
-                                <i class="bi bi-pencil-square me-2"></i>Update Details
+                                <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
                         </li>
 
@@ -208,7 +205,9 @@
                         <li class="nav-item">
 
                             <form id="logoutForm" class="dropdown-item text-danger" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">Logout</button>
+                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">
+                                    <i class="bi bi-box-arrow-left me-2"></i>Logout
+                                </button>
                             </form>
 
                         </li>
@@ -235,7 +234,7 @@
                         </li>
                         <li>
                             <a class="dropdown-item" asp-area="PurchasingManager" asp-controller="Profile" asp-action="Edit">
-                                <i class="bi bi-pencil-square me-2"></i>Update Details
+                                <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
                         </li>
 
@@ -243,7 +242,9 @@
                         <li class="nav-item">
 
                             <form id="logoutForm" class="dropdown-item text-danger" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">Logout</button>
+                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">
+                                    <i class="bi bi-box-arrow-left me-2"></i>Logout
+                                </button>
                             </form>
 
                         </li>
@@ -270,24 +271,17 @@
                         </li>
                         <li>
                             <a class="dropdown-item" asp-area="CustomerManagement" asp-controller="Profile" asp-action="Edit">
-                                <i class="bi bi-pencil-square me-2"></i>Update Details
+                                <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
                         </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" asp-controller="Notifications" asp-action="Index" id="notificationsToggle">
-                                <i class="bi bi-bell me-2"></i>
-                                Notifications
-                                <span class="badge bg-danger ms-2" id="notificationCount">0</span>
-                                @await Component.InvokeAsync("Notifications")
-                            </a>
-                            
-                        </li>
+                        
                         <li><hr class="dropdown-divider"></li>
                         <li class="nav-item">
 
                             <form id="logoutForm" class="dropdown-item text-danger" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">Logout</button>
+                                <button id="logout" type="submit" class="nav-link btn btn-link text-black border-0">
+                                    <i class="bi bi-box-arrow-left me-2"></i>Logout
+                                </button>
                             </form>
 
                         </li>
@@ -310,25 +304,6 @@
     }
 </ul>
 
-@functions {
-    private async Task<int> GetUnreadNotificationCount()
-    {
-        var context = new FridgeManagementSystemContext(new Microsoft.EntityFrameworkCore.DbContextOptions<FridgeManagementSystemContext>());
-        var userManager = Context.RequestServices.GetService<UserManager<ApplicationUser>>();
-
-        if (User.Identity.IsAuthenticated)
-        {
-            var user = await userManager.GetUserAsync(User);
-            if (user != null)
-            {
-                return await context.Notifications
-                    .Where(n => n.UserId == user.Id && !n.IsRead)
-                    .CountAsync();
-            }
-        }
-        return 0;
-    }
-}
 
 
 

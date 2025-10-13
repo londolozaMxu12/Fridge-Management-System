@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FridgeManagementSystem.Data;
 using Microsoft.AspNetCore.Identity;
@@ -21,19 +20,23 @@ namespace FridgeManagementSystem.Components
 
         public async Task<IViewComponentResult> InvokeAsync()
         {
+            var unreadCount = await GetUnreadNotificationCount();
+            return View(unreadCount);
+        }
+
+        private async Task<int> GetUnreadNotificationCount()
+        {
             if (User.Identity.IsAuthenticated)
             {
                 var user = await _userManager.GetUserAsync((ClaimsPrincipal)User);
                 if (user != null)
                 {
-                    var unreadCount = await _context.Notifications
+                    return await _context.Notifications
                         .Where(n => n.UserId == user.Id && !n.IsRead)
                         .CountAsync();
-
-                    return View(unreadCount);
                 }
             }
-            return View(0);
+            return 0;
         }
     }
 }
