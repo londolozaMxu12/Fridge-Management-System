@@ -60,21 +60,7 @@ namespace FridgeManagementSystem.Controllers.F.Technician
             var currentTechnician = await GetCurrentFaultTechnicianAsync();
             var isFaultTechnician = currentTechnician != null;
             var currentTechnicianId = currentTechnician?.Id;
-
-            //if (isFaultTechnician)
-            //{
-            //    ViewBag.CurrentTechnicianId = currentTechnicianId;
-
-            //    // Show faults assigned to current technician OR unassigned faults
-            //    query = query.Where(f => f.FaultTechnicianId == null || f.FaultTechnicianId == currentTechnicianId);
-            //}
-
-            //ViewBag.PendingFaultsCount = await _context.Faults.CountAsync(f => f.Status == FaultStatus.Reported);
             
-            //ViewBag.UrgentFaultsCount = await _context.Faults.CountAsync(f => f.Priority == FaultPriority.Critical || f.Priority == FaultPriority.High);
-            //ViewBag.InProgressFaultsCount = await _context.Faults.CountAsync(f => f.Status == FaultStatus.InProgress);
-            //ViewBag.CompletedFaultsCount = await _context.Faults.CountAsync(f => f.Status == FaultStatus.Completed);
-            // Calculate counts
             var baseQuery = _context.Faults.AsQueryable();
             if (isFaultTechnician)
             {
@@ -121,6 +107,10 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                 TempData["Error"] = "Fault not found";
                 return RedirectToAction(nameof(Index));
             }
+
+            var currentTechnician = await GetCurrentFaultTechnicianAsync();
+            ViewBag.CurrentTechnicianId = currentTechnician?.Id;
+            ViewBag.IsFaultTechnician = currentTechnician != null;
 
             return View(fault);
         }
@@ -451,6 +441,8 @@ namespace FridgeManagementSystem.Controllers.F.Technician
 
             _context.RepairSchedules.Update(schedule);
             await _context.SaveChangesAsync();
+
+
 
             TempData["Success"] = $"Repair schedule status updated from {oldStatus} to {status}";
             return RedirectToAction(nameof(MySchedule));

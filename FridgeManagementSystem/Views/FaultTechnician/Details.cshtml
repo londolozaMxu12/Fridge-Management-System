@@ -109,8 +109,8 @@
                     <div class="mt-4">
                         <h6>Resolution Notes</h6>
                         <hr />
-                        <div class="alert alert-success">
-                            <i class="fas fa-clipboard-check"></i>
+                        <div>
+                            
                             <strong>Resolution Details:</strong>
                             <p class="mb-0 mt-2">@Model.ResolutionNotes</p>
                         </div>
@@ -163,21 +163,30 @@
                 <a asp-action="Index" class="btn btn-secondary">
                     <i class="fas fa-arrow-left m-1"></i> Back to Faults
                 </a>
-                @* <form asp-action="AttendFault" method="post" class="d-inline">
-                    <input type="hidden" name="id" value="@Model.FaultId" />
-                    <button type="submit" class="btn btn-success"
-                            title="Attend this fault"
-                            onclick="return confirm('Are you sure you want to attend this fault? Other technicians will be notified.')">
-                        <i class="fas fa-user-check"></i> Attend
-                    </button>
-                </form> *@
-
-                @if (Model.FaultTechnicianId == ViewBag.CurrentTechnicianId)
+                @if (Model.FaultTechnicianId == null && ViewBag.IsFaultTechnician == true)
+                {
+                    <form asp-action="AttendFault" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@Model.FaultId" />
+                        <button type="submit" class="btn btn-success"
+                                title="Attend this fault"
+                                onclick="return confirm('Are you sure you want to attend this fault? Other technicians will be notified.')">
+                            <i class="fas fa-user-check"></i> Attend
+                        </button>
+                    </form>
+                }
+                else if (Model.FaultTechnicianId != null && Model.FaultTechnicianId == ViewBag.CurrentTechnicianId)
                 {
                     <a asp-action="Update" asp-route-id="@Model.FaultId" class="btn btn-warning">
                         <i class="fas fa-edit m-1"></i> Update Fault
                     </a>
                 }
+                else if (Model.FaultTechnicianId != null)
+                {
+                    <span class="text-muted small">
+                        <i class="fas fa-user-clock"></i> Attended by another technician.
+                    </span>
+                }
+                
             </div>
         </div>
     </div>
@@ -207,9 +216,9 @@
         return fault.Priority switch
         {
             FaultPriority.Critical => "bg-danger",
-            FaultPriority.High => "bg-warning",
-            FaultPriority.Medium => "bg-info",
-            FaultPriority.Low => "bg-secondary",
+            FaultPriority.High => "bg-danger",
+            FaultPriority.Medium => "bg-warning",
+            FaultPriority.Low => "bg-info",
             _ => "bg-secondary"
         };
     }
@@ -219,9 +228,9 @@
         return priority switch
         {
             FaultPriority.Critical => "bg-danger",
-            FaultPriority.High => "bg-warning",
-            FaultPriority.Medium => "bg-info",
-            FaultPriority.Low => "bg-secondary",
+            FaultPriority.High => "bg-danger",
+            FaultPriority.Medium => "bg-warning",
+            FaultPriority.Low => "bg-info",
             _ => "bg-secondary"
         };
     }

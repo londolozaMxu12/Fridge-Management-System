@@ -10,12 +10,7 @@
         <i class="fas fa-tools"></i> Faults Dashboard
     </h1>
     <div class="text-light">
-        @* @if (User.IsInRole("FaultTechnician"))
-        {
-            <a asp-action="MySchedule" class="btn btn-outline-primary">
-                <i class="fas fa-calendar"></i> My Schedule
-            </a>
-        } *@
+        
         <a asp-action="MySchedule" class="btn btn-outline-primary text-light">
             <i class="fas fa-calendar m-1"></i> My Schedule
         </a>
@@ -30,10 +25,10 @@
                class="btn @(ViewBag.CurrentStatus == "all" ? "btn-primary" : "btn-outline-primary")">
                 All Faults
             </a>
-            <a asp-action="Index" asp-route-status="Critical"
+            @* <a asp-action="Index" asp-route-status="Critical"
                class="btn @(ViewBag.CurrentPriority == "Critical" ? "btn-danger" : "btn-outline-danger")">
                 Critical (@Model.Count(f => f.Priority == FaultPriority.Critical || f.Priority == FaultPriority.High))
-            </a>
+            </a> *@
             <a asp-action="Index" asp-route-status="Reported"
                class="btn @(ViewBag.CurrentStatus == "Reported" ? "btn-warning" : "btn-outline-warning")">
                 Reported (@Model.Count(f => f.Status == FaultStatus.Reported))
@@ -100,7 +95,7 @@ else
                         {
                             <div class="mb-2">
                                 <strong>Fridge:</strong>
-                                @fault.Fridge.FridgeType.Brand @fault.Fridge.FridgeType.Name - @fault.Fridge.SerialNumber
+                                @fault.Fridge.FridgeType.Name, @fault.Fridge.FridgeType.Model, @fault.Fridge.FridgeType.Brand -SN: @fault.Fridge.SerialNumber
                             </div>
                         }
 
@@ -161,9 +156,9 @@ else
         return fault.Priority switch
         {
             FaultPriority.Critical => "bg-danger",
-            FaultPriority.High => "bg-warning",
-            FaultPriority.Medium => "bg-info",
-            FaultPriority.Low => "bg-secondary",
+            FaultPriority.High => "bg-danger",
+            FaultPriority.Medium => "bg-warning",
+            FaultPriority.Low => "bg-info",
             _ => "bg-secondary"
         };
     }
@@ -173,9 +168,9 @@ else
         return priority switch
         {
             FaultPriority.Critical => "bg-danger",
-            FaultPriority.High => "bg-warning",
-            FaultPriority.Medium => "bg-info",
-            FaultPriority.Low => "bg-secondary",
+            FaultPriority.High => "bg-danger",
+            FaultPriority.Medium => "bg-warning",
+            FaultPriority.Low => "bg-info",
             _ => "bg-secondary"
         };
     }

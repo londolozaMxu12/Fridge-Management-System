@@ -11,6 +11,7 @@
         <i class="fas fa-calendar"></i> My Repair Schedule
     </h1>
     <div>
+        
         <a asp-action="Index" class="btn btn-outline-primary text-white">
             <i class="fas fa-tools"></i> Back to Faults
         </a>
@@ -68,7 +69,7 @@ else
                         {
                             <tr>
                                 <td>
-                                    <strong>@schedule.ScheduledDate.ToString("yyyy-MM-dd")</strong>
+                                    <strong>@schedule.ScheduledDate.ToString("dd/MM/yyyy")</strong>
                                     <br />
                                     <small class="text-muted">@schedule.ScheduledDate.ToString("HH:mm")</small>
                                 </td>
@@ -93,6 +94,12 @@ else
                                             <small class="text-muted">
                                                 <i class="fas fa-phone"></i> @schedule.Fault.ReportedBy.User.ContactNo
                                             </small>
+                                            <br />
+                                            <small class="text-muted">
+                                                <i class="fas fa-map-marker-alt me-2"></i>@schedule.Fault.ReportedBy.User.Address, 
+                                                @schedule.Fault.ReportedBy.User.City, @schedule.Fault.ReportedBy.User.Suburb
+                                            </small>
+                                            
                                         </div>
                                     }
                                     else
@@ -110,7 +117,7 @@ else
                                             <br />
                                             <small class="text-muted">Model: @schedule.Fault.Fridge.FridgeType?.Brand</small>
                                             <br />
-                                            <small class="text-muted">Serial: @schedule.Fault.Fridge.SerialNumber</small>
+                                            <small class="text-muted">SN: @schedule.Fault.Fridge.SerialNumber</small>
                                         </div>
                                     }
                                     else
@@ -174,13 +181,14 @@ else
                                                 </li>
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li>
-                                                    <a class="dropdown-item" 
-                                                       asp-controller="FaultTechnician" 
-                                                       asp-action="Details" 
+                                                    <a class="dropdown-item"
+                                                       asp-controller="FaultTechnician"
+                                                       asp-action="Update"
                                                        asp-route-id="@schedule.FaultId">
-                                                        <i class="fas fa-info-circle me-2"></i>View Fault Details
+                                                        <i class="fas fa-info-circle me-2"></i>Update Fault Status
                                                     </a>
                                                 </li>
+                                               
                                             </ul>
                                         </div>
                                     </div>
