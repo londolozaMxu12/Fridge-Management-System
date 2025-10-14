@@ -1,4 +1,4 @@
-﻿@model IEnumerable<FridgeManagementSystem.Models.Fault>
+﻿@model FridgeManagementSystem.ViewModels.FaultSearchViewModel
 
 @{
     ViewData["Title"] = "Faults Dashboard";
@@ -10,54 +10,148 @@
         <i class="fas fa-tools"></i> Faults Dashboard
     </h1>
     <div class="text-light">
-        
         <a asp-action="MySchedule" class="btn btn-outline-primary text-light">
             <i class="fas fa-calendar m-1"></i> My Schedule
         </a>
     </div>
 </div>
 
-<!-- Status Filter -->
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="btn-group" role="group">
-            <a asp-action="Index" asp-route-status="all"
-               class="btn @(ViewBag.CurrentStatus == "all" ? "btn-primary" : "btn-outline-primary")">
-                All Faults
-            </a>
-            @* <a asp-action="Index" asp-route-status="Critical"
-               class="btn @(ViewBag.CurrentPriority == "Critical" ? "btn-danger" : "btn-outline-danger")">
-                Critical (@Model.Count(f => f.Priority == FaultPriority.Critical || f.Priority == FaultPriority.High))
-            </a> *@
-            <a asp-action="Index" asp-route-status="Reported"
-               class="btn @(ViewBag.CurrentStatus == "Reported" ? "btn-warning" : "btn-outline-warning")">
-                Reported (@Model.Count(f => f.Status == FaultStatus.Reported))
-            </a>
-            <a asp-action="Index" asp-route-status="InProgress"
-               class="btn @(ViewBag.CurrentStatus == "InProgress" ? "btn-info" : "btn-outline-info")">
-                In Progress (@Model.Count(f => f.Status == FaultStatus.InProgress))
-            </a>
-            
-            <a asp-action="Index" asp-route-status="Completed"
-               class="btn @(ViewBag.CurrentStatus == "Completed" ? "btn-success" : "btn-outline-success")">
-                Completed (@Model.Count(f => f.Status == FaultStatus.Completed))
-            </a>
-        </div>
+<!-- Status, Priority and Sort Filters - Inline -->
+<div class="d-flex flex-wrap gap-2 align-items-center mb-4 p-3 bg-dark rounded">
+    <!-- Status Filter -->
+    <div class="btn-group" role="group">
+        <a asp-action="Index"
+           asp-route-status="all"
+           asp-route-search="@Model.Search"
+           asp-route-priority="@Model.Priority"
+           asp-route-sort="@Model.Sort"
+           class="btn @(ViewBag.CurrentStatus == "all" ? "btn-primary" : "btn-outline-primary")">
+            All Faults (@ViewBag.TotalFaultsCount)
+        </a>
+        <a asp-action="Index"
+           asp-route-status="Reported"
+           asp-route-search="@Model.Search"
+           asp-route-priority="@Model.Priority"
+           asp-route-sort="@Model.Sort"
+           class="btn @(ViewBag.CurrentStatus == "Reported" ? "btn-warning" : "btn-outline-warning")">
+            Reported (@ViewBag.PendingFaultsCount)
+        </a>
+        <a asp-action="Index"
+           asp-route-status="InProgress"
+           asp-route-search="@Model.Search"
+           asp-route-priority="@Model.Priority"
+           asp-route-sort="@Model.Sort"
+           class="btn @(ViewBag.CurrentStatus == "InProgress" ? "btn-info" : "btn-outline-info")">
+            In Progress (@ViewBag.InProgressFaultsCount)
+        </a>
+        <a asp-action="Index"
+           asp-route-status="Completed"
+           asp-route-search="@Model.Search"
+           asp-route-priority="@Model.Priority"
+           asp-route-sort="@Model.Sort"
+           class="btn @(ViewBag.CurrentStatus == "Completed" ? "btn-success" : "btn-outline-success")">
+            Completed (@ViewBag.CompletedFaultsCount)
+        </a>
+    </div>
+
+    <!-- Priority Filter -->
+    <div class="ms-2">
+        <select class="form-select" name="priority" asp-for="Priority" onchange="this.form.submit()" style="min-width: 150px;">
+            <option value="">All Priorities</option>
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+        </select>
+    </div>
+
+    <!-- Sort Options -->
+    <div class="ms-2">
+        <select class="form-select" name="sort" asp-for="Sort" onchange="this.form.submit()" style="min-width: 180px;">
+            <option value="">Default Sort</option>
+            <option value="priority_desc">Priority: High to Low</option>
+            <option value="priority_asc">Priority: Low to High</option>
+            <option value="date_desc">Date: Newest First</option>
+            <option value="date_asc">Date: Oldest First</option>
+        </select>
     </div>
 </div>
 
-@if (!Model.Any())
+<!-- Search Filter - Without Card -->
+<form class="row g-3 mb-4" method="get">
+    <div class="col-lg-8 col-md-10">
+        <div class="input-group">
+            <input class="form-control" name="search" asp-for="Search" placeholder="Search by Title or Description">
+            <button class="btn btn-outline-primary" type="submit">
+                <i class="fas fa-search"></i> Search
+            </button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Priority) || !string.IsNullOrEmpty(Model.Sort))
+            {
+                <a asp-action="Index" asp-route-status="@Model.Status" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Hidden fields to maintain state -->
+    <input type="hidden" name="status" value="@Model.Status" />
+    <input type="hidden" name="priority" value="@Model.Priority" />
+    <input type="hidden" name="sort" value="@Model.Sort" />
+    <input type="hidden" name="pageIndex" value="1" />
+</form>
+
+<!-- Results Count -->
+@if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Priority) || !string.IsNullOrEmpty(Model.Sort))
+{
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-filter"></i>
+        @if (!string.IsNullOrEmpty(Model.Search))
+        {
+            <span>Search: "<strong>@Model.Search</strong>"</span>
+        }
+        @if (!string.IsNullOrEmpty(Model.Priority))
+        {
+            <span> | Priority: <strong>@Model.Priority</strong></span>
+        }
+        @if (!string.IsNullOrEmpty(Model.Sort))
+        {
+            <span> | Sorted by: <strong>@GetSortDisplayName(Model.Sort)</strong></span>
+        }
+    </div>
+}
+
+@{
+    var faults = ViewBag.Faults as IEnumerable<FridgeManagementSystem.Models.Fault> ?? new List<FridgeManagementSystem.Models.Fault>();
+}
+
+@if (!faults.Any())
 {
     <div class="text-center text-light py-4">
         <i class="fas fa-times-circle fa-3x text-capitalize mb-3"></i>
         <h5>No faults found</h5>
-        <p class="text-light">All faults are currently processed or no faults match your filter.</p>
+        <p class="text-light">
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Priority))
+            {
+                <span>No faults match your current filters.</span>
+            }
+            else
+            {
+                <span>All faults are currently processed or no faults match your filter.</span>
+            }
+        </p>
+        @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Priority))
+        {
+            <a asp-action="Index" asp-route-status="@Model.Status" class="btn btn-primary mt-2">
+                <i class="fas fa-undo"></i> Show All Faults
+            </a>
+        }
     </div>
 }
 else
 {
     <div class="row">
-        @foreach (var fault in Model)
+        @foreach (var fault in faults)
         {
             <div class="col-md-6 mb-4">
                 <div class="card h-100 @(fault.FaultTechnicianId == null ? "border-warning" : fault.FaultTechnicianId == ViewBag.CurrentTechnicianId ? "border-primary" : "border-secondary")">
@@ -148,6 +242,28 @@ else
             </div>
         }
     </div>
+
+    <!-- Pagination -->
+    @if (ViewBag.TotalPages > 1)
+    {
+        <nav aria-label="Faults pagination">
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    string active = i == ViewBag.PageIndex ? "active" : "";
+                    <li class="page-item @active">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-pageIndex="@i"
+                           asp-route-status="@Model.Status"
+                           asp-route-search="@Model.Search"
+                           asp-route-priority="@Model.Priority"
+                           asp-route-sort="@Model.Sort">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
 }
 
 @functions {
@@ -162,7 +278,7 @@ else
             _ => "bg-secondary"
         };
     }
-    
+
     public string GetPriorityBadgeClass(FaultPriority priority)
     {
         return priority switch
@@ -185,6 +301,18 @@ else
             FaultStatus.Completed => "bg-success",
             FaultStatus.Cancelled => "bg-danger",
             _ => "bg-secondary"
+        };
+    }
+
+    public string GetSortDisplayName(string sort)
+    {
+        return sort switch
+        {
+            "priority_desc" => "Priority: High to Low",
+            "priority_asc" => "Priority: Low to High",
+            "date_desc" => "Date: Newest First",
+            "date_asc" => "Date: Oldest First",
+            _ => "Default"
         };
     }
 }
