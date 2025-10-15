@@ -53,7 +53,7 @@
         <div class="container-fluid">
             <!-- Brand -->
             
-            <a class="navbar-brand d-flex align-items-center" asp-area="FaultTechnician" asp-controller="FaultTechnician" asp-action="Index">
+            <a class="navbar-brand d-flex align-items-center" asp-area="FaultTechnician" asp-controller="Dashboard" asp-action="Index">
                 <div class="d-flex flex-column align-items-center">
                     <img src="~/Images/WhatsApp Image 2025-05-27 at 18.37.15_1c44df4a.jpg" height="50" width="100" />
                     <span class="fw-bold mt-1" style="color: #001f3f; font-size: 0.9rem;">NM DESIGN HUB</span>
@@ -70,7 +70,7 @@
             <div class="collapse navbar-collapse" id="faultTechNavbar">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" asp-area="FaultTechnician" asp-controller="FaultTechnician" asp-action="Index">
+                        <a class="nav-link" asp-area="FaultTechnician" asp-controller="Dashboard" asp-action="Index">
                             <i class="bi bi-speedometer2 me-1"></i>Dashboard
                         </a>
                     </li>
@@ -99,8 +99,8 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item" asp-area="FaultTechnician" asp-action="Index" asp-route-status="Urgent">
-                                    <i class="bi bi-exclamation-circle me-2 "></i>Urgent Faults
+                                <a class="dropdown-item" asp-area="FaultTechnician" asp-action="Index" asp-route-priority="urgent">
+                                    <i class="bi bi-exclamation-circle me-2"></i>Urgent Faults
                                     <span class="badge bg-danger">@ViewBag.UrgentFaultsCount</span>
                                 </a>
                             </li>

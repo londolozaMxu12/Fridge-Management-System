@@ -232,17 +232,17 @@ namespace FridgeManagementSystem.Controllers
 
             var totalCount = await query.CountAsync();
 
-            // Apply pagination
-            var employees = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
             // Get employee types for filter dropdown
             var employeeTypes = await _context.EmployeeTypes
                 .Where(et => et.IsActive)
                 .Select(et => et.Name)
                 .Distinct()
+                .ToListAsync();
+
+            // Apply pagination
+            var employees = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             var viewModel = new EmployeeManagementViewModel

@@ -1,23 +1,30 @@
 ﻿@model FridgeManagementSystem.ViewModels.FaultSearchViewModel
 
 @{
-    ViewData["Title"] = "Faults Dashboard";
+    ViewData["Title"] = "Reported Faults";
     Layout = "_FaultTechnicianLayout";
+
+    <!-- For Pagination -->
+    var totalPages = (int)Math.Ceiling((double) @ViewBag.TotalFaultsCount / Model.PageSize);
+    var prevDisabled = Model.PageNumber <= 1 ? "disabled" : "";
+    var nextDisabled = Model.PageNumber >= totalPages ? "disabled" : "";
 }
 
 <div class="d-flex justify-content-between align-items-center text-light mb-4">
-    <h1>
-        <i class="fas fa-tools"></i> Faults Dashboard
-    </h1>
+    <h2>
+        <i class="bi bi-exclamation-triangle text-warning me-2"></i>List Of Reported Faults
+    </h2>
     <div class="text-light">
         <a asp-action="MySchedule" class="btn btn-outline-primary text-light">
             <i class="fas fa-calendar m-1"></i> My Schedule
         </a>
+        @*<span class="badge bg-light text-dark">Total: @ViewBag.TotalFaultsCount</span>*@
     </div>
+
 </div>
 
-<!-- Status, Priority and Sort Filters - Inline -->
-<div class="d-flex flex-wrap gap-2 align-items-center mb-4 p-3 bg-dark rounded">
+<!-- Status and Sort Filters - Inline -->
+<div class="d-flex flex-wrap gap-2 align-items-center mb-4 p-3 bg-light rounded">
     <!-- Status Filter -->
     <div class="btn-group" role="group">
         <a asp-action="Index"
@@ -25,6 +32,8 @@
            asp-route-search="@Model.Search"
            asp-route-priority="@Model.Priority"
            asp-route-sort="@Model.Sort"
+           asp-route-pageNumber="1"
+           asp-route-pageSize="@Model.PageSize"
            class="btn @(ViewBag.CurrentStatus == "all" ? "btn-primary" : "btn-outline-primary")">
             All Faults (@ViewBag.TotalFaultsCount)
         </a>
@@ -33,6 +42,8 @@
            asp-route-search="@Model.Search"
            asp-route-priority="@Model.Priority"
            asp-route-sort="@Model.Sort"
+           asp-route-pageNumber="1"
+           asp-route-pageSize="@Model.PageSize"
            class="btn @(ViewBag.CurrentStatus == "Reported" ? "btn-warning" : "btn-outline-warning")">
             Reported (@ViewBag.PendingFaultsCount)
         </a>
@@ -41,6 +52,8 @@
            asp-route-search="@Model.Search"
            asp-route-priority="@Model.Priority"
            asp-route-sort="@Model.Sort"
+           asp-route-pageNumber="1"
+           asp-route-pageSize="@Model.PageSize"
            class="btn @(ViewBag.CurrentStatus == "InProgress" ? "btn-info" : "btn-outline-info")">
             In Progress (@ViewBag.InProgressFaultsCount)
         </a>
@@ -49,83 +62,66 @@
            asp-route-search="@Model.Search"
            asp-route-priority="@Model.Priority"
            asp-route-sort="@Model.Sort"
+           asp-route-pageNumber="1"
+           asp-route-pageSize="@Model.PageSize"
            class="btn @(ViewBag.CurrentStatus == "Completed" ? "btn-success" : "btn-outline-success")">
             Completed (@ViewBag.CompletedFaultsCount)
         </a>
     </div>
 
-    <!-- Priority Filter -->
-    <div class="ms-2">
-        <select class="form-select" name="priority" asp-for="Priority" onchange="this.form.submit()" style="min-width: 150px;">
-            <option value="">All Priorities</option>
-            <option value="Critical">Critical</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-        </select>
-    </div>
-
-    <!-- Sort Options -->
-    <div class="ms-2">
-        <select class="form-select" name="sort" asp-for="Sort" onchange="this.form.submit()" style="min-width: 180px;">
-            <option value="">Default Sort</option>
-            <option value="priority_desc">Priority: High to Low</option>
-            <option value="priority_asc">Priority: Low to High</option>
-            <option value="date_desc">Date: Newest First</option>
-            <option value="date_asc">Date: Oldest First</option>
-        </select>
-    </div>
 </div>
 
-<!-- Search Filter - Without Card -->
-<form class="row g-3 mb-4" method="get">
-    <div class="col-lg-8 col-md-10">
-        <div class="input-group">
-            <input class="form-control" name="search" asp-for="Search" placeholder="Search by Title or Description">
-            <button class="btn btn-outline-primary" type="submit">
-                <i class="fas fa-search"></i> Search
-            </button>
-            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Priority) || !string.IsNullOrEmpty(Model.Sort))
-            {
-                <a asp-action="Index" asp-route-status="@Model.Status" class="btn btn-outline-secondary">
-                    <i class="fas fa-times"></i> Clear
-                </a>
-            }
-        </div>
+<div class="card mb-4">
+    <div class="card-body">
+        <form class="row row-cols-auto g-3 align-items-center" method="get">
+
+            <input type="hidden" name="pageNumber" value="1" />
+            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+
+            <!-- Priority Filter -->
+            <div class="col-auto">
+                <select class="form-select" name="priority" asp-for="Priority" onchange="this.form.submit()">
+                    <option value="">All Priorities</option>
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+
+            <!-- Sort Options -->
+            <div class="col-auto">
+                <select class="form-select" name="sort" asp-for="Sort" onchange="this.form.submit()">
+                    <option value="">Order By Highest/Newest</option>
+                    <option value="priority_desc">Priority: High to Low</option>
+                    <option value="priority_asc">Priority: Low to High</option>
+                    <option value="date_desc">Date: Newest First</option>
+                    <option value="date_asc">Date: Oldest First</option>
+                </select>
+            </div>
+
+            <!-- Search Input (push to the right) -->
+            <div class="col-lg-4 col-md-6 ms-auto">
+                <div class="input-group">
+                    <input class="form-control" name="search" asp-for="Search" placeholder="Search by Title or Description">
+                    <button class="btn btn-outline-primary" type="submit">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Priority) || !string.IsNullOrEmpty(Model.Sort))
+                    {
+                        <a asp-action="Index" asp-route-status="@Model.Status" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                    }
+                </div>
+            </div>
+        </form>
     </div>
 
-    <!-- Hidden fields to maintain state -->
-    <input type="hidden" name="status" value="@Model.Status" />
-    <input type="hidden" name="priority" value="@Model.Priority" />
-    <input type="hidden" name="sort" value="@Model.Sort" />
-    <input type="hidden" name="pageIndex" value="1" />
-</form>
+</div>
 
-<!-- Results Count -->
-@if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Priority) || !string.IsNullOrEmpty(Model.Sort))
-{
-    <div class="alert alert-info mb-4">
-        <i class="fas fa-filter"></i>
-        @if (!string.IsNullOrEmpty(Model.Search))
-        {
-            <span>Search: "<strong>@Model.Search</strong>"</span>
-        }
-        @if (!string.IsNullOrEmpty(Model.Priority))
-        {
-            <span> | Priority: <strong>@Model.Priority</strong></span>
-        }
-        @if (!string.IsNullOrEmpty(Model.Sort))
-        {
-            <span> | Sorted by: <strong>@GetSortDisplayName(Model.Sort)</strong></span>
-        }
-    </div>
-}
 
-@{
-    var faults = ViewBag.Faults as IEnumerable<FridgeManagementSystem.Models.Fault> ?? new List<FridgeManagementSystem.Models.Fault>();
-}
-
-@if (!faults.Any())
+@if (!Model.Faults.Any())
 {
     <div class="text-center text-light py-4">
         <i class="fas fa-times-circle fa-3x text-capitalize mb-3"></i>
@@ -151,7 +147,8 @@
 else
 {
     <div class="row">
-        @foreach (var fault in faults)
+
+        @foreach (var fault in Model.Faults)
         {
             <div class="col-md-6 mb-4">
                 <div class="card h-100 @(fault.FaultTechnicianId == null ? "border-warning" : fault.FaultTechnicianId == ViewBag.CurrentTechnicianId ? "border-primary" : "border-secondary")">
@@ -244,26 +241,83 @@ else
     </div>
 
     <!-- Pagination -->
-    @if (ViewBag.TotalPages > 1)
+    @if (totalPages > 1)
     {
         <nav aria-label="Faults pagination">
             <ul class="pagination justify-content-center">
-                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                <li class="page-item @prevDisabled">
+                    <a class="page-link text-light"
+                       asp-action="Index"
+                       asp-route-pageNumber="@(Model.PageNumber - 1)"
+                       asp-route-pageSize="@Model.PageSize"
+                       asp-route-sort="@Model.Sort"
+                       asp-route-search="@Model.Search"
+                       asp-route-priority="@Model.Priority"
+                       asp-route-status="@Model.Status">
+                        Prev
+                    </a>
+                </li>
+
+                @for (int i = 1; i <= totalPages; i++)
                 {
-                    string active = i == ViewBag.PageIndex ? "active" : "";
-                    <li class="page-item @active">
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
                         <a class="page-link"
                            asp-action="Index"
-                           asp-route-pageIndex="@i"
-                           asp-route-status="@Model.Status"
+                           asp-route-pageNumber="@i"
+                           asp-route-pageSize="@Model.PageSize"
+                           asp-route-sort="@Model.Sort"
                            asp-route-search="@Model.Search"
                            asp-route-priority="@Model.Priority"
-                           asp-route-sort="@Model.Sort">@i</a>
+                           asp-route-status="@Model.Status">
+                            @i
+                        </a>
                     </li>
                 }
+
+                <li class="page-item @nextDisabled">
+                    <a class="page-link text-light"
+                       asp-action="Index"
+                       asp-route-pageNumber="@(Model.PageNumber + 1)"
+                       asp-route-pageSize="@Model.PageSize"
+                       asp-route-sort="@Model.Sort"
+                       asp-route-search="@Model.Search"
+                       asp-route-priority="@Model.Priority"
+                       asp-route-status="@Model.Status">
+                        Next
+                    </a>
+                </li>
             </ul>
         </nav>
     }
+
+    <div class="row align-items-center mt-3">
+        <div class="col-md-6">
+            <span class="text-light">
+                Showing @((Model.PageNumber - 1) * Model.PageSize + 1) to
+                @Math.Min(Model.PageNumber * Model.PageSize, ViewBag.TotalFaultsCount) of @ViewBag.TotalFaultsCount entries
+            </span>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group">
+                <span class="me-2 text-light">Page size:</span>
+                @foreach (var size in new[] { 5, 10, 20, 50 })
+                {
+                    <a class="btn btn-outline-secondary btn-sm @(Model.PageSize == size ? "active" : "")"
+                       asp-action="Index"
+                       asp-route-pageNumber="1"
+                       asp-route-pageSize="@size"
+                       asp-route-sort="@Model.Sort"
+                       asp-route-search="@Model.Search"
+                       asp-route-priority="@Model.Priority"
+                       asp-route-status="@Model.Status">
+                        @size
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+    
+    
 }
 
 @functions {

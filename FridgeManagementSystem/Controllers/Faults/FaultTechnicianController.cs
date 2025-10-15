@@ -12,8 +12,7 @@ namespace FridgeManagementSystem.Controllers.F.Technician
         private readonly FridgeManagementSystemContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IFaultNotificationRepository _notification;
-        private readonly int pageSize = 4;
-
+       
         public FaultTechnicianController(FridgeManagementSystemContext context,
                                        UserManager<ApplicationUser> userManager,
                                        IFaultNotificationRepository notification)
@@ -35,59 +34,9 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                                          e.EmployeeType.Name == "FaultTechnician" &&
                                          e.IsActive);
         }
+        
 
-        // GET: FaultTechnician/Index - All faults for technicians
-        //public async Task<IActionResult> Index(string status = "all")
-        //{
-        //    var query = _context.Faults
-        //        .Include(f => f.Fridge)
-        //        .ThenInclude(f => f.FridgeType)
-        //        .Include(f => f.ReportedBy)
-        //        .ThenInclude(c => c.User)
-        //        .Include(f => f.FaultTechnician)
-        //        .ThenInclude(t => t.User)
-        //        .AsQueryable();
-
-        //    // Filter by status
-        //    if (status != "all")
-        //    {
-        //        if (Enum.TryParse<FaultStatus>(status, out var faultStatus))
-        //        {
-        //            query = query.Where(f => f.Status == faultStatus);
-        //        }
-        //    }
-
-        //    // Check if current user is a fault technician
-        //    var currentTechnician = await GetCurrentFaultTechnicianAsync();
-        //    var isFaultTechnician = currentTechnician != null;
-        //    var currentTechnicianId = currentTechnician?.Id;
-            
-        //    var baseQuery = _context.Faults.AsQueryable();
-        //    if (isFaultTechnician)
-        //    {
-        //        baseQuery = baseQuery.Where(f => f.FaultTechnicianId == null || f.FaultTechnicianId == currentTechnicianId);
-        //    }
-
-        //    ViewBag.TotalFaultsCount = await baseQuery.CountAsync();
-        //    ViewBag.PendingFaultsCount = await baseQuery.CountAsync(f => f.Status == FaultStatus.Reported);
-        //    ViewBag.UrgentFaultsCount = await baseQuery.CountAsync(f => f.Priority == FaultPriority.Critical || f.Priority == FaultPriority.High);
-        //    ViewBag.InProgressFaultsCount = await baseQuery.CountAsync(f => f.Status == FaultStatus.InProgress);
-        //    ViewBag.CompletedFaultsCount = await baseQuery.CountAsync(f => f.Status == FaultStatus.Completed);
-
-        //    var faults = await query
-        //        .OrderByDescending(f => f.Priority)
-        //        .ThenByDescending(f => f.ReportedDate)
-        //        .ToListAsync();
-
-
-        //    // Pass the technician status to the view
-        //    ViewBag.IsFaultTechnician = isFaultTechnician;
-        //    ViewBag.CurrentTechnicianId = currentTechnicianId;
-        //    ViewBag.CurrentStatus = status;
-
-        //    return View(faults);
-        //}
-        public async Task<IActionResult> Index(int pageIndex = 1, string status = "all", string? search = null, string? priority = null, string? sort = null)
+        public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 4, string status = "all", string? search = null, string? priority = null, string? sort = null)
         {
             var query = _context.Faults
                 .Include(f => f.Fridge)
@@ -105,7 +54,11 @@ namespace FridgeManagementSystem.Controllers.F.Technician
             }
 
             // Filter by Priority
-            if (!string.IsNullOrEmpty(priority) && priority != "all")
+            if (!string.IsNullOrEmpty(priority) && priority == "urgent")
+            {
+                query = query.Where(f => f.Priority == FaultPriority.Critical || f.Priority == FaultPriority.High);
+            }
+            else if (!string.IsNullOrEmpty(priority) && priority != "all")
             {
                 if (Enum.TryParse<FaultPriority>(priority, out var faultPriority))
                 {
@@ -122,7 +75,17 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                 }
             }
 
-            // Sort functionality
+            // Check if current user is a fault technician and filter accordingly
+            var currentTechnician = await GetCurrentFaultTechnicianAsync();
+            var isFaultTechnician = currentTechnician != null;
+            var currentTechnicianId = currentTechnician?.Id;
+
+            if (isFaultTechnician)
+            {
+                query = query.Where(f => f.FaultTechnicianId == null || f.FaultTechnicianId == currentTechnicianId);
+            }
+
+            // Sort functionality (AFTER all filters)
             if (sort == "priority_asc")
             {
                 query = query.OrderBy(f => f.Priority);
@@ -146,55 +109,32 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                             .ThenByDescending(f => f.ReportedDate);
             }
 
-            // Check if current user is a fault technician and filter accordingly
-            var currentTechnician = await GetCurrentFaultTechnicianAsync();
-            var isFaultTechnician = currentTechnician != null;
-            var currentTechnicianId = currentTechnician?.Id;
-
-            if (isFaultTechnician)
-            {
-                query = query.Where(f => f.FaultTechnicianId == null || f.FaultTechnicianId == currentTechnicianId);
-            }
-
-            // Get counts for dashboard BEFORE pagination
-            var baseQuery = _context.Faults.AsQueryable();
-            if (isFaultTechnician)
-            {
-                baseQuery = baseQuery.Where(f => f.FaultTechnicianId == null || f.FaultTechnicianId == currentTechnicianId);
-            }
-
-            ViewBag.TotalFaultsCount = await baseQuery.CountAsync();
-            ViewBag.PendingFaultsCount = await baseQuery.CountAsync(f => f.Status == FaultStatus.Reported);
-            ViewBag.UrgentFaultsCount = await baseQuery.CountAsync(f => f.Priority == FaultPriority.Critical || f.Priority == FaultPriority.High);
-            ViewBag.InProgressFaultsCount = await baseQuery.CountAsync(f => f.Status == FaultStatus.InProgress);
-            ViewBag.CompletedFaultsCount = await baseQuery.CountAsync(f => f.Status == FaultStatus.Completed);
-
-            // Pagination functionality
-            if (pageIndex < 1)
-            {
-                pageIndex = 1;
-            }
-
-            decimal count = await query.CountAsync();
-            int totalPages = (int)Math.Ceiling(count / pageSize);
+            // Get counts for dashboard - Use the FILTERED query, not baseQuery
+            var totalFaultsCount = await query.CountAsync(); // This is the key fix!
+            ViewBag.TotalFaultsCount = totalFaultsCount;
+            ViewBag.PendingFaultsCount = await query.CountAsync(f => f.Status == FaultStatus.Reported);
+            ViewBag.UrgentFaultsCount = await query.CountAsync(f => f.Priority == FaultPriority.Critical || f.Priority == FaultPriority.High);
+            ViewBag.InProgressFaultsCount = await query.CountAsync(f => f.Status == FaultStatus.InProgress);
+            ViewBag.CompletedFaultsCount = await query.CountAsync(f => f.Status == FaultStatus.Completed);
 
             // Apply pagination
             var faults = await query
-                .Skip((pageIndex - 1) * pageSize)
+                .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
             // Pass data to view
-            ViewBag.Faults = faults;
-            ViewBag.PageIndex = pageIndex;
-            ViewBag.TotalPages = totalPages;
             ViewBag.IsFaultTechnician = isFaultTechnician;
             ViewBag.CurrentTechnicianId = currentTechnicianId;
+            ViewBag.CurrentPriority = priority;
             ViewBag.CurrentStatus = status;
 
             // Create search model for form persistence
             var faultSearchViewModel = new FaultSearchViewModel()
             {
+                Faults = faults,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
                 Search = search,
                 Priority = priority,
                 Status = status,
@@ -203,7 +143,6 @@ namespace FridgeManagementSystem.Controllers.F.Technician
 
             return View(faultSearchViewModel);
         }
-
         // GET: FaultTechnician/Details/5
         public async Task<IActionResult> Details(int id)
         {

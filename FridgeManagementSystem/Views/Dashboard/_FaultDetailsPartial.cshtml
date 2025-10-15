@@ -1,0 +1,190 @@
+﻿@model FridgeManagementSystem.Models.Fault
+
+<div class="card">
+    <div class="card-header @GetFaultHeaderClass(Model) text-white">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-tools"></i> Fault Details: @Model.Title
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Fault Information</h6>
+                <hr />
+
+                <dl class="row">
+                    <dt class="col-sm-4">Title:</dt>
+                    <dd class="col-sm-8">@Model.Title</dd>
+
+                    <dt class="col-sm-4">Description:</dt>
+                    <dd class="col-sm-8">@Model.Description</dd>
+
+                    <dt class="col-sm-4">Priority:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @GetPriorityBadgeClass(Model.Priority)">@Model.Priority</span>
+                    </dd>
+
+                    <dt class="col-sm-4">Status:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @GetStatusBadgeClass(Model.Status)">@Model.Status</span>
+                    </dd>
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <h6>Reporting Details</h6>
+                <hr />
+                <dl class="row">
+                    <dt class="col-sm-4">Reported By:</dt>
+                    <dd class="col-sm-8">@Model.ReportedBy.User.FullName</dd>
+
+                    <dt class="col-sm-4">Business:</dt>
+                    <dd class="col-sm-8">@Model.ReportedBy.BusinessName</dd>
+
+                    <dt class="col-sm-4">Customer Type:</dt>
+                    <dd class="col-sm-8">@Model.ReportedBy.CustomerType</dd>
+
+                    <dt class="col-sm-4">Reported Date:</dt>
+                    <dd class="col-sm-8">@Model.ReportedDate.ToString("yyyy-MM-dd HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
+
+        @if (Model.Fridge != null)
+        {
+            <div class="mt-4">
+                <h6>Fridge Information</h6>
+                <hr />
+                <dl class="row">
+                    <dt class="col-sm-3">Fridge Type:</dt>
+                    <dd class="col-sm-9">(@Model.Fridge.FridgeType.Name), (@Model.Fridge.FridgeType.Model), (@Model.Fridge.FridgeType.Brand)</dd>
+                    <small class="text-muted">(Name), (Model), (Brand)</small>
+
+                    <dt class="col-sm-3">Serial Number:</dt>
+                    <dd class="col-sm-9">@Model.Fridge.SerialNumber</dd>
+
+                    <dt class="col-sm-3">Description:</dt>
+                    <dd class="col-sm-9">@Model.Fridge.Description</dd>
+
+                    <dt class="col-sm-3">Current Status:</dt>
+                    <dd class="col-sm-9">
+                        <span class="badge @(Model.Fridge.Status == "UnderRepair" ? "bg-warning" : "bg-success")">
+                            @Model.Fridge.Status
+                        </span>
+                    </dd>
+                </dl>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.ResolutionNotes))
+        {
+            <div class="mt-4">
+                <h6>Resolution Notes</h6>
+                <hr />
+                <div>
+                    <strong>Resolution Details:</strong>
+                    <p class="mb-0 mt-2">@Model.ResolutionNotes</p>
+                </div>
+            </div>
+        }
+
+        @if (Model.RepairSchedules.Any())
+        {
+            <div class="mt-4">
+                <h6>Repair Schedule</h6>
+                <hr />
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>Scheduled Date</th>
+                                <th>Technician</th>
+                                <th>Status</th>
+                                <th>Estimated Hours</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var schedule in Model.RepairSchedules)
+                            {
+                                <tr>
+                                    <td>@schedule.ScheduledDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@schedule.FaultTechnician.User.FullName</td>
+                                    <td>
+                                        <span class="badge @GetScheduleStatusBadgeClass(schedule.Status)">@schedule.Status</span>
+                                    </td>
+                                    <td>@schedule.EstimatedHours hours</td>
+                                    <td>@schedule.Notes</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="card-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times m-1"></i> Close
+        </button>
+        <form asp-action="AttendFault" method="post" class="d-inline">
+            <input type="hidden" name="id" value="@Model.FaultId" />
+            <button type="submit" class="btn btn-success"
+                    title="Attend this fault"
+                    onclick="return confirm('Are you sure you want to attend this fault? Other technicians will be notified.')">
+                <i class="fas fa-user-check"></i> Attend Fault
+            </button>
+        </form>
+    </div>
+</div>
+
+@functions {
+    public string GetFaultHeaderClass(Fault fault)
+    {
+        return fault.Priority switch
+        {
+            FaultPriority.Critical => "bg-danger",
+            FaultPriority.High => "bg-danger",
+            FaultPriority.Medium => "bg-warning",
+            FaultPriority.Low => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+
+    public string GetPriorityBadgeClass(FaultPriority priority)
+    {
+        return priority switch
+        {
+            FaultPriority.Critical => "bg-danger",
+            FaultPriority.High => "bg-danger",
+            FaultPriority.Medium => "bg-warning",
+            FaultPriority.Low => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+
+    public string GetStatusBadgeClass(FaultStatus status)
+    {
+        return status switch
+        {
+            FaultStatus.Reported => "bg-warning",
+            FaultStatus.Scheduled => "bg-info",
+            FaultStatus.InProgress => "bg-primary",
+            FaultStatus.Completed => "bg-success",
+            FaultStatus.Cancelled => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    public string GetScheduleStatusBadgeClass(ScheduleStatus status)
+    {
+        return status switch
+        {
+            ScheduleStatus.Scheduled => "bg-info",
+            ScheduleStatus.InProgress => "bg-primary",
+            ScheduleStatus.Completed => "bg-success",
+            ScheduleStatus.Cancelled => "bg-danger",
+            ScheduleStatus.Rescheduled => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+}

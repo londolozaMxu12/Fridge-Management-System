@@ -203,70 +203,7 @@ else
             <small>Showing @Model.Count() upcoming repair schedules</small>
         </div>
     </div>
-@* 
-    <!-- Quick Stats -->
-    <div class="row mt-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">@Model.Count(s => s.Status == FridgeManagementSystem.Models.ScheduleStatus.Scheduled)</h4>
-                            <small>Scheduled</small>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-calendar fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">@Model.Count(s => s.Status == FridgeManagementSystem.Models.ScheduleStatus.InProgress)</h4>
-                            <small>In Progress</small>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-play fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">@Model.Count(s => s.Status == FridgeManagementSystem.Models.ScheduleStatus.Completed)</h4>
-                            <small>Completed</small>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-check fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">@Model.Count(s => s.Status == FridgeManagementSystem.Models.ScheduleStatus.Rescheduled)</h4>
-                            <small>Rescheduled</small>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-calendar-alt fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> *@
+
 }
 
 <!-- Hidden form for status updates -->

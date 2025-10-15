@@ -187,7 +187,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
 
                             if (empType == "FaultTechnician")
                             {
-                                return RedirectToAction("Index", "FaultTechnician", new { area = "" });
+                                return RedirectToAction("Index", "Dashboard", new { area = "" });
                             }
                             else if (empType == "MaintenanceTechnician")
                             {
