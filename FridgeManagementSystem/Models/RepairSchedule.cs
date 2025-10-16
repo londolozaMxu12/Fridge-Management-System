@@ -25,7 +25,7 @@ namespace FridgeManagementSystem.Models
 
         [Required]
         [Display(Name = "Schedule Status")]
-        public ScheduleStatus Status { get; set; } = ScheduleStatus.Scheduled;
+        public ScheduleStatus Status { get; set; } = ScheduleStatus.InProgress;
 
         [Display(Name = "Estimated Hours")]
         public decimal EstimatedHours { get; set; }

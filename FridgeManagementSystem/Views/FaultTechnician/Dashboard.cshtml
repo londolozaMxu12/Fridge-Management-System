@@ -179,7 +179,7 @@ else
                 <h3 class="modal-title" id="faultDetailsModalLabel">
                     Fault Details
                 </h3>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="faultDetailsModalBody">
                 <!-- Content will be loaded here dynamically -->
@@ -200,8 +200,23 @@ else
 
 <script src="~/js/site.js" asp-append-version="true"></script>
 
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('Layout loaded');
+
+        // Check if navigation links are working
+        document.querySelectorAll('a.nav-link, a.dropdown-item').forEach(link => {
+            link.addEventListener('click', function(e) {
+                console.log('Navigation link clicked:', this.href);
+            });
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
         // Handle modal show event
         const faultDetailsModal = document.getElementById('faultDetailsModal');
         if (faultDetailsModal) {
@@ -223,7 +238,7 @@ else
 
         // Function to load fault details via AJAX
         function loadFaultDetails(faultId) {
-            fetch(`/Dashboard/GetFaultDetailsPartial?id=${faultId}`)
+            fetch(`/FaultTechnician/GetFaultDetailsPartial?id=${faultId}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');

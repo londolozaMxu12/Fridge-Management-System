@@ -34,7 +34,59 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                                          e.EmployeeType.Name == "FaultTechnician" &&
                                          e.IsActive);
         }
-        
+
+        private async Task SetNavigationViewBagProperties()
+        {
+            var baseQuery = _context.Faults.AsQueryable();
+            ViewBag.TotalFaultsCount = await baseQuery.CountAsync();
+            ViewBag.PendingFaultsCount = await baseQuery.CountAsync(f => f.Status == FaultStatus.Reported);
+            ViewBag.UrgentFaultsCount = await baseQuery.CountAsync(f => f.Priority == FaultPriority.Critical || f.Priority == FaultPriority.High);
+            ViewBag.InProgressFaultsCount = await baseQuery.CountAsync(f => f.Status == FaultStatus.InProgress);
+            ViewBag.CompletedFaultsCount = await baseQuery.CountAsync(f => f.Status == FaultStatus.Completed);
+        }
+
+        public async Task<IActionResult> Dashboard()
+        {
+            // Check if current user is a fault technician and filter accordingly
+            var currentTechnician = await GetCurrentFaultTechnicianAsync();
+            var isFaultTechnician = currentTechnician != null;
+            var currentTechnicianId = currentTechnician?.Id;
+
+            await SetNavigationViewBagProperties();
+
+            // Get only unattended faults (FaultTechnicianId == null)
+            var faults = await _context.Faults
+                .Include(f => f.Fridge)
+                .ThenInclude(f => f.FridgeType)
+                .Include(f => f.ReportedBy)
+                .ThenInclude(c => c.User)
+                .Include(f => f.FaultTechnician)
+                .ThenInclude(t => t.User)
+                .Where(f => f.FaultTechnicianId == null)  // Only unattended faults
+                .OrderByDescending(f => f.Priority)
+                .ThenByDescending(f => f.ReportedDate)
+                .Take(2)
+                .ToListAsync();
+
+            // Get schedules for the stat cards
+            var schedules = await _context.RepairSchedules.Where(rs => rs.FaultTechnicianId == currentTechnicianId)
+                .ToListAsync();
+
+            var dashboardView = new TechnicianDashboardViewModel
+            {
+                Faults = faults,
+                Schedules = schedules,
+                IsFaultTechnician = isFaultTechnician,
+                CurrentTechnicianId = currentTechnicianId
+
+            };
+
+            // Pass data to view
+            ViewBag.IsFaultTechnician = isFaultTechnician;
+            ViewBag.CurrentTechnicianId = currentTechnicianId;
+
+            return View(dashboardView);
+        }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 4, string status = "all", string? search = null, string? priority = null, string? sort = null)
         {
@@ -109,13 +161,7 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                             .ThenByDescending(f => f.ReportedDate);
             }
 
-            // Get counts for dashboard - Use the FILTERED query, not baseQuery
-            var totalFaultsCount = await query.CountAsync(); // This is the key fix!
-            ViewBag.TotalFaultsCount = totalFaultsCount;
-            ViewBag.PendingFaultsCount = await query.CountAsync(f => f.Status == FaultStatus.Reported);
-            ViewBag.UrgentFaultsCount = await query.CountAsync(f => f.Priority == FaultPriority.Critical || f.Priority == FaultPriority.High);
-            ViewBag.InProgressFaultsCount = await query.CountAsync(f => f.Status == FaultStatus.InProgress);
-            ViewBag.CompletedFaultsCount = await query.CountAsync(f => f.Status == FaultStatus.Completed);
+            await SetNavigationViewBagProperties();
 
             // Apply pagination
             var faults = await query
@@ -146,6 +192,8 @@ namespace FridgeManagementSystem.Controllers.F.Technician
         // GET: FaultTechnician/Details/5
         public async Task<IActionResult> Details(int id)
         {
+            await SetNavigationViewBagProperties();
+
             var fault = await _context.Faults
                 .Include(f => f.Fridge)
                 .ThenInclude(f => f.FridgeType)
@@ -228,13 +276,15 @@ namespace FridgeManagementSystem.Controllers.F.Technician
             // Send notifications to other technicians and customer
             await _notification.NotifyFaultAttendedAsync(fault, currentTechnician);
 
-            //TempData["Success"] = "You have successfully attended this fault. Other technicians have been notified.";
+            TempData["Success"] = "You have successfully attended this fault. Other technicians have been notified.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
         // GET: FaultTechnician/Update/5
         public async Task<IActionResult> Update(int id)
         {
+            await SetNavigationViewBagProperties();
+
             var fault = await _context.Faults
                 .Include(f => f.ReportedBy)
                 .ThenInclude(c => c.User)
@@ -330,7 +380,7 @@ namespace FridgeManagementSystem.Controllers.F.Technician
         }
 
         // GET: FaultTechnician/MySchedule
-        public async Task<IActionResult> MySchedule()
+        public async Task<IActionResult> MySchedule(string? search, string? column, string? orderBy, string status = "all")
         {
             var currentTechnician = await GetCurrentFaultTechnicianAsync();
             if (currentTechnician == null)
@@ -339,17 +389,76 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                 return RedirectToAction("Index", "FaultTechnician");
             }
 
-            var schedules = await _context.RepairSchedules
+            // Start with base query including all necessary relationships
+            IQueryable<RepairSchedule> query = _context.RepairSchedules
                 .Include(rs => rs.Fault)
-                .ThenInclude(f => f.ReportedBy)
-                .ThenInclude(c => c.User)
+                    .ThenInclude(f => f.ReportedBy)
+                        .ThenInclude(c => c.User)
                 .Include(rs => rs.Fault)
-                .ThenInclude(f => f.Fridge)
-                .ThenInclude(f => f.FridgeType)
+                    .ThenInclude(f => f.Fridge)
+                        .ThenInclude(f => f.FridgeType)
                 .Where(rs => rs.FaultTechnicianId == currentTechnician.Id &&
-                            rs.ScheduledDate >= DateTime.Today)
-                .OrderBy(rs => rs.ScheduledDate)
-                .ToListAsync();
+                            rs.ScheduledDate >= DateTime.Today);
+
+            // Search functionality - search in Fault Title or Customer FullName
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(rs =>
+                    rs.Fault.Title.Contains(search) ||
+                    rs.Fault.ReportedBy.User.FullName.Contains(search)
+                );
+            }
+
+            // Filter by Status
+            if (status != "all")
+            {
+                if (Enum.TryParse<ScheduleStatus>(status, out var scheduleStatus))
+                {
+                    query = query.Where(f => f.Status == scheduleStatus);
+                }
+            }
+
+            // Sort functionality
+            string[] validColumns = { "RepairScheduleId", "ScheduledDate" };
+            string[] validOrderBy = { "desc", "asc" };
+
+            if (!validColumns.Contains(column))
+            {
+                column = "ScheduledDate";
+            }
+
+            if (!validOrderBy.Contains(orderBy))
+            {
+                orderBy = "asc";
+            }
+
+            // Apply sorting
+            switch (column)
+            {
+                case "RepairScheduleId":
+                    query = orderBy == "asc"
+                        ? query.OrderBy(rs => rs.RepairScheduleId)
+                        : query.OrderByDescending(rs => rs.RepairScheduleId);
+                    break;
+
+                case "ScheduledDate":
+                default:
+                    query = orderBy == "asc"
+                        ? query.OrderBy(rs => rs.ScheduledDate)
+                        : query.OrderByDescending(rs => rs.ScheduledDate);
+                    break;
+            }
+
+            // Execute the query
+            var schedules = await query.ToListAsync();
+
+            // Set ViewBag values for the view
+            ViewBag.Search = search;
+            ViewBag.Column = column;
+            ViewBag.OrderBy = orderBy;
+            ViewBag.CurrentStatus = status;
+
+            await SetNavigationViewBagProperties();
 
             return View(schedules);
         }
@@ -395,6 +504,8 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                 Notes = schedule.Notes,
                 Status = schedule.Status
             };
+
+            await SetNavigationViewBagProperties();
 
             // Store the original schedule in ViewBag for display
             ViewBag.OriginalSchedule = schedule;
@@ -503,6 +614,307 @@ namespace FridgeManagementSystem.Controllers.F.Technician
             TempData["Success"] = $"Repair schedule status updated from {oldStatus} to {status}";
             return RedirectToAction(nameof(MySchedule));
         }
-        
+        public async Task<IActionResult> GetFaultDetailsPartial(int id)
+        {
+            var fault = await _context.Faults
+                .Include(f => f.Fridge)
+                .ThenInclude(f => f.FridgeType)
+                .Include(f => f.ReportedBy)
+                .ThenInclude(c => c.User)
+                .Include(f => f.FaultTechnician)
+                .ThenInclude(t => t.User)
+                .Include(f => f.RepairSchedules)
+                .ThenInclude(rs => rs.FaultTechnician)
+                .ThenInclude(t => t.User)
+                .FirstOrDefaultAsync(f => f.FaultId == id);
+
+            if (fault == null)
+            {
+                return Content("<div class='alert alert-danger'>Fault not found</div>");
+            }
+
+            var currentTechnician = await GetCurrentFaultTechnicianAsync();
+            ViewBag.CurrentTechnicianId = currentTechnician?.Id;
+            ViewBag.IsFaultTechnician = currentTechnician != null;
+
+            return PartialView("_FaultDetailsPartial", fault);
+        }
+        // GET: FaultTechnician/MyPerformance
+        public async Task<IActionResult> MyPerformance()
+        {
+            var currentTechnician = await GetCurrentFaultTechnicianAsync();
+            if (currentTechnician == null)
+            {
+                TempData["Error"] = "Access denied. Only fault technicians can view performance reports.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var model = new TechnicianPerformanceViewModel
+            {
+                Technician = currentTechnician
+            };
+
+            // Calculate performance metrics
+            var technicianFaults = await _context.Faults
+                .Include(f => f.RepairSchedules)
+                .Where(f => f.FaultTechnicianId == currentTechnician.Id)
+                .ToListAsync();
+
+            var completedFaults = technicianFaults.Where(f => f.Status == FaultStatus.Completed).ToList();
+            var inProgressFaults = technicianFaults.Where(f => f.Status == FaultStatus.InProgress).ToList();
+
+            model.TotalFaultsAssigned = technicianFaults.Count;
+            model.CompletedFaults = completedFaults.Count;
+            model.InProgressFaults = inProgressFaults.Count;
+            model.CompletionRate = model.TotalFaultsAssigned > 0 ?
+                (double)model.CompletedFaults / model.TotalFaultsAssigned * 100 : 0;
+
+            // Calculate overdue faults (faults older than 7 days still in progress)
+            model.OverdueFaults = technicianFaults
+                .Count(f => f.Status != FaultStatus.Completed &&
+                           (DateTime.Now - f.ReportedDate).TotalDays > 7);
+
+            // Priority breakdown
+            model.CriticalFaultsCompleted = completedFaults.Count(f => f.Priority == FaultPriority.Critical);
+            model.HighFaultsCompleted = completedFaults.Count(f => f.Priority == FaultPriority.High);
+            model.MediumFaultsCompleted = completedFaults.Count(f => f.Priority == FaultPriority.Medium);
+            model.LowFaultsCompleted = completedFaults.Count(f => f.Priority == FaultPriority.Low);
+
+            // Recent completed faults
+            model.RecentCompletedFaults = completedFaults
+                .OrderByDescending(f => f.UpdatedAt)
+                .Take(3)
+                .ToList();
+
+            // Monthly performance (last 3 months)
+            var sixMonthsAgo = DateTime.Now.AddMonths(-3);
+            var monthlyFaults = technicianFaults
+                .Where(f => f.ReportedDate >= sixMonthsAgo)
+                .GroupBy(f => new { f.ReportedDate.Year, f.ReportedDate.Month })
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.Month)
+                .Take(3);
+
+            foreach (var monthGroup in monthlyFaults)
+            {
+                var monthCompleted = monthGroup.Count(f => f.Status == FaultStatus.Completed);
+                var monthTotal = monthGroup.Count();
+                
+                model.MonthlyPerformance.Add(new MonthlyPerformance
+                {
+                    Month = new DateTime(monthGroup.Key.Year, monthGroup.Key.Month, 1).ToString("MMM yyyy"),
+                    CompletedFaults = monthCompleted,
+                    TotalFaults = monthTotal
+                });
+            }
+
+            await SetNavigationViewBagProperties();
+            return View(model);
+        }
+
+        // GET: FaultTechnician/FaultAnalysis
+        public async Task<IActionResult> FaultAnalysis()
+        {
+            var currentTechnician = await GetCurrentFaultTechnicianAsync();
+            if (currentTechnician == null)
+            {
+                TempData["Error"] = "Access denied. Only fault technicians can view fault analysis.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var model = new FaultAnalysisViewModel();
+
+            // Get all faults for analysis
+            var allFaults = await _context.Faults
+                .Include(f => f.FaultTechnician)
+                .ThenInclude(t => t.User)
+                .Include(f => f.Fridge)
+                .ThenInclude(fr => fr.FridgeType)
+                .Include(f => f.ReportedBy)
+                .ToListAsync();
+
+            // Basic statistics
+            model.TotalFaults = allFaults.Count;
+            model.ResolvedFaults = allFaults.Count(f => f.Status == FaultStatus.Completed);
+            model.ResolutionRate = model.TotalFaults > 0 ?
+                (double)model.ResolvedFaults / model.TotalFaults * 100 : 0;
+
+            // Status distribution
+            foreach (FaultStatus status in Enum.GetValues(typeof(FaultStatus)))
+            {
+                model.FaultsByStatus[status] = allFaults.Count(f => f.Status == status);
+            }
+
+            // Priority distribution
+            foreach (FaultPriority priority in Enum.GetValues(typeof(FaultPriority)))
+            {
+                model.FaultsByPriority[priority] = allFaults.Count(f => f.Priority == priority);
+            }
+
+            // Monthly trends (last 12 months)
+            var oneYearAgo = DateTime.Now.AddYears(-1);
+            var monthlyFaults = allFaults
+                .Where(f => f.ReportedDate >= oneYearAgo)
+                .GroupBy(f => new { f.ReportedDate.Year, f.ReportedDate.Month })
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.Month);
+
+            foreach (var monthGroup in monthlyFaults)
+            {
+                var monthResolved = monthGroup.Count(f => f.Status == FaultStatus.Completed);
+                var monthTotal = monthGroup.Count();
+
+                model.MonthlyTrends.Add(new MonthlyFaultStats
+                {
+                    Month = new DateTime(monthGroup.Key.Year, monthGroup.Key.Month, 1).ToString("MMM yyyy"),
+                    ReportedFaults = monthTotal,
+                    ResolvedFaults = monthResolved,
+                    ResolutionRate = monthTotal > 0 ? (double)monthResolved / monthTotal * 100 : 0
+                });
+            }
+
+            // Common fault types (based on title keywords)
+            var commonFaults = allFaults
+                .GroupBy(f => f.Title.Split(' ').First().ToLower()) // Simple grouping by first word
+                .Where(g => g.Count() > 1)
+                .OrderByDescending(g => g.Count())
+                .Take(10)
+                .ToList();
+
+            foreach (var faultGroup in commonFaults)
+            {
+                model.CommonFaultTypes.Add(new FaultTypeStats
+                {
+                    FaultType = faultGroup.Key,
+                    Count = faultGroup.Count(),
+                    Percentage = (double)faultGroup.Count() / model.TotalFaults * 100
+                });
+            }
+
+            // Technician performance comparison
+            var technicianFaults = allFaults
+                .Where(f => f.FaultTechnicianId.HasValue)
+                .GroupBy(f => f.FaultTechnician)
+                .Where(g => g.Key != null);
+
+            foreach (var techGroup in technicianFaults)
+            {
+                var completedFaults = techGroup.Where(f => f.Status == FaultStatus.Completed).ToList();
+                var avgCompletionTime = completedFaults
+                    .Where(f => f.UpdatedAt.HasValue)
+                    .Average(f => (f.UpdatedAt.Value - f.ReportedDate).TotalHours);
+
+                model.TechnicianStats.Add(new TechnicianStats
+                {
+                    TechnicianName = techGroup.Key.User.FullName,
+                    CompletedFaults = completedFaults.Count,
+                    
+                    CustomerSatisfaction = 4.2 // This would come from customer feedback system
+                });
+            }
+
+            // Fridge type analysis
+            var fridgeFaults = allFaults
+                .Where(f => f.Fridge != null && f.Fridge.FridgeType != null)
+                .GroupBy(f => f.Fridge.FridgeType.Name);
+
+            foreach (var fridgeGroup in fridgeFaults)
+            {
+                model.FridgeTypeStats.Add(new FridgeTypeStats
+                {
+                    FridgeType = fridgeGroup.Key,
+                    FaultCount = fridgeGroup.Count(),
+                    FaultRate = (double)fridgeGroup.Count() / allFaults.Count(f => f.Fridge != null) * 100
+                });
+            }
+
+            await SetNavigationViewBagProperties();
+            return View(model);
+        }
+
+        // GET: FaultTechnician/RepairHistory
+        public async Task<IActionResult> RepairHistory(string? search, string? status, DateTime? fromDate, DateTime? toDate, int pageNumber = 1, int pageSize = 10)
+        {
+            var currentTechnician = await GetCurrentFaultTechnicianAsync();
+            if (currentTechnician == null)
+            {
+                TempData["Error"] = "Access denied. Only fault technicians can view repair history.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Base query for technician's repair schedules
+            var query = _context.RepairSchedules
+                .Include(rs => rs.Fault)
+                    .ThenInclude(f => f.ReportedBy)
+                        .ThenInclude(c => c.User)
+                .Include(rs => rs.Fault)
+                    .ThenInclude(f => f.Fridge)
+                        .ThenInclude(f => f.FridgeType)
+                .Where(rs => rs.FaultTechnicianId == currentTechnician.Id)
+                .AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(rs =>
+                    rs.Fault.Title.Contains(search) ||
+                    rs.Fault.ReportedBy.User.FullName.Contains(search) ||
+                    rs.Fault.Fridge.SerialNumber.Contains(search)
+                );
+            }
+
+            if (!string.IsNullOrEmpty(status) && status != "all")
+            {
+                if (Enum.TryParse<ScheduleStatus>(status, out var scheduleStatus))
+                {
+                    query = query.Where(rs => rs.Status == scheduleStatus);
+                }
+            }
+
+            if (fromDate.HasValue)
+            {
+                query = query.Where(rs => rs.ScheduledDate >= fromDate.Value);
+            }
+
+            if (toDate.HasValue)
+            {
+                query = query.Where(rs => rs.ScheduledDate <= toDate.Value);
+            }
+
+            // Get total count for pagination
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination and ordering (most recent first)
+            var repairSchedules = await query
+                .OrderByDescending(rs => rs.ScheduledDate)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Calculate statistics
+            var allTechnicianSchedules = await _context.RepairSchedules
+                .Where(rs => rs.FaultTechnicianId == currentTechnician.Id)
+                .ToListAsync();
+
+            var completedRepairs = allTechnicianSchedules.Count(rs => rs.Status == ScheduleStatus.Completed);
+            var totalRepairs = allTechnicianSchedules.Count;
+            var completionRate = totalRepairs > 0 ? (double)completedRepairs / totalRepairs * 100 : 0;
+
+            // Pass data to view
+            ViewBag.Search = search;
+            ViewBag.Status = status;
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalCount = totalCount;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            ViewBag.CompletedRepairs = completedRepairs;
+            ViewBag.TotalRepairs = totalRepairs;
+            ViewBag.CompletionRate = completionRate;
+
+            await SetNavigationViewBagProperties();
+            return View(repairSchedules);
+        }
     }
 }

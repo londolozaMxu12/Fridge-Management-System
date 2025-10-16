@@ -1,9 +1,46 @@
-﻿@model IEnumerable<FridgeManagementSystem.Models.RepairSchedule>
+﻿@using Microsoft.AspNetCore.Html
+@model IEnumerable<FridgeManagementSystem.Models.RepairSchedule>
+
+<style>
+    .form-select {
+        min-width: 150px;
+    }
+
+    .input-group {
+        min-width: 300px;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .row-cols-auto > .col-auto {
+            margin-bottom: 10px;
+        }
+
+        .input-group {
+            min-width: 100%;
+        }
+    }
+</style>
 
 @{
     ViewData["Title"] = "My Repair Schedule";
     Layout = "_FaultTechnicianLayout";
 
+    string search = ViewBag.Search ?? "";
+    string column = ViewBag.Column ?? "ScheduledDate";
+    string orderBy = ViewBag.OrderBy ?? "asc";
+
+    HtmlString getArrow(string tableColumn)
+    {
+        if (tableColumn != column) return new HtmlString("");
+
+        if (orderBy == "desc")
+        {
+            return new HtmlString("<i class='bi bi-arrow-down'></i>");
+        }
+
+        return new HtmlString("<i class='bi bi-arrow-up'></i>");
+    }
 }
 
 <div class="d-flex justify-content-between align-items-center text-white mb-4">
@@ -15,6 +52,52 @@
         <a asp-action="Index" class="btn btn-outline-primary text-white">
             <i class="fas fa-tools"></i> Back to Faults
         </a>
+    </div>
+</div>
+
+@* <div class="row mb-5">
+    
+    <div class="col">
+        <form class="d-flex" role="search">
+            <input class="form-control me-2" type="search" name="search" value="@search" placeholder="Search by Fault Title or Customer Name" aria-label="Search">
+            <button class="btn btn-outline-success" type="submit">Search</button>
+        </form>
+        
+    </div>
+</div> *@
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form class="row row-cols-auto g-3 align-items-center" method="get">
+
+            <!-- Status Filter -->
+            <div class="col-auto">
+                <select class="form-select" name="status" onchange="this.form.submit()">
+                    <option value="all" selected="@(ViewBag.CurrentStatus == "all")">All Statuses</option>
+                    <option value="Scheduled" selected="@(ViewBag.CurrentStatus == "Scheduled")">Scheduled</option>
+                    <option value="InProgress" selected="@(ViewBag.CurrentStatus == "InProgress")">In Progress</option>
+                    <option value="Completed" selected="@(ViewBag.CurrentStatus == "Completed")">Completed</option>
+                    <option value="Cancelled" selected="@(ViewBag.CurrentStatus == "Cancelled")">Cancelled</option>
+                    <option value="Rescheduled" selected="@(ViewBag.CurrentStatus == "Rescheduled")">Rescheduled</option>
+                </select>
+            </div>
+
+            <div class="col-lg-6 col-md-8 ms-auto">
+                <div class="input-group">
+                    <input class="form-control" name="search" value="@ViewBag.Search" placeholder="Search by Fault Title or Customer Name">
+                    <button class="btn btn-outline-primary" type="submit">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+
+                    @if (!string.IsNullOrEmpty(ViewBag.Search) || (ViewBag.CurrentStatus != "all" && ViewBag.CurrentStatus != null) || !string.IsNullOrEmpty(ViewBag.Column) || !string.IsNullOrEmpty(ViewBag.OrderBy))
+                    {
+                        <a asp-action="MySchedule" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                    }
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -34,14 +117,42 @@
     </div>
 }
 
-@if (!Model.Any())
+@* @if (!Model.Any())
 {
     <div class="text-center text-white py-4">
         <i class="fas fa-calendar-times fa-3x text-light mb-3"></i>
         <h5>No scheduled repairs</h5>
         <p class="text-white">You don't have any repair schedules for today or future dates.</p>
     </div>
+} *@
+@if (!Model.Any())
+{
+    <div class="text-center text-light py-4">
+        <i class="fas fa-times-circle fa-3x text-capitalize mb-3"></i>
+        <h5>No schedules found</h5>
+        <p class="text-light">
+            @if (!string.IsNullOrEmpty(ViewBag.Search) || (ViewBag.CurrentStatus != "all" && ViewBag.CurrentStatus != null))
+            {
+                <span>No schedules match your current filters.</span>
+            }
+            else
+            {
+                <div class="text-center text-white py-4">
+                    <i class="fas fa-calendar-times fa-3x text-light mb-3"></i>
+                    <h5>No scheduled repairs</h5>
+                    <p class="text-white">You don't have any repair schedules for today or future dates.</p>
+                </div>
+            }
+        </p>
+        @if (!string.IsNullOrEmpty(ViewBag.Search) || (ViewBag.CurrentStatus != "all" && ViewBag.CurrentStatus != null))
+        {
+            <a asp-action="MySchedule" class="btn btn-primary mt-2">
+                <i class="fas fa-undo"></i> Show All Schedules
+            </a>
+        }
+    </div>
 }
+
 else
 {
     <div class="card">
@@ -54,8 +165,10 @@ else
             <div class="table-responsive">
                 <table class="table table-striped table-hover mb-0">
                     <thead class="table-primary">
-                        <tr>
-                            <th>Scheduled Date</th>
+                        <tr>                            
+                            <th style="cursor: pointer;" onclick="sortTable('RepairScheduleId')"># @getArrow("RepairScheduleId")</th>
+                            
+                            <th style="cursor: pointer;" onclick="sortTable('ScheduledDate')">Scheduled Date @getArrow("ScheduledDate")</th>
                             <th>Fault Title</th>
                             <th>Customer</th>
                             <th>Fridge</th>
@@ -68,6 +181,9 @@ else
                         @foreach (var schedule in Model)
                         {
                             <tr>
+                                <td>
+                                    @schedule.RepairScheduleId
+                                </td>
                                 <td>
                                     <strong>@schedule.ScheduledDate.ToString("dd/MM/yyyy")</strong>
                                     <br />
@@ -183,9 +299,9 @@ else
                                                 <li>
                                                     <a class="dropdown-item"
                                                        asp-controller="FaultTechnician"
-                                                       asp-action="Update"
+                                                       asp-action="Details"
                                                        asp-route-id="@schedule.FaultId">
-                                                        <i class="bi bi-pencil-square me-2"></i> Update Fault Status
+                                                        <i class="bi bi-pencil-square me-2"></i> View Fault Details
                                                     </a>
                                                 </li>
                                                
@@ -215,6 +331,37 @@ else
 
 @section Scripts {
     <script>
+            function sortTable(column) {
+            let orderBy = "desc";
+            let currentColumn = "@ViewBag.Column";
+            let currentOrder = "@ViewBag.OrderBy";
+
+            // If clicking the same column, toggle the order
+            if (column === currentColumn) {
+                orderBy = currentOrder === "asc" ? "desc" : "asc";
+            }
+
+            // Build URL with all current parameters
+            let url = "MySchedule?";
+
+            // Add search parameter if exists
+            let search = "@ViewBag.Search";
+            if (search && search !== "") {
+                url += "search=" + encodeURIComponent(search) + "&";
+            }
+
+            // Add status parameter if exists and not "all"
+            let status = "@ViewBag.CurrentStatus";
+            if (status && status !== "all") {
+                url += "status=" + encodeURIComponent(status) + "&";
+            }
+
+            // Add sorting parameters
+            url += "column=" + column + "&orderBy=" + orderBy;
+
+            window.location.href = url;
+        }
+
         function updateScheduleStatus(scheduleId, status) {
             if (confirm('Are you sure you want to update the status of this repair schedule?')) {
                 document.getElementById('scheduleId').value = scheduleId;

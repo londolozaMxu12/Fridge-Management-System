@@ -87,41 +87,6 @@
             </div>
         }
 
-        @if (Model.RepairSchedules.Any())
-        {
-            <div class="mt-4">
-                <h6>Repair Schedule</h6>
-                <hr />
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th>Scheduled Date</th>
-                                <th>Technician</th>
-                                <th>Status</th>
-                                <th>Estimated Hours</th>
-                                <th>Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var schedule in Model.RepairSchedules)
-                            {
-                                <tr>
-                                    <td>@schedule.ScheduledDate.ToString("yyyy-MM-dd HH:mm")</td>
-                                    <td>@schedule.FaultTechnician.User.FullName</td>
-                                    <td>
-                                        <span class="badge @GetScheduleStatusBadgeClass(schedule.Status)">@schedule.Status</span>
-                                    </td>
-                                    <td>@schedule.EstimatedHours hours</td>
-                                    <td>@schedule.Notes</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        }
-    </div>
     <div class="card-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             <i class="fas fa-times m-1"></i> Close
@@ -175,16 +140,4 @@
         };
     }
 
-    public string GetScheduleStatusBadgeClass(ScheduleStatus status)
-    {
-        return status switch
-        {
-            ScheduleStatus.Scheduled => "bg-info",
-            ScheduleStatus.InProgress => "bg-primary",
-            ScheduleStatus.Completed => "bg-success",
-            ScheduleStatus.Cancelled => "bg-danger",
-            ScheduleStatus.Rescheduled => "bg-warning",
-            _ => "bg-secondary"
-        };
-    }
 }

@@ -1,0 +1,209 @@
+﻿@model FridgeManagementSystem.ViewModels.TechnicianPerformanceViewModel
+@{
+    ViewData["Title"] = "My Performance Report";
+    Layout = "_FaultTechnicianLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center text-white mb-4">
+    <h1>
+        <i class="bi bi-speedometer me-2"></i> My Performance Report
+    </h1>
+    @* <div class="text-end">
+        <h5 class="mb-0">@Model.Technician.User.FullName</h5>
+        <small class="text-light">Fault Technician</small>
+    </div> *@
+</div>
+
+<!-- Performance Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">@Model.TotalFaultsAssigned</h4>
+                        <small>Total Attended Faults</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-list-ul fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">@Model.CompletedFaults</h4>
+                        <small>Completed Faults</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">@Model.CompletionRate.ToString("F1")%</h4>
+                        <small>Completion Rate</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-graph-up fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<div class="row">
+    <!-- Priority Breakdown -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Priority Breakdown Completed Faults
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-3">
+                        <div class="border rounded p-2 bg-danger text-white">
+                            <h5 class="mb-0">@Model.CriticalFaultsCompleted</h5>
+                            <small>Critical</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="border rounded p-2 bg-warning text-dark">
+                            <h5 class="mb-0">@Model.HighFaultsCompleted</h5>
+                            <small>High</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="border rounded p-2 bg-info text-white">
+                            <h5 class="mb-0">@Model.MediumFaultsCompleted</h5>
+                            <small>Medium</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="border rounded p-2 bg-success text-white">
+                            <h5 class="mb-0">@Model.LowFaultsCompleted</h5>
+                            <small>Low</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Performance -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-calendar me-2"></i>Monthly Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Month</th>
+                                <th>Completed</th>
+                                <th>Total</th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var month in Model.MonthlyPerformance)
+                            {
+                                <tr>
+                                    <td>@month.Month</td>
+                                    <td>@month.CompletedFaults</td>
+                                    <td>@month.TotalFaults</td>
+                                    
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Completed Faults -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-clock-history me-2"></i>Recently Completed Faults
+        </h5>
+    </div>
+    <div class="card-body">
+        @if (Model.RecentCompletedFaults.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>Fault Title</th>
+                            <th>Priority</th>
+                            <th>Reported Date</th>
+                            <th>Completed Date</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var fault in Model.RecentCompletedFaults)
+                        {
+                            var completionTime = fault.UpdatedAt.HasValue ?
+                            (fault.UpdatedAt.Value - fault.ReportedDate).TotalHours : 0;
+
+                            <tr>
+                                <td>@fault.Title</td>
+                                <td>
+                                    <span class="badge @GetPriorityBadgeClass(fault.Priority)">
+                                        @fault.Priority
+                                    </span>
+                                </td>
+                                <td>@fault.ReportedDate.ToString("dd/MM/yyyy")</td>
+                                <td>@fault.UpdatedAt?.ToString("dd/MM/yyyy")</td>
+                                
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4">
+                <i class="bi bi-inbox fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No completed faults found.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    public string GetPriorityBadgeClass(FaultPriority priority)
+    {
+        return priority switch
+        {
+            FaultPriority.Critical => "bg-danger",
+            FaultPriority.High => "bg-warning text-dark",
+            FaultPriority.Medium => "bg-info",
+            FaultPriority.Low => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+}
