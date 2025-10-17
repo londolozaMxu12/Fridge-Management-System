@@ -1,0 +1,459 @@
+﻿@model FridgeManagementSystem.ViewModels.FaultAnalysisViewModel
+@{
+    ViewData["Title"] = "Fault Analysis Report";
+    Layout = "_FaultTechnicianLayout";
+}
+
+<style>
+    .analysis-header {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-left: 4px solid #e74c3c;
+    }
+
+    .kpi-card {
+        transition: transform 0.2s;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+        }
+
+    .trend-indicator {
+        font-size: 0.9em;
+        padding: 0.2em 0.6em;
+        border-radius: 12px;
+    }
+
+    .hotspot-critical {
+        background-color: #e74c3c;
+        color: white;
+    }
+
+    .hotspot-high {
+        background-color: #e67e22;
+        color: white;
+    }
+
+    .hotspot-medium {
+        background-color: #f39c12;
+        color: white;
+    }
+
+    .hotspot-low {
+        background-color: #27ae60;
+        color: white;
+    }
+</style>
+
+<div class="analysis-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="display-5 fw-bold">
+                <i class="bi bi-binoculars me-2"></i>Comprehensive Fault Analysis
+            </h1>
+            <p class="lead mb-0">System-wide Fault Patterns & Performance Insights</p>
+            <small class="opacity-75">Generated on @Model.GeneratedOn | Period: @Model.ReportPeriod</small>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group">
+                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-download me-2"></i>Export Report
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="exportAnalysisReport('pdf')"><i class="bi bi-file-pdf me-2"></i>PDF Format</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportAnalysisReport('excel')"><i class="bi bi-file-spreadsheet me-2"></i>Excel Format</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Filters -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0"><i class="bi bi-funnel me-2"></i>Analysis Filters</h5>
+    </div>
+    <div class="card-body">
+        <form id="analysisFilterForm" class="row g-3" method="get">
+            <div class="col-md-3">
+                <label class="form-label">Date From</label>
+                <input type="date" class="form-control" name="dateFrom" value="@ViewBag.DateFrom">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Date To</label>
+                <input type="date" class="form-control" name="dateTo" value="@ViewBag.DateTo">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Analysis Type</label>
+                <select class="form-select" name="analysisType">
+                    <option value="comprehensive" selected="@(ViewBag.AnalysisType == "comprehensive")">Comprehensive</option>
+                    <option value="trends" selected="@(ViewBag.AnalysisType == "trends")">Trend Analysis</option>
+                    <option value="geographic" selected="@(ViewBag.AnalysisType == "geographic")">Geographic</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-filter me-2"></i>Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Executive Summary -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="summary-card">
+            <div class="row">
+                <div class="col-md-4 text-center border-end">
+                    <h2 class="display-4 fw-bold text-primary">@Model.Summary.TotalFaults</h2>
+                    <p class="text-muted mb-0">Total Faults Reported</p>
+                </div>
+                <div class="col-md-4 text-center border-end">
+                    <h2 class="display-4 fw-bold text-success">@Model.Summary.ResolvedFaults</h2>
+                    <p class="text-muted mb-0">Faults Resolved</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <h2 class="display-4 fw-bold text-info">@Model.Summary.ResolutionRate.ToString("F1")%</h2>
+                    <p class="text-muted mb-0">Overall Resolution Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column - Trends and KPIs -->
+    <div class="col-md-8">
+        <!-- Fault Trends Chart -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Fault Trends Over Time</h5>
+            </div>
+            <div class="card-body">
+                <div id="faultTrendsChart" style="height: 300px;"></div>
+            </div>
+        </div>
+
+        <!-- KPI Metrics -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0"><i class="bi bi-speedometer2 me-2"></i>Key Performance Indicators</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @foreach (var kpi in Model.Kpis)
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="card kpi-card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-muted">@kpi.Name</h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h4 class="mb-0 @(kpi.CurrentValue >= kpi.TargetValue ? "text-success" : "text-warning")">
+                                            @kpi.CurrentValue.ToString("F1")
+                                        </h4>
+                                        <span class="badge @(kpi.Status == "Improving" ? "bg-success" : kpi.Status == "Declining" ? "bg-danger" : "bg-secondary")">
+                                            @kpi.Status
+                                        </span>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            Target: @kpi.TargetValue.ToString("F1") |
+                                            Previous: @kpi.PreviousValue.ToString("F1")
+                                        </small>
+                                    </div>
+                                    <div class="progress mt-2" style="height: 6px;">
+                                        @{
+                                            var progress = kpi.TargetValue > 0 ? (kpi.CurrentValue / kpi.TargetValue * 100) : 0;
+                                            progress = Math.Min(progress, 100);
+                                        }
+                                        <div class="progress-bar @(progress >= 100 ? "bg-success" : progress >= 80 ? "bg-warning" : "bg-danger")"
+                                             style="width: @progress%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Geographic and Insights -->
+    <div class="col-md-4">
+        <!-- Geographic Distribution -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0"><i class="bi bi-geo-alt me-2"></i>Geographic Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>City</th>
+                                <th>Faults</th>
+                                <th>Critical</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var area in Model.GeographicData)
+                            {
+                                <tr>
+                                    <td>@area.City</td>
+                                    <td>@area.TotalFaults</td>
+                                    <td>@area.CriticalFaults</td>
+                                    <td>
+                                        <span class="trend-indicator hotspot-@area.HotspotLevel.ToLower()">
+                                            @area.HotspotLevel
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Insights -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0"><i class="bi bi-lightbulb me-2"></i>Key Insights</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Summary.ResolutionRate >= 80)
+                {
+                    <div class="alert alert-success">
+                        <h6><i class="bi bi-check-circle me-2"></i>Excellent System Performance</h6>
+                        <small class="mb-0">Resolution rates are above target. System maintenance is effective.</small>
+                    </div>
+                }
+                else if (Model.Summary.ResolutionRate >= 70)
+                {
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-info-circle me-2"></i>Good Performance</h6>
+                        <small class="mb-0">System performance is meeting expectations with room for improvement.</small>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <h6><i class="bi bi-exclamation-triangle me-2"></i>Attention Required</h6>
+                        <small class="mb-0">Resolution rates below target. Review maintenance procedures.</small>
+                    </div>
+                }
+
+                <!-- Quick Actions -->
+                <div class="mt-3">
+                    <h6 class="text-muted">Recommended Actions</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            <small>Focus on high-priority areas</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            <small>Review seasonal patterns</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            <small>Optimize resource allocation</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trends Table -->
+<div class="card mt-4">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0"><i class="bi bi-table me-2"></i>Detailed Trend Analysis</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Period</th>
+                        <th>Reported</th>
+                        <th>Resolved</th>
+                        <th>Critical</th>
+                        <th>Resolution Rate</th>
+                        
+                        <th>Trend</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var trend in Model.Trends)
+                    {
+                        <tr>
+                            <td>@trend.Period</td>
+                            <td>@trend.ReportedFaults</td>
+                            <td>@trend.ResolvedFaults</td>
+                            <td>
+                                <span class="badge bg-danger">@trend.CriticalFaults</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold @(trend.ResolutionRate >= 75 ? "text-success" : "text-warning")">
+                                    @trend.ResolutionRate.ToString("F1")%
+                                </span>
+                            </td>
+                           
+                            <td>
+                                @if (trend.TrendDirection > 0)
+                                {
+                                    <i class="bi bi-arrow-up-circle-fill text-success" title="Improving"></i>
+                                }
+                                else if (trend.TrendDirection < 0)
+                                {
+                                    <i class="bi bi-arrow-down-circle-fill text-danger" title="Declining"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-dash-circle-fill text-secondary" title="Stable"></i>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAnalysisCharts();
+        });
+
+        function initializeAnalysisCharts() {
+            // Fault Trends Chart
+            const trendsCtx = document.getElementById('faultTrendsChart').getContext('2d');
+            const trendsChart = new Chart(trendsCtx, {
+                type: 'line',
+                data: {
+                    labels: @Html.Raw(Json.Serialize(Model.Trends.Select(t => t.Period))),
+                    datasets: [
+                        {
+                            label: 'Reported Faults',
+                            data: @Html.Raw(Json.Serialize(Model.Trends.Select(t => t.ReportedFaults))),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Resolved Faults',
+                            data: @Html.Raw(Json.Serialize(Model.Trends.Select(t => t.ResolvedFaults))),
+                            borderColor: '#27ae60',
+                            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Faults'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function exportAnalysisReport(format) {
+            const form = document.getElementById('analysisFilterForm');
+            const formData = new FormData(form);
+
+            // Show loading indicator
+            const exportBtn = document.querySelector('.btn-group .btn');
+            const originalHtml = exportBtn.innerHTML;
+            exportBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating...';
+            exportBtn.disabled = true;
+
+            fetch(`/FaultTechnician/ExportFaultAnalysisReport?format=${format}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) return response.blob();
+                throw new Error('Export failed');
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `Fault_Analysis_Report_${new Date().toISOString().split('T')[0]}.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+
+                showAlert('Analysis report exported successfully!', 'success');
+            })
+            .catch(error => {
+                console.error('Export error:', error);
+                showAlert('Failed to export analysis report. Please try again.', 'danger');
+            })
+            .finally(() => {
+                // Restore button state
+                exportBtn.innerHTML = originalHtml;
+                exportBtn.disabled = false;
+            });
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+            alertDiv.style.zIndex = '1060';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(alertDiv);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentElement) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+}

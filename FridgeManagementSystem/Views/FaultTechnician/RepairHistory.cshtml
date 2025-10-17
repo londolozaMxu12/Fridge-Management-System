@@ -1,0 +1,334 @@
+﻿@using FridgeManagementSystem.Helpers
+@model List<FridgeManagementSystem.Models.RepairSchedule>
+@{
+    ViewData["Title"] = "Repair History";
+    Layout = "_FaultTechnicianLayout";
+}
+
+<style>
+    .history-header { 
+        background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%); 
+        color: white; 
+        padding: 2rem; 
+        border-radius: 10px; 
+        margin-bottom: 2rem; 
+    }
+    .status-badge {
+        font-size: 0.8em;
+        padding: 0.4em 0.8em;
+    }
+    .repair-card {
+        transition: transform 0.2s;
+        border-left: 4px solid #6c5ce7;
+    }
+    .repair-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+</style>
+
+<div class="history-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="display-5 fw-bold">
+                <i class="bi bi-clock-history me-2"></i>Repair History
+            </h1>
+            <p class="lead mb-0">Complete record of all repair schedules</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="bg-white bg-opacity-25 p-3 rounded">
+                <h4 class="mb-1">@ViewBag.CompletionRate.ToString("F1")%</h4>
+                <small class="opacity-75">Overall Completion Rate</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3 class="mb-0">@ViewBag.TotalRepairs</h3>
+                <small>Total Faults Attended</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3 class="mb-0">@ViewBag.CompletedRepairs</h3>
+                <small>Completed</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3 class="mb-0">@(ViewBag.TotalRepairs - ViewBag.CompletedRepairs)</h3>
+                <small>Pending</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h3 class="mb-0">@ViewBag.CompletionRate.ToString("F1")%</h3>
+                <small>Success Rate</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0"><i class="bi bi-funnel me-2"></i>Filter Repair History</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control" name="search" value="@ViewBag.Search" placeholder="Search faults, customers...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="status">
+                    <option value="all">All Status</option>
+                    <option value="Scheduled" selected="@(ViewBag.Status == "Scheduled")">Scheduled</option>
+                    <option value="InProgress" selected="@(ViewBag.Status == "InProgress")">In Progress</option>
+                    <option value="Completed" selected="@(ViewBag.Status == "Completed")">Completed</option>
+                    <option value="Cancelled" selected="@(ViewBag.Status == "Cancelled")">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">From Date</label>
+                <input type="date" class="form-control" name="fromDate" value="@ViewBag.FromDate">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">To Date</label>
+                <input type="date" class="form-control" name="toDate" value="@ViewBag.ToDate">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Page Size</label>
+                <select class="form-select" name="pageSize">
+                    <option value="10" selected="@(ViewBag.PageSize == 10)">10</option>
+                    <option value="25" selected="@(ViewBag.PageSize == 25)">25</option>
+                    <option value="50" selected="@(ViewBag.PageSize == 50)">50</option>
+                </select>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-filter me-1"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Repair History Table -->
+<div class="card">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-list-ul me-2"></i>Repair Schedule History
+            <span class="badge bg-secondary ms-2">@ViewBag.TotalCount total records</span>
+        </h5>
+        <div>
+            <small class="text-muted">
+                Showing @((ViewBag.PageNumber - 1) * ViewBag.PageSize + 1) to 
+                @Math.Min(ViewBag.PageNumber * ViewBag.PageSize, ViewBag.TotalCount) of @ViewBag.TotalCount entries
+            </small>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>Schedule Date</th>
+                            <th>Fault Details</th>
+                            <th>Customer</th>
+                            <th>Fridge</th>
+                            <th>Estimated Hours</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var schedule in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@schedule.ScheduledDate.ToString("MMM dd, yyyy")</strong><br>
+                                    <small class="text-muted">@schedule.ScheduledDate.ToString("hh:mm tt")</small>
+                                </td>
+                                <td>
+                                    <strong>@schedule.Fault?.Title</strong><br>
+                                    <small class="text-muted">@schedule.Fault?.Description?.Truncate(50)</small>
+                                </td>
+                                <td>
+                                    @schedule.Fault?.ReportedBy?.User?.FullName<br>
+                                    <small class="text-muted">@schedule.Fault?.ReportedBy?.User?.PhoneNumber</small>
+                                </td>
+                                <td>
+                                    
+                                    @if (schedule.Fault?.Fridge != null)
+                                    {
+                                        @schedule.Fault?.Fridge?.SerialNumber<br>
+                                        <small class="text-muted">@schedule.Fault?.Fridge?.FridgeType?.Name</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">N/A</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">@schedule.EstimatedHours hours</span>
+                                </td>
+                                <td>
+                                    
+                                    @{
+                                        var statusClass = schedule.Status.ToString() switch
+                                        {
+                                            "Scheduled" => "bg-primary",
+                                            "InProgress" => "bg-warning",
+                                            "Completed" => "bg-success",
+                                            "Cancelled" => "bg-danger",
+                                            "Rescheduled" => "bg-info",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @statusClass">@schedule.Status</span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(schedule.Notes))
+                                    {
+                                        <small class="text-muted" title="@schedule.Notes">
+                                            @schedule.Notes.Truncate(30)
+                                        </small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="@Url.Action("Details", "FaultTechnician", new { id = schedule.FaultId })" 
+                                           class="btn btn-outline-primary" title="View Fault Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (schedule.Status != ScheduleStatus.Completed && schedule.Status != ScheduleStatus.Cancelled)
+                                        {
+                                            <a href="@Url.Action("UpdateSchedule", "FaultTechnician", new { id = schedule.RepairScheduleId })" 
+                                               class="btn btn-outline-warning" title="Update Schedule">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (ViewBag.TotalPages > 1)
+            {
+                <nav aria-label="Repair history pagination">
+                    <ul class="pagination justify-content-center">
+                        @if (ViewBag.PageNumber > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("RepairHistory", new { 
+                                    search = ViewBag.Search, 
+                                    status = ViewBag.Status, 
+                                    fromDate = ViewBag.FromDate, 
+                                    toDate = ViewBag.ToDate, 
+                                    pageNumber = ViewBag.PageNumber - 1, 
+                                    pageSize = ViewBag.PageSize 
+                                })">Previous</a>
+                            </li>
+                        }
+
+                        @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == ViewBag.PageNumber ? "active" : "")">
+                                <a class="page-link" href="@Url.Action("RepairHistory", new { 
+                                    search = ViewBag.Search, 
+                                    status = ViewBag.Status, 
+                                    fromDate = ViewBag.FromDate, 
+                                    toDate = ViewBag.ToDate, 
+                                    pageNumber = i, 
+                                    pageSize = ViewBag.PageSize 
+                                })">@i</a>
+                            </li>
+                        }
+
+                        @if (ViewBag.PageNumber < ViewBag.TotalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("RepairHistory", new { 
+                                    search = ViewBag.Search, 
+                                    status = ViewBag.Status, 
+                                    fromDate = ViewBag.FromDate, 
+                                    toDate = ViewBag.ToDate, 
+                                    pageNumber = ViewBag.PageNumber + 1, 
+                                    pageSize = ViewBag.PageSize 
+                                })">Next</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <h4 class="text-muted mt-3">No repair history found</h4>
+                <p class="text-muted">No repair schedules match your current filters.</p>
+                <a href="@Url.Action("RepairHistory")" class="btn btn-primary">Clear Filters</a>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    public static string GetStatusBadge(ScheduleStatus status)
+    {
+        return status switch
+        {
+            ScheduleStatus.Scheduled => "<span class='badge bg-primary status-badge'>Scheduled</span>",
+            ScheduleStatus.InProgress => "<span class='badge bg-warning status-badge'>In Progress</span>",
+            ScheduleStatus.Completed => "<span class='badge bg-success status-badge'>Completed</span>",
+            ScheduleStatus.Cancelled => "<span class='badge bg-danger status-badge'>Cancelled</span>",
+            ScheduleStatus.Rescheduled => "<span class='badge bg-info status-badge'>Rescheduled</span>",
+            _ => "<span class='badge bg-secondary status-badge'>Unknown</span>"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add tooltips to truncated text
+            const truncatedElements = document.querySelectorAll('[title]');
+            truncatedElements.forEach(el => {
+                new bootstrap.Tooltip(el);
+            });
+
+            // Auto-submit form when page size changes
+            const pageSizeSelect = document.querySelector('select[name="pageSize"]');
+            if (pageSizeSelect) {
+                pageSizeSelect.addEventListener('change', function() {
+                    this.form.submit();
+                });
+            }
+        });
+    </script>
+}

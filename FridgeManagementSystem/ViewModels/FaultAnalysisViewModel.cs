@@ -1,28 +1,28 @@
-﻿namespace FridgeManagementSystem.ViewModels
+﻿using Microsoft.CodeAnalysis.FlowAnalysis.DataFlow.CopyAnalysis;
+
+namespace FridgeManagementSystem.ViewModels
 {
     public class FaultAnalysisViewModel
     {
-        // Overall statistics
-        public int TotalFaults { get; set; }
-        public int ResolvedFaults { get; set; }
-        public double ResolutionRate { get; set; }
+        public DateTime? ReportDateFrom { get; set; }
+        public DateTime? ReportDateTo { get; set; }
+        public string AnalysisType { get; set; } = "comprehensive";
 
-        // Status distribution
-        public Dictionary<FaultStatus, int> FaultsByStatus { get; set; } = new();
+        // Executive Summary
+        public ExecutiveSummary Summary { get; set; } = new();
 
-        // Priority distribution
-        public Dictionary<FaultPriority, int> FaultsByPriority { get; set; } = new();
+        // Trend Analysis
+        public List<FaultTrend> Trends { get; set; } = new();
+        
+        // Geographic Analysisnalysis Report
+        public List<GeographicDistribution> GeographicData { get; set; } = new();
 
-        // Monthly trends
-        public List<MonthlyFaultStats> MonthlyTrends { get; set; } = new();
+        // KPI Metrics
+        public List<KpiMetric> Kpis { get; set; } = new();
 
-        // Common fault types
-        public List<FaultTypeStats> CommonFaultTypes { get; set; } = new();
-
-        // Technician performance comparison
-        public List<TechnicianStats> TechnicianStats { get; set; } = new();
-
-        // Fridge type analysis
-        public List<FridgeTypeStats> FridgeTypeStats { get; set; } = new();
+        // Export Properties
+        public string ReportTitle => "Comprehensive Fault Analysis Report";
+        public string GeneratedOn => DateTime.Now.ToString("dd-MM-yyyy HH:mm");
+        public string ReportPeriod => $"{ReportDateFrom?.ToString("dd-MM-yyyy")} to {ReportDateTo?.ToString("dd-MM-yyyy")}";
     }
 }

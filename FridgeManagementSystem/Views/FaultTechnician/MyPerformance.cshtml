@@ -4,206 +4,707 @@
     Layout = "_FaultTechnicianLayout";
 }
 
-<div class="d-flex justify-content-between align-items-center text-white mb-4">
-    <h1>
-        <i class="bi bi-speedometer me-2"></i> My Performance Report
-    </h1>
-    @* <div class="text-end">
-        <h5 class="mb-0">@Model.Technician.User.FullName</h5>
-        <small class="text-light">Fault Technician</small>
-    </div> *@
+<style>
+    .report-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+
+    .metric-card {
+        transition: transform 0.2s;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-left: 4px solid #3498db;
+    }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+    .chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 1px solid #e9ecef;
+    }
+
+    .priority-critical {
+        border-left-color: #e74c3c !important;
+    }
+
+    .priority-high {
+        border-left-color: #e67e22 !important;
+    }
+
+    .priority-medium {
+        border-left-color: #3498db !important;
+    }
+
+    .priority-low {
+        border-left-color: #2ecc71 !important;
+    }
+
+    .export-btn {
+        background: #28a745;
+        border: none;
+    }
+
+        .export-btn:hover {
+            background: #218838;
+        }
+
+    .trend-up {
+        color: #27ae60;
+    }
+
+    .trend-down {
+        color: #e74c3c;
+    }
+
+    .kpi-badge {
+        font-size: 0.8em;
+        padding: 0.25em 0.6em;
+    }
+</style>
+
+<div class="report-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="display-5 fw-bold">
+                <i class="bi bi-graph-up-arrow me-2"></i>@Model.ReportTitle
+            </h1>
+            <p class="lead mb-0">Comprehensive Performance Analytics & Insights</p>
+            <small class="opacity-75">Generated on @Model.GeneratedOn | Period: @Model.ReportPeriod</small>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group">
+                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-download me-2"></i>Export Report
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="exportReport('pdf')"><i class="bi bi-file-pdf me-2"></i>PDF Format</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportReport('excel')"><i class="bi bi-file-spreadsheet me-2"></i>Excel Format</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Filters -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0"><i class="bi bi-filter me-2"></i>Report Filters</h5>
+    </div>
+    <div class="card-body">
+        <form id="reportFilterForm" class="row g-3" method="get">
+            <div class="col-md-3">
+                <label class="form-label">Date From</label>
+                <input type="date" class="form-control" name="dateFrom" value="@ViewBag.DateFrom">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Date To</label>
+                <input type="date" class="form-control" name="dateTo" value="@ViewBag.DateTo">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Report Type</label>
+                <select class="form-select" name="reportType">
+                    <option value="detailed" selected="@(ViewBag.ReportType == "detailed")">Detailed Analysis</option>
+                    <option value="executive" selected="@(ViewBag.ReportType == "executive")">Executive Summary</option>
+                    <option value="comparative" selected="@(ViewBag.ReportType == "comparative")">Comparative</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-filter me-2"></i>Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- Performance Summary Cards -->
 <div class="row mb-4">
-    <div class="col-md-3 mb-3">
-        <div class="card bg-primary text-white">
+    <div class="col-md-3">
+        <div class="card metric-card">
             <div class="card-body">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h4 class="mb-0">@Model.TotalFaultsAssigned</h4>
-                        <small>Total Attended Faults</small>
+                        <h6 class="card-title text-muted mb-2">Completion Rate</h6>
+                        <h2 class="mb-0">@Model.CompletionRate.ToString("F1")%</h2>
+                        <small class="text-muted">@Model.CompletedFaults of @Model.TotalFaultsAssigned faults</small>
                     </div>
-                    <div class="align-self-center">
-                        <i class="bi bi-list-ul fa-2x"></i>
+                    <div class="text-primary">
+                        <i class="bi bi-check-circle-fill fs-1"></i>
                     </div>
+                </div>
+                <div class="mt-3">
+                    @if (Model.CompletionRate >= 75)
+                    {
+                        <span class="badge bg-success"><i class="bi bi-arrow-up me-1"></i>On Target</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning"><i class="bi bi-arrow-down me-1"></i>Needs Improvement</span>
+                    }
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card bg-success text-white">
+
+    <div class="col-md-3">
+        <div class="card metric-card">
             <div class="card-body">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h4 class="mb-0">@Model.CompletedFaults</h4>
-                        <small>Completed Faults</small>
+                        <h6 class="card-title text-muted mb-2">Total Attended Faults</h6>
+                        <h2 class="mb-0">@Model.TotalFaultsAssigned</h2>
+                        <small class="text-muted">Attended Faults</small>
                     </div>
-                    <div class="align-self-center">
-                        <i class="bi bi-check-circle fa-2x"></i>
+                    <div class="text-info">
+                        <i class="bi bi-list-task fs-1"></i>
                     </div>
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-info">Attended</span>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card bg-info text-white">
+
+    <div class="col-md-3">
+        <div class="card metric-card">
             <div class="card-body">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h4 class="mb-0">@Model.CompletionRate.ToString("F1")%</h4>
-                        <small>Completion Rate</small>
+                        <h6 class="card-title text-muted mb-2">Completed</h6>
+                        <h2 class="mb-0">@Model.CompletedFaults</h2>
+                        <small class="text-muted">Successfully resolved</small>
                     </div>
-                    <div class="align-self-center">
-                        <i class="bi bi-graph-up fa-2x"></i>
+                    <div class="text-success">
+                        <i class="bi bi-check-square-fill fs-1"></i>
                     </div>
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-success">Resolved</span>
                 </div>
             </div>
         </div>
     </div>
-    
+
+    <div class="col-md-3">
+        <div class="card metric-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-2">In Progress</h6>
+                        <h2 class="mb-0">@Model.InProgressFaults</h2>
+                        <small class="text-muted">Currently working on</small>
+                    </div>
+                    <div class="text-warning">
+                        <i class="bi bi-clock-fill fs-1"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-warning">Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row">
-    <!-- Priority Breakdown -->
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-exclamation-triangle me-2"></i>Priority Breakdown Completed Faults
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-3">
-                        <div class="border rounded p-2 bg-danger text-white">
-                            <h5 class="mb-0">@Model.CriticalFaultsCompleted</h5>
-                            <small>Critical</small>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="border rounded p-2 bg-warning text-dark">
-                            <h5 class="mb-0">@Model.HighFaultsCompleted</h5>
-                            <small>High</small>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="border rounded p-2 bg-info text-white">
-                            <h5 class="mb-0">@Model.MediumFaultsCompleted</h5>
-                            <small>Medium</small>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="border rounded p-2 bg-success text-white">
-                            <h5 class="mb-0">@Model.LowFaultsCompleted</h5>
-                            <small>Low</small>
-                        </div>
-                    </div>
+    <!-- Left Column - Charts -->
+    <div class="col-md-8">
+        <!-- Performance Trends Chart -->
+        <div class="chart-container">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Performance Trends</h5>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary active" data-chart-type="completion">Completion Rate</button>
+                    <button type="button" class="btn btn-outline-secondary" data-chart-type="volume">Fault Volume</button>
                 </div>
             </div>
+            <div id="performanceTrendsChart" style="height: 300px;"></div>
         </div>
-    </div>
 
-    <!-- Monthly Performance -->
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-calendar me-2"></i>Monthly Performance
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0">
-                        <thead class="table-primary">
-                            <tr>
-                                <th>Month</th>
-                                <th>Completed</th>
-                                <th>Total</th>
-                                
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var month in Model.MonthlyPerformance)
-                            {
+        <!-- Priority Distribution -->
+        <div class="chart-container">
+            <h5 class="mb-3"><i class="bi bi-pie-chart me-2"></i>Priority Distribution</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div id="priorityDistributionChart" style="height: 250px;"></div>
+                </div>
+                <div class="col-md-6">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-primary">
                                 <tr>
-                                    <td>@month.Month</td>
-                                    <td>@month.CompletedFaults</td>
-                                    <td>@month.TotalFaults</td>
-                                    
+                                    <th>Priority</th>
+                                    <th>Assigned</th>
+                                    <th>Completed</th>
+                                    <th>Rate</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var priority in Model.PriorityMetrics)
+                                {
+                                    <tr>
+                                        <td>
+                                            <span class="badge
+                                                    @(priority.Priority.ToString() == "Critical" ? "bg-danger" :
+                                                                                                    priority.Priority.ToString() == "High" ? "bg-warning" :
+                                                                                                    priority.Priority.ToString() == "Medium" ? "bg-info" : "bg-success")">
+                                            @priority.Priority
+                                        </span>
+                                    </td>
+                                    <td>@priority.Assigned</td>
+                                    <td>@priority.Completed</td>
+                                    <td>
+                                        @if (priority.Assigned > 0)
+                                            {
+                                                var rate = (double)priority.Completed / priority.Assigned * 100;
+                                                <span class="@(rate >= 75 ? "text-success" : "text-warning") fw-bold">
+                                                    @rate.ToString("F1")%
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">N/A</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Recent Completed Faults -->
-<div class="card">
-    <div class="card-header">
-        <h5 class="card-title mb-0">
-            <i class="bi bi-clock-history me-2"></i>Recently Completed Faults
-        </h5>
-    </div>
-    <div class="card-body">
-        @if (Model.RecentCompletedFaults.Any())
-        {
+    <!-- Right Column - Insights and Details -->
+    <div class="col-md-4">
+        <!-- Performance Insights -->
+        <div class="chart-container">
+            <h5 class="mb-3"><i class="bi bi-lightbulb me-2"></i>Performance Insights</h5>
+
+            @if (Model.CompletionRate >= 85)
+            {
+                <div class="alert alert-success">
+                    <h6><i class="bi bi-trophy me-2"></i>Excellent Performance</h6>
+                    <small class="mb-0">Your completion rate exceeds the target of 75%. Keep up the great work!</small>
+                </div>
+            }
+            else if (Model.CompletionRate >= 70)
+            {
+                <div class="alert alert-info">
+                    <h6><i class="bi bi-check-circle me-2"></i>Good Performance</h6>
+                    <small class="mb-0">You're close to the target. Focus on completing pending faults.</small>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    <h6><i class="bi bi-exclamation-triangle me-2"></i>Needs Improvement</h6>
+                    <small class="mb-0">Your completion rate is below target. Consider prioritizing critical faults.</small>
+                </div>
+            }
+
+            @if (Model.OverdueFaults > 0)
+            {
+                <div class="alert alert-danger">
+                    <h6><i class="bi bi-clock me-2"></i>Overdue Faults</h6>
+                    <small class="mb-0">You have @Model.OverdueFaults overdue faults requiring immediate attention.</small>
+                </div>
+            }
+
+            <!-- Quick Stats -->
+            <div class="mt-3">
+                <h6 class="text-muted">Quick Stats</h6>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border rounded p-2">
+                            <div class="fw-bold text-primary">@Model.InProgressFaults</div>
+                            <small class="text-muted">In Progress</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-2">
+                            <div class="fw-bold text-warning">@Model.OverdueFaults</div>
+                            <small class="text-muted">Overdue</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Performance -->
+        <div class="chart-container">
+            <h5 class="mb-3"><i class="bi bi-speedometer2 me-2"></i>Recent Performance</h5>
             <div class="table-responsive">
                 <table class="table table-striped table-hover mb-0">
                     <thead class="table-primary">
                         <tr>
-                            <th>Fault Title</th>
-                            <th>Priority</th>
-                            <th>Reported Date</th>
-                            <th>Completed Date</th>
-                            
+                            <th>Month</th>
+                            <th>Completed</th>
+                            <th>Rate</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var fault in Model.RecentCompletedFaults)
+                        @foreach (var month in Model.MonthlyPerformance.Take(6))
                         {
-                            var completionTime = fault.UpdatedAt.HasValue ?
-                            (fault.UpdatedAt.Value - fault.ReportedDate).TotalHours : 0;
-
+                            var rate = month.TotalFaults > 0 ? (double)month.CompletedFaults / month.TotalFaults * 100 : 0;
                             <tr>
-                                <td>@fault.Title</td>
+                                <td>@month.Month</td>
+                                <td>@month.CompletedFaults/@month.TotalFaults</td>
                                 <td>
-                                    <span class="badge @GetPriorityBadgeClass(fault.Priority)">
-                                        @fault.Priority
+                                    <span class="@(rate >= 75 ? "text-success" : "text-warning") fw-bold">
+                                        @rate.ToString("F1")%
                                     </span>
                                 </td>
-                                <td>@fault.ReportedDate.ToString("dd/MM/yyyy")</td>
-                                <td>@fault.UpdatedAt?.ToString("dd/MM/yyyy")</td>
-                                
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
-        }
-        else
-        {
-            <div class="text-center py-4">
-                <i class="bi bi-inbox fa-3x text-muted mb-3"></i>
-                <p class="text-muted">No completed faults found.</p>
-            </div>
-        }
+        </div>
     </div>
 </div>
 
-@functions {
-    public string GetPriorityBadgeClass(FaultPriority priority)
-    {
-        return priority switch
-        {
-            FaultPriority.Critical => "bg-danger",
-            FaultPriority.High => "bg-warning text-dark",
-            FaultPriority.Medium => "bg-info",
-            FaultPriority.Low => "bg-success",
-            _ => "bg-secondary"
-        };
-    }
+<!-- Detailed Performance Table -->
+<div class="card mt-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-table me-2"></i>Detailed Performance Metrics
+        </h5>
+        
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                        <th>Target</th>
+                        <th>Status</th>
+                        <th>Trend</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Overall Completion Rate</td>
+                        <td>@Model.CompletionRate.ToString("F1")%</td>
+                        <td>75%</td>
+                        <td>
+                            <span class="badge @(Model.CompletionRate >= 75 ? "bg-success" : "bg-warning")">
+                                @(Model.CompletionRate >= 75 ? "Excellent" : "Needs Improvement")
+                            </span>
+                        </td>
+                        <td>
+                            @if (Model.CompletionRate >= 75)
+                            {
+                                <i class="bi bi-arrow-up-circle-fill text-success"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-arrow-down-circle-fill text-warning"></i>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Critical Priority Completion</td>
+                        <td>
+                            @{
+                                var criticalFaults = Model.PriorityMetrics.FirstOrDefault(p => p.Priority.ToString() == "Critical");
+                                var criticalRate = criticalFaults?.Assigned > 0 ? (double)criticalFaults.Completed / criticalFaults.Assigned * 100 : 0;
+                            }
+                            @criticalRate.ToString("F1")%
+                        </td>
+                        <td>90%</td>
+                        <td>
+                            <span class="badge @(criticalRate >= 90 ? "bg-success" : "bg-danger")">
+                                @(criticalRate >= 90 ? "On Target" : "Critical")
+                            </span>
+                        </td>
+                        <td>
+                            @if (criticalRate >= 90)
+                            {
+                                <i class="bi bi-arrow-up-circle-fill text-success"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-arrow-down-circle-fill text-danger"></i>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>High Priority Completion</td>
+                        <td>
+                            @{
+                                var highFaults = Model.PriorityMetrics.FirstOrDefault(p => p.Priority.ToString() == "High");
+                                var highRate = highFaults?.Assigned > 0 ? (double)highFaults.Completed / highFaults.Assigned * 100 : 0;
+                            }
+                            @highRate.ToString("F1")%
+                        </td>
+                        <td>80%</td>
+                        <td>
+                            <span class="badge @(highRate >= 80 ? "bg-success" : "bg-warning")">
+                                @(highRate >= 80 ? "Good" : "Needs Attention")
+                            </span>
+                        </td>
+                        <td>
+                            @if (highRate >= 80)
+                            {
+                                <i class="bi bi-arrow-up-circle-fill text-success"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-arrow-down-circle-fill text-warning"></i>
+                            }
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Initialize charts when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            loadChartData();
+        });
+
+        // Initialize chart structures
+        function initializeCharts() {
+            // Performance Trends Chart
+            const trendsCtx = document.getElementById('performanceTrendsChart').getContext('2d');
+            window.performanceTrendsChart = new Chart(trendsCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Completion Rate %',
+                        data: [],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Completion Rate (%)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Priority Distribution Chart
+            const priorityCtx = document.getElementById('priorityDistributionChart').getContext('2d');
+            window.priorityDistributionChart = new Chart(priorityCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#e74c3c', '#e67e22', '#3498db', '#2ecc71']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load chart data via AJAX
+        function loadChartData() {
+            const form = document.getElementById('reportFilterForm');
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+
+            fetch(`/FaultTechnician/GetPerformanceChartData?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateCharts(data.data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading chart data:', error);
+                    // Fallback to server-side data
+                    updateChartsWithServerData();
+                });
+        }
+
+        // Update charts with loaded data
+        function updateCharts(chartData) {
+            // Update trends chart
+            if (chartData.monthlyTrends) {
+                window.performanceTrendsChart.data.labels = chartData.monthlyTrends.labels;
+                window.performanceTrendsChart.data.datasets[0].data = chartData.monthlyTrends.resolved.map((resolved, index) => {
+                    const total = chartData.monthlyTrends.reported[index];
+                    return total > 0 ? (resolved / total * 100) : 0;
+                });
+                window.performanceTrendsChart.update();
+            }
+
+            // Update priority distribution chart
+            if (chartData.priorityDistribution) {
+                window.priorityDistributionChart.data.labels = chartData.priorityDistribution.labels;
+                window.priorityDistributionChart.data.datasets[0].data = chartData.priorityDistribution.counts;
+                window.priorityDistributionChart.update();
+            }
+        }
+
+        // Fallback to server-side data
+        function updateChartsWithServerData() {
+            // Use data from the model if AJAX fails
+            const monthlyData = @Html.Raw(Json.Serialize(Model.MonthlyPerformance));
+            const priorityData = @Html.Raw(Json.Serialize(Model.PriorityMetrics));
+
+            // Update trends chart
+            window.performanceTrendsChart.data.labels = monthlyData.map(m => m.month);
+            window.performanceTrendsChart.data.datasets[0].data = monthlyData.map(m =>
+                m.totalFaults > 0 ? (m.completedFaults / m.totalFaults * 100) : 0
+            );
+            window.performanceTrendsChart.update();
+
+            // Update priority distribution chart
+            window.priorityDistributionChart.data.labels = priorityData.map(p => p.priority);
+            window.priorityDistributionChart.data.datasets[0].data = priorityData.map(p => p.assigned);
+            window.priorityDistributionChart.update();
+        }
+
+        // Export report function
+        function exportReport(format) {
+            const form = document.getElementById('reportFilterForm');
+            const formData = new FormData(form);
+
+            // Show loading indicator
+            const exportBtn = document.querySelector('.export-btn');
+            const originalHtml = exportBtn.innerHTML;
+            exportBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating...';
+            exportBtn.disabled = true;
+
+            fetch(`/FaultTechnician/ExportPerformanceReport?format=${format}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) return response.blob();
+                throw new Error('Export failed');
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `Performance_Report_${new Date().toISOString().split('T')[0]}.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+
+                // Show success message
+                showAlert('Report exported successfully!', 'success');
+            })
+            .catch(error => {
+                console.error('Export error:', error);
+                showAlert('Failed to export report. Please try again.', 'danger');
+            })
+            .finally(() => {
+                // Restore button state
+                exportBtn.innerHTML = originalHtml;
+                exportBtn.disabled = false;
+            });
+        }
+
+        // Toggle detailed table view
+        function toggleDetailedView() {
+            const tableView = document.getElementById('detailedTableView');
+            tableView.classList.toggle('table-sm');
+        }
+
+        // Show alert message
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.querySelector('.report-header').after(alertDiv);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentElement) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Chart type switcher
+        document.querySelectorAll('[data-chart-type]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Update active state
+                document.querySelectorAll('[data-chart-type]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                // Switch chart data based on type
+                const chartType = this.dataset.chartType;
+                switchChartType(chartType);
+            });
+        });
+
+        function switchChartType(type) {
+            if (type === 'volume') {
+                window.performanceTrendsChart.data.datasets[0].label = 'Fault Volume';
+                window.performanceTrendsChart.data.datasets[0].data = @Html.Raw(Json.Serialize(Model.MonthlyPerformance.Select(m => m.TotalFaults)));
+                window.performanceTrendsChart.options.scales.y.title.text = 'Number of Faults';
+                window.performanceTrendsChart.options.scales.y.max = null;
+            } else {
+                window.performanceTrendsChart.data.datasets[0].label = 'Completion Rate %';
+                window.performanceTrendsChart.data.datasets[0].data = @Html.Raw(Json.Serialize(Model.MonthlyPerformance.Select(m => m.TotalFaults > 0 ? (double)m.CompletedFaults / m.TotalFaults * 100 : 0)));
+                window.performanceTrendsChart.options.scales.y.title.text = 'Completion Rate (%)';
+                window.performanceTrendsChart.options.scales.y.max = 100;
+            }
+            window.performanceTrendsChart.update();
+        }
+    </script>
 }

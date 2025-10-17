@@ -4,11 +4,21 @@ using FridgeManagementSystem.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using QuestPDF.Infrastructure;
 using System.Globalization;
 //using FridgeManagementSystem.Managers.Validators;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Set QuestPDF license (Community version - free for non-commercial use)
+QuestPDF.Settings.License = LicenseType.Community;
+
+// Set EPPlus license context (EPPlus is free for non-commercial use)
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+
 var connectionString = builder.Configuration.GetConnectionString("FridgeManagementSystemContextConnection") ?? throw new InvalidOperationException("Connection string 'FridgeManagementSystemContextConnection' not found.");
 
 builder.Services.AddDbContext<FridgeManagementSystemContext>(options => options.UseSqlServer(connectionString));
