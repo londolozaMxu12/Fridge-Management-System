@@ -9,7 +9,7 @@ namespace FridgeManagementSystem.Models
         
         [Required, StringLength(200)]
         public string Details { get; set; }
-
+        public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
 
         // Foreign Key

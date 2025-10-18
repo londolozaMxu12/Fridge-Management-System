@@ -43,11 +43,13 @@ namespace FridgeManagementSystem.Repositories
                 }
                 else
                 {
+                    var fridge = _db.Fridges.Find(fridgeId);
                     cartItem = new CartDetails
                     {
                         FridgeId = fridgeId,
                         ShoppingCartId = cart.ShoppingCartId,
-                        Quantity = quantity
+                        Quantity = quantity,
+                        UnitPrice = fridge.Price
                     };
                     _db.CartDetails.Add(cartItem);
                 }
@@ -133,6 +135,54 @@ namespace FridgeManagementSystem.Repositories
                               ).ToListAsync();
             return data.Count;
         }
+
+        public async Task<bool> DoCheckout()
+        {
+            using var transaction = _db.Database.BeginTransaction();
+            try
+            {
+                var userId = GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                    throw new Exception("User is not logged in.");
+                var cart = GetUserCart();
+                if (cart is null)
+                    throw new Exception("Invalid Cart");
+                var cartDetails = _db.CartDetails.Where(a=>a.ShoppingCartId==cart.Id).ToList();
+                if (cartDetails.Count == 0)
+                    throw new Exception("Cart is Empty");
+                var order = new PurchasingOrder
+                {
+                    UserId = userId,
+                    Date = DateTime.UtcNow,
+                    OrderStatusId = 1, //pending
+                };
+                _db.PurchasingOrders.Add(order);
+                _db.SaveChanges();
+                foreach(var item in cartDetails)
+                {
+                    var orderDetails = new PurchasingOrderDetails
+                    {
+                        FridgeId = (int)item.FridgeId,
+                        PurchasingOrderId = order.PurchasingOrderId,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice
+                    };
+                    _db.PurchasingOrderDetails.Add(orderDetails);
+                }
+                _db.SaveChanges();
+
+                //removing cart details
+                _db.CartDetails.RemoveRange(cartDetails);
+                _db.SaveChanges();
+                transaction.Commit();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public string GetUserId()
         {
             var principal = _httpContextAccessor.HttpContext.User;

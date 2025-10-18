@@ -16,6 +16,8 @@ namespace FridgeManagementSystem.Models
         [Required]
         [Display(Name = "Fridge")]
         public int? FridgeId { get; set; }
+        [Required, Precision(16, 2)]
+        public Decimal UnitPrice { get; set; }
         public Fridge Fridge { get; set; }
 
         public int Quantity { get; set; }

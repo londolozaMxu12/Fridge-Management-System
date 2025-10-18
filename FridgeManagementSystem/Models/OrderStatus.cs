@@ -9,5 +9,7 @@ namespace FridgeManagementSystem.Models
 
         [Required, MaxLength(20)]
         public string? OrderStatusName { get; set; }
+        //[Required]
+        //public int StatusId { get; set; }
     }
 }

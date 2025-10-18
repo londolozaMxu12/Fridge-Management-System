@@ -39,5 +39,12 @@ namespace FridgeManagementSystem.Controllers
             int cartItem = await _cartRepository.GetCartItemCount();
             return Ok(cartItem);
         }
+        public async Task<IActionResult> Checkout()
+        {
+            bool isCheckout = await _cartRepository.DoCheckout();
+            //if (!isCheckout)
+            //    throw new Exception("Something went wrong");
+            return RedirectToAction("Home", "Customer");
+        }
     }
 }
