@@ -82,7 +82,7 @@ namespace FridgeManagementSystem.Repositories
                 _db.SaveChanges();
                 //Cart details
                 var cartItem = _db.CartDetails.FirstOrDefault(a => a.ShoppingCartId == cart.ShoppingCartId && a.FridgeId == fridgeId);
-                if (cartItem is not null)
+                if (cartItem == null)
                 {
                     throw new Exception("No items in cart");
                     //return false;
@@ -144,10 +144,10 @@ namespace FridgeManagementSystem.Repositories
                 var userId = GetUserId();
                 if (string.IsNullOrEmpty(userId))
                     throw new Exception("User is not logged in.");
-                var cart = GetUserCart();
+                var cart = await GetUserCart();
                 if (cart is null)
                     throw new Exception("Invalid Cart");
-                var cartDetails = _db.CartDetails.Where(a=>a.ShoppingCartId==cart.Id).ToList();
+                var cartDetails = _db.CartDetails.Where(a=>a.ShoppingCartId==cart.ShoppingCartId).ToList();
                 if (cartDetails.Count == 0)
                     throw new Exception("Cart is Empty");
                 var order = new PurchasingOrder
@@ -162,7 +162,7 @@ namespace FridgeManagementSystem.Repositories
                 {
                     var orderDetails = new PurchasingOrderDetails
                     {
-                        FridgeId = (int)item.FridgeId,
+                        FridgeId = item.FridgeId.Value,
                         PurchasingOrderId = order.PurchasingOrderId,
                         Quantity = item.Quantity,
                         UnitPrice = item.UnitPrice
