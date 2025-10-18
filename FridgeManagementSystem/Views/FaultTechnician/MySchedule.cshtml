@@ -130,19 +130,13 @@
     <div class="text-center text-light py-4">
         <i class="fas fa-times-circle fa-3x text-capitalize mb-3"></i>
         <h5>No schedules found</h5>
+        <p class="text-white">You don't have any repair schedules for today or future dates.</p>
         <p class="text-light">
             @if (!string.IsNullOrEmpty(ViewBag.Search) || (ViewBag.CurrentStatus != "all" && ViewBag.CurrentStatus != null))
             {
                 <span>No schedules match your current filters.</span>
             }
-            else
-            {
-                <div class="text-center text-white py-4">
-                    <i class="fas fa-calendar-times fa-3x text-light mb-3"></i>
-                    <h5>No scheduled repairs</h5>
-                    <p class="text-white">You don't have any repair schedules for today or future dates.</p>
-                </div>
-            }
+          
         </p>
         @if (!string.IsNullOrEmpty(ViewBag.Search) || (ViewBag.CurrentStatus != "all" && ViewBag.CurrentStatus != null))
         {

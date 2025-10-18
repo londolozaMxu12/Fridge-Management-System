@@ -17,6 +17,9 @@ namespace FridgeManagementSystem.ViewModels
         // Geographic Analysisnalysis Report
         public List<GeographicDistribution> GeographicData { get; set; } = new();
 
+        // Advanced Breakdowns
+        public List<TechnicianEfficiency> TechnicianEfficiency { get; set; } = new();
+
         // KPI Metrics
         public List<KpiMetric> Kpis { get; set; } = new();
 

@@ -89,7 +89,7 @@
         <form method="get" class="row g-3">
             <div class="col-md-3">
                 <label class="form-label">Search</label>
-                <input type="text" class="form-control" name="search" value="@ViewBag.Search" placeholder="Search faults, customers...">
+                <input type="text" class="form-control" name="search" value="@ViewBag.Search" placeholder="Search by fault title, customer name, SN...">
             </div>
             <div class="col-md-2">
                 <label class="form-label">Status</label>
@@ -109,18 +109,19 @@
                 <label class="form-label">To Date</label>
                 <input type="date" class="form-control" name="toDate" value="@ViewBag.ToDate">
             </div>
-            <div class="col-md-2">
+            <div class="col-auto">
                 <label class="form-label">Page Size</label>
                 <select class="form-select" name="pageSize">
-                    <option value="10" selected="@(ViewBag.PageSize == 10)">10</option>
-                    <option value="25" selected="@(ViewBag.PageSize == 25)">25</option>
-                    <option value="50" selected="@(ViewBag.PageSize == 50)">50</option>
+                    <option value="5" selected="@(ViewBag.PageSize == 10)">5</option>
+                    <option value="10" selected="@(ViewBag.PageSize == 25)">10</option>
+                    <option value="20" selected="@(ViewBag.PageSize == 50)">20</option>
                 </select>
             </div>
-            <div class="col-md-1 d-flex align-items-end">
+            <div class="col-auto d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100">
                     <i class="bi bi-filter me-1"></i>Filter
                 </button>
+                <a href="@Url.Action("RepairHistory")" class="btn btn-secondary">Clear</a>
             </div>
         </form>
     </div>

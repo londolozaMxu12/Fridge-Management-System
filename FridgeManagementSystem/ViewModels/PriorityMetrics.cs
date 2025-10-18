@@ -2,9 +2,11 @@
 {
     public class PriorityMetrics
     {
-        public FaultPriority Priority { get; set; }
-        public int Assigned { get; set; }
+        public int Priority { get; set; } // 1=Low, 2=Medium, 3=High, 4=Critical
+        public int Attended { get; set; }
         public int Completed { get; set; }
-        
+        public double SuccessRate { get; set; }
+        public double AvgCompletionTime { get; set; }
+
     }
 }
