@@ -39,6 +39,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(
     .AddDefaultTokenProviders();
 //.AddUserValidator<ActiveUserValidator<ApplicationUser>>();
 
+builder.Services.AddScoped<IFaultNotificationRepository, FaultNotificationRepository>();
+builder.Services.AddScoped<ITechnicianReportRepository, TechnicianReportRepository>();
 builder.Services.AddScoped<IEmployeeNumberService, EmployeeNumberService>();
 
 // Register Admin Seed Service
@@ -55,8 +57,6 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Identity/Account/Login";           
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
-
-builder.Services.AddScoped<IFaultNotificationRepository, FaultNotificationRepository>();
 
 var app = builder.Build();
 

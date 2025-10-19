@@ -1,0 +1,811 @@
+﻿@using FridgeManagementSystem.ViewModels
+@model TechnicianReportViewModel
+
+@{
+    ViewData["Title"] = "Technician Performance Report";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h2 class="h2 mb-0">
+                    <i class="fas fa-chart-bar text-primary me-2"></i>Fault Technician Performance Report
+                </h2>
+               
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Filters Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-filter text-secondary me-2"></i>Report Filters
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="reportForm">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="TechnicianId" class="form-label fw-semibold">Technician</label>
+                                    <select asp-for="TechnicianId" asp-items="ViewBag.Technicians" class="form-select">
+                                        <option value="">-- Select Technician --</option>
+                                    </select>
+                                    <span asp-validation-for="TechnicianId" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label asp-for="StartDate" class="form-label fw-semibold">Start Date</label>
+                                    <input asp-for="StartDate" type="date" class="form-control" />
+                                    <span asp-validation-for="StartDate" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label asp-for="EndDate" class="form-label fw-semibold">End Date</label>
+                                    <input asp-for="EndDate" type="date" class="form-control" />
+                                    <span asp-validation-for="EndDate" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label class="form-label fw-semibold text-white d-block">Actions</label>
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-chart-bar me-2"></i>Generate
+                                        </button>
+                                        @if (Model.Performance.TotalFaults > 0)
+                                        {
+                                            <div class="dropdown">
+                                                <button class="btn btn-success dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-download me-2"></i>Export
+                                                </button>
+                                                <ul class="dropdown-menu w-100">
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" onclick="exportReport('pdf')">
+                                                            <i class="fas fa-file-pdf me-2 text-danger"></i>PDF
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" onclick="exportReport('excel')">
+                                                            <i class="fas fa-file-excel me-2 text-success"></i>Excel
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Performance.TotalFaults > 0)
+    {
+        <!-- Technician Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h3 class="card-title text-primary mb-2">@Model.TechnicianName</h3>
+                                <div class="d-flex flex-wrap gap-4">
+                                    <span class="text-muted">
+                                        <i class="fas fa-envelope me-2"></i>@Model.Email
+                                    </span>
+                                    <span class="text-muted">
+                                        <i class="fas fa-calendar-alt me-2"></i>Member since: @Model.JoinDate?.ToString("MMMM yyyy")
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <div class="display-4 text-primary fw-bold mb-1">@Model.Performance.CompletionRate.ToString("F1")%</div>
+                                <p class="text-muted mb-0">Overall Completion Rate</p>
+                                <small class="text-muted">Based on @Model.Performance.TotalFaults total faults</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Key Performance Indicators - Modern Style -->
+        <div class="row mb-4">
+            <div class="col-xl-4 col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-info bg-opacity-10 rounded-3 p-3">
+                                    <i class="fas fa-tasks fa-2x text-info"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-4">
+                                <h6 class="text-muted text-uppercase fw-semibold mb-1">Total Attended</h6>
+                                <h3 class="fw-bold text-dark mb-0">@Model.Performance.TotalFaults</h3>
+                                <small class="text-muted">All attended faults</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4 col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-success bg-opacity-10 rounded-3 p-3">
+                                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-4">
+                                <h6 class="text-muted text-uppercase fw-semibold mb-1">Completed</h6>
+                                <h3 class="fw-bold text-dark mb-0">@Model.Performance.CompletedFaults</h3>
+                                <small class="text-muted">@Model.Performance.CompletionRate.ToString("F1")% completion rate</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4 col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-warning bg-opacity-10 rounded-3 p-3">
+                                    <i class="fas fa-clock fa-2x text-warning"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-4">
+                                <h6 class="text-muted text-uppercase fw-semibold mb-1">Avg Resolution</h6>
+                                <h3 class="fw-bold text-dark mb-0">@Model.Performance.AverageResolutionDays.ToString("F1")d</h3>
+                                <small class="text-muted">@Model.Performance.OnTimeCompletionRate.ToString("F1")% on-time</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Metrics and Charts -->
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line text-primary me-2"></i>Performance Metrics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold text-muted">Completion Rate</label>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: @Model.Performance.CompletionRate%"></div>
+                                </div>
+                                <small class="text-muted">@Model.Performance.CompletionRate.ToString("F1")%</small>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold text-muted">On-Time Completion</label>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-info" style="width: @Model.Performance.OnTimeCompletionRate%"></div>
+                                </div>
+                                <small class="text-muted">@Model.Performance.OnTimeCompletionRate.ToString("F1")%</small>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="border-end">
+                                    <div class="text-muted small fw-semibold">Critical Faults</div>
+                                    <div class="h4 text-danger fw-bold">@Model.Performance.CriticalFaults</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="border-end">
+                                    <div class="text-muted small fw-semibold">High Priority</div>
+                                    <div class="h4 text-warning fw-bold">@Model.Performance.HighPriorityFaults</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-muted small fw-semibold">In Progress</div>
+                                <div class="h4 text-info fw-bold">@Model.Performance.InProgressFaults</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workload Distribution -->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-pie text-primary me-2"></i>Workload Distribution
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.HasStatusData)
+                        {
+                            <div class="chart-container" style="position: relative; height: 250px; width: 100%">
+                                <canvas id="statusChart"></canvas>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-chart-pie fa-3x mb-3 opacity-50"></i>
+                                <p class="mb-0">No status distribution data available</p>
+                                <small>Faults need to be assigned to show status distribution</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar text-primary me-2"></i>Faults by Priority
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.HasPriorityData)
+                        {
+                            <div class="chart-container" style="position: relative; height: 250px; width: 100%">
+                                <canvas id="priorityChart"></canvas>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-chart-bar fa-3x mb-3 opacity-50"></i>
+                                <p class="mb-0">No priority data available</p>
+                                <small>Faults need assigned priorities to show distribution</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line text-primary me-2"></i>Monthly Completion Trend
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.HasTrendData)
+                        {
+                            <div class="chart-container" style="position: relative; height: 250px; width: 100%">
+                                <canvas id="trendChart"></canvas>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-chart-line fa-3x mb-3 opacity-50"></i>
+                                <p class="mb-0">No trend data available</p>
+                                <small>Need data across multiple months to show trends</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fault Details Table -->
+        <div class="row" id="faultDetails">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list text-primary me-2"></i>Recent Attended Fault Details
+                        </h5>
+                        <span class="badge bg-primary fs-6">@Model.FaultDetails.Count Total Attended Faults</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Title</th>
+                                        <th scope="col">Priority</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col">Reported Date</th>
+                                        <th scope="col">Resolution Days</th>
+                                        <th scope="col">Fridge Type</th>
+                                        <th scope="col" class="text-center">Has Notes</th>
+                                        <th scope="col" class="text-center">On Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var fault in Model.FaultDetails.OrderByDescending(f => f.ReportedDate).Take(10))
+                                    {
+                                        <tr>
+                                            <td><strong>@fault.FaultId</strong></td>
+                                            <td>
+                                                <span class="text-truncate d-inline-block" style="max-width: 200px;">
+                                                    @fault.Title
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-@GetPriorityBadgeClass(fault.Priority)">
+                                                    @fault.Priority
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-@GetStatusBadgeClass(fault.Status)">
+                                                    @fault.Status
+                                                </span>
+                                            </td>
+                                            <td>@fault.ReportedDate.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                @if (fault.Status == "Completed" && fault.ResolutionDays > 0)
+                                                {
+                                                    <span class="fw-bold @(fault.ResolutionDays > 7 ? "text-warning" : "text-success")">
+                                                        @fault.ResolutionDays.ToString("F1") days
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>@fault.FridgeType</td>
+                                            <td class="text-center">
+                                                @if (fault.HasResolutionNotes)
+                                                {
+                                                    <span class="badge bg-info" data-bs-toggle="tooltip" title="@fault.ResolutionNotes">
+                                                        <i class="fas fa-file-alt"></i>
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        <i class="fas fa-times"></i>
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                @if (fault.OnTimeCompletion && fault.Status == "Completed")
+                                                {
+                                                    <span class="badge bg-success" data-bs-toggle="tooltip" title="Completed on time">
+                                                        <i class="fas fa-check"></i>
+                                                    </span>
+                                                }
+                                                else if (fault.Status == "Completed")
+                                                {
+                                                    <span class="badge bg-warning" data-bs-toggle="tooltip" title="Completed but delayed">
+                                                        <i class="fas fa-clock"></i>
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">-</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        @if (Model.FaultDetails.Count > 5)
+                        {
+                            <div class="text-center mt-3">
+                                <small class="text-muted">Showing 5 of @Model.FaultDetails.Count faults</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (Model.TechnicianId.HasValue)
+    {
+        <!-- No Data State -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-chart-bar fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Data Available</h4>
+                        <p class="text-muted mb-4">No fault data found for the selected technician and date range.</p>
+                        <a href="#reportForm" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>Adjust Filters
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@* @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+        });
+
+        function initializeCharts() {
+            @if (Model.HasChartData)
+            {
+                    <text>
+                    // Status Distribution Chart
+                    initializeStatusChart();
+
+                    // Priority Distribution Chart
+                    initializePriorityChart();
+
+                    // Monthly Trend Chart
+                    initializeTrendChart();
+                    </text>
+            }
+        }
+
+        function initializeStatusChart() {
+            const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+            if (!statusCtx) return;
+
+            const statusData = @Html.Raw(Json.Serialize(Model.FaultsByStatus));
+            console.log("Status Data:", statusData); // Debug log
+
+            if (!statusData || Object.keys(statusData).length === 0) {
+                console.log("No status data available");
+                return;
+            }
+
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusData),
+                    datasets: [{
+                        data: Object.values(statusData),
+                        backgroundColor: ['#28a745', '#007bff', '#17a2b8', '#ffc107', '#dc3545'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: getDoughnutOptions()
+            });
+        }
+
+        function initializePriorityChart() {
+            const priorityCtx = document.getElementById('priorityChart')?.getContext('2d');
+            if (!priorityCtx) return;
+
+            const priorityData = @Html.Raw(Json.Serialize(Model.FaultsByPriority));
+            if (Object.keys(priorityData).length === 0) return;
+
+            new Chart(priorityCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(priorityData),
+                    datasets: [{
+                        data: Object.values(priorityData),
+                        backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: getDoughnutOptions()
+            });
+        }
+
+        function initializeTrendChart() {
+            const trendCtx = document.getElementById('trendChart')?.getContext('2d');
+            if (!trendCtx) return;
+
+            const trendData = @Html.Raw(Json.Serialize(Model.MonthlyCompletionRate));
+            if (Object.keys(trendData).length === 0) return;
+
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(trendData),
+                    datasets: [{
+                        label: 'Completion Rate %',
+                        data: Object.values(trendData),
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3
+                    }]
+                },
+                options: getLineOptions()
+            });
+        }
+
+        function getDoughnutOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            };
+        }
+
+        function getLineOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            };
+        }
+    </script>
+} *@
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function exportReport(format) {
+            const form = document.getElementById('reportForm');
+            const formData = new FormData(form);
+
+            const params = new URLSearchParams();
+            for (let [key, value] of formData) {
+                if (value) params.append(key, value);
+            }
+
+            window.open(`@Url.Action("ExportTechnicianReport")?${params}&format=${format}`, '_blank');
+        }
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Form validation
+            document.getElementById('reportForm').addEventListener('submit', function(e) {
+                const technicianId = document.getElementById('TechnicianId').value;
+                if (!technicianId) {
+                    e.preventDefault();
+                    alert('Please select a technician');
+                    return false;
+                }
+            });
+        });
+
+        @if (Model.Performance.TotalFaults > 0 && Model.IncludeCharts)
+        {
+                <text>
+                // Status Distribution Chart
+                var statusCtx = document.getElementById('statusChart').getContext('2d');
+                var statusChart = new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: @Html.Raw(Json.Serialize(Model.FaultsByStatus.Keys)),
+                        datasets: [{
+                            data: @Html.Raw(Json.Serialize(Model.FaultsByStatus.Values)),
+                            backgroundColor: ['#28a745', '#007bff', '#17a2b8', '#ffc107', '#dc3545'],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Priority Distribution Chart
+                var priorityCtx = document.getElementById('priorityChart').getContext('2d');
+                var priorityChart = new Chart(priorityCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: @Html.Raw(Json.Serialize(Model.FaultsByPriority.Keys)),
+                        datasets: [{
+                            data: @Html.Raw(Json.Serialize(Model.FaultsByPriority.Values)),
+                            backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745'],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            }
+                        }
+                    }
+                });
+
+                            // Monthly Trend Chart - Enhanced
+            var trendCtx = document.getElementById('trendChart').getContext('2d');
+
+            // Format month labels to "MMM YYYY" format
+            var monthLabels = @Html.Raw(Json.Serialize(Model.MonthlyCompletionRate.Keys));
+            var formattedLabels = monthLabels.map(function(label) {
+                var parts = label.split('-');
+                var year = parseInt(parts[0]);
+                var month = parseInt(parts[1]) - 1;
+                var date = new Date(year, month);
+                return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            });
+
+            var trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: formattedLabels,
+                    datasets: [{
+                        label: 'Completion Rate %',
+                        data: @Html.Raw(Json.Serialize(Model.MonthlyCompletionRate.Values)),
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#007bff',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: {
+                                stepSize: 20,
+                                callback: function(value) {
+                                    return value + '%';
+                                },
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Completion Rate (%)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                padding: { top: 10, bottom: 10 }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Timeline (Months)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                padding: { top: 10, bottom: 10 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Completion: ${context.parsed.y}%`;
+                                },
+                                title: function(context) {
+                                    return context[0].label;
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+
+
+            
+                </text>
+        }
+    </script>
+}
+
+@functions {
+    public string GetPriorityBadgeClass(string priority)
+    {
+        return priority.ToLower() switch
+        {
+            "critical" => "danger",
+            "high" => "warning",
+            "medium" => "info",
+            "low" => "success",
+            _ => "secondary"
+        };
+    }
+
+    public string GetStatusBadgeClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "completed" => "success",
+            "inprogress" => "primary",
+            "scheduled" => "info",
+            "reported" => "warning",
+            "cancelled" => "danger",
+            _ => "secondary"
+        };
+    }
+}

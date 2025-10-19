@@ -64,15 +64,9 @@
                                 <i class="bi-person-workspace"></i> <span class="d-none d-sm-inline ms-2">Roles</span>
                             </a>
 
-
                             <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Admin" asp-action="PendingApprovals">
                                 <i class="bi bi-hourglass-split"></i> <span class="d-none d-sm-inline ms-2">Pending Approvals</span>
                             </a>
-
-                            @* <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Notifications" asp-action="Index">
-                                <i class="bi bi-bell"></i><span class="d-none d-sm-inline ms-2">Notifications</span>
-                                @await Component.InvokeAsync("Notifications")
-                            </a> *@
 
                             <a class="nav-link text-white position-relative" style="white-space:nowrap" href="#" data-bs-toggle="modal" data-bs-target="#notificationsModal">
                                 <i class="bi bi-bell"></i>
@@ -80,9 +74,12 @@
                                 @await Component.InvokeAsync("Notifications")
                             </a>
 
-                            <a class="nav-link text-white" style="white-space:nowrap" href="#">
-                                <i class="bi bi-person"></i> <span class="d-none d-sm-inline ms-2">Profile</span>
+                            <a class="nav-link text-white" style="white-space:nowrap" asp-controller="FaultTechnician" asp-action="TechnicianReport">
+                                <i class="bi bi-file-earmark-bar-graph"></i><span class="d-none d-sm-inline ms-2">Fault Technician Reports</span>
                             </a>
+                           @*  <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Admin" asp-action="PendingApprovals">
+                                <i class="bi bi-hourglass-split"></i> <span class="d-none d-sm-inline ms-2">Pending Approvals</span>
+                            </a> *@
                         </nav>
                     </ul>
                     @* <partial name="_LoginPartial" /> *@
