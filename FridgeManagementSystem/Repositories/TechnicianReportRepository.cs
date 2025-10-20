@@ -78,6 +78,10 @@ namespace FridgeManagementSystem.Repositories
                 parameters.FaultsByPriority = GetFaultsByPriority(faults);
                 parameters.MonthlyCompletionRate = GetMonthlyCompletionRates(parameters.MonthlyTrends);
 
+                // Set the new properties with all statuses and priorities
+                parameters.AllStatusesWithCounts = parameters.FaultsByStatus;
+                parameters.AllPrioritiesWithCounts = parameters.FaultsByPriority;
+
             }
 
             return parameters;
@@ -184,11 +188,19 @@ namespace FridgeManagementSystem.Repositories
 
             return resolutionDays <= targetDays;
         }
-
-        private static Dictionary<string, int> GetFaultsByStatus(List<Fault> faults)
+        private Dictionary<string, int> GetFaultsByStatus(List<Fault> faults)
         {
+            // Get all possible statuses from the enum
+            var allStatuses = Enum.GetNames(typeof(FaultStatus));
             var result = new Dictionary<string, int>();
 
+            // Initialize all statuses with zero counts
+            foreach (var status in allStatuses)
+            {
+                result[status] = 0;
+            }
+
+            // Update with actual counts from faults
             if (faults != null && faults.Any())
             {
                 foreach (var fault in faults)
@@ -196,18 +208,25 @@ namespace FridgeManagementSystem.Repositories
                     var status = fault.Status.ToString();
                     if (result.ContainsKey(status))
                         result[status]++;
-                    else
-                        result[status] = 1;
                 }
             }
 
             return result;
         }
 
-        private static Dictionary<string, int> GetFaultsByPriority(List<Fault> faults)
+        private Dictionary<string, int> GetFaultsByPriority(List<Fault> faults)
         {
+            // Get all possible priorities from the enum
+            var allPriorities = Enum.GetNames(typeof(FaultPriority));
             var result = new Dictionary<string, int>();
 
+            // Initialize all priorities with zero counts
+            foreach (var priority in allPriorities)
+            {
+                result[priority] = 0;
+            }
+
+            // Update with actual counts from faults
             if (faults != null && faults.Any())
             {
                 foreach (var fault in faults)
@@ -215,8 +234,6 @@ namespace FridgeManagementSystem.Repositories
                     var priority = fault.Priority.ToString();
                     if (result.ContainsKey(priority))
                         result[priority]++;
-                    else
-                        result[priority] = 1;
                 }
             }
 
@@ -300,7 +317,6 @@ namespace FridgeManagementSystem.Repositories
         // PDF Generation with QuestPDF
         public async Task<byte[]> GenerateTechnicianPdfReportAsync(TechnicianReportViewModel report)
         {
-            // Register QuestPDF fonts (optional but recommended)
             if (!QuestPDF.Settings.License.HasValue)
             {
                 QuestPDF.Settings.License = LicenseType.Community;
@@ -319,8 +335,8 @@ namespace FridgeManagementSystem.Repositories
 
                         page.Header()
                             .AlignCenter()
-                            .Text(" Fault Technician Performance Report")
-                            .SemiBold().FontSize(16).FontColor(Colors.Blue.Medium);
+                            .Text("Fault Technician Performance Report")
+                            .Bold().FontSize(20).FontColor(Colors.Black);
 
                         page.Content()
                             .PaddingVertical(1, Unit.Centimetre)
@@ -336,7 +352,7 @@ namespace FridgeManagementSystem.Repositories
                                 });
 
                                 // Performance Summary
-                                column.Item().PaddingBottom(10).Text("Performance Summary Details").SemiBold().FontSize(14);
+                                column.Item().PaddingBottom(10).Text("Performance Summary").SemiBold().FontSize(14);
                                 column.Item().Table(table =>
                                 {
                                     table.ColumnsDefinition(columns =>
@@ -349,7 +365,7 @@ namespace FridgeManagementSystem.Repositories
 
                                     table.Header(header =>
                                     {
-                                        header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Total Faults Attended").FontColor(Colors.White).SemiBold();
+                                        header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Total Attended Faults").FontColor(Colors.White).SemiBold();
                                         header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Completed").FontColor(Colors.White).SemiBold();
                                         header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Avg Resolution").FontColor(Colors.White).SemiBold();
                                         header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Completion Rate").FontColor(Colors.White).SemiBold();
@@ -362,7 +378,7 @@ namespace FridgeManagementSystem.Repositories
                                 });
 
                                 // Detailed Metrics
-                                column.Item().PaddingVertical(10).Text("Detailed Fault Metrics").SemiBold().FontSize(14);
+                                column.Item().PaddingVertical(10).Text("Detailed Metrics").SemiBold().FontSize(14);
                                 column.Item().Table(table =>
                                 {
                                     table.ColumnsDefinition(columns =>
@@ -380,65 +396,109 @@ namespace FridgeManagementSystem.Repositories
                                     });
 
                                     AddMetricRow(table, "On-Time Completion", report.Performance.OnTimeCompletionRate.ToString("F1"), "%");
-
+                                    
                                     AddMetricRow(table, "Critical Faults", report.Performance.CriticalFaults.ToString(), "");
                                     AddMetricRow(table, "High Priority Faults", report.Performance.HighPriorityFaults.ToString(), "");
                                     AddMetricRow(table, "In Progress", report.Performance.InProgressFaults.ToString(), "");
                                 });
 
-                                // Fault Distribution
-                                if (report.FaultsByStatus.Any())
+                                // Complete Status Distribution (All Statuses)
+                                column.Item().PaddingVertical(10).Text("Fault Distribution by Status").SemiBold().FontSize(14);
+                                column.Item().Table(table =>
                                 {
-                                    column.Item().PaddingVertical(10).Text("Fault Distribution by Status").SemiBold().FontSize(14);
+                                    table.ColumnsDefinition(columns =>
+                                    {
+                                        columns.RelativeColumn(2);
+                                        columns.RelativeColumn(1);
+                                        columns.RelativeColumn(1);
+                                    });
+
+                                    table.Header(header =>
+                                    {
+                                        header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Status").FontColor(Colors.White).SemiBold();
+                                        header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Count").FontColor(Colors.White).SemiBold();
+                                        header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Percentage").FontColor(Colors.White).SemiBold();
+                                    });
+
+                                    var totalFaults = report.Performance.TotalFaults;
+                                    var statusOrder = new List<string> { "Reported", "Scheduled", "InProgress", "Completed", "Cancelled" };
+
+                                    foreach (var status in statusOrder)
+                                    {
+                                        var count = report.AllStatusesWithCounts.ContainsKey(status) ? report.AllStatusesWithCounts[status] : 0;
+                                        var percentage = totalFaults > 0 ? (count / (double)totalFaults * 100) : 0;
+
+                                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(status);
+                                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(count.ToString()).SemiBold();
+                                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{percentage:F1}%");
+                                    }
+                                });
+
+                                // Complete Priority Distribution (All Priorities)
+                                column.Item().PaddingVertical(10).Text("Fault Distribution by Priority").SemiBold().FontSize(14);
+                                column.Item().Table(table =>
+                                {
+                                    table.ColumnsDefinition(columns =>
+                                    {
+                                        columns.RelativeColumn(2);
+                                        columns.RelativeColumn(1);
+                                        columns.RelativeColumn(1);
+                                    });
+
+                                    table.Header(header =>
+                                    {
+                                        header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Priority").FontColor(Colors.White).SemiBold();
+                                        header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Count").FontColor(Colors.White).SemiBold();
+                                        header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Percentage").FontColor(Colors.White).SemiBold();
+                                    });
+
+                                    var totalFaults = report.Performance.TotalFaults;
+                                    var priorityOrder = new List<string> { "Critical", "High", "Medium", "Low" };
+
+                                    foreach (var priority in priorityOrder)
+                                    {
+                                        var count = report.AllPrioritiesWithCounts.ContainsKey(priority) ? report.AllPrioritiesWithCounts[priority] : 0;
+                                        var percentage = totalFaults > 0 ? (count / (double)totalFaults * 100) : 0;
+
+                                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(priority);
+                                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(count.ToString()).SemiBold();
+                                        table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{percentage:F1}%");
+                                    }
+                                });
+
+                                // Monthly Trends (if available)
+                                if (report.MonthlyTrends.Any())
+                                {
+                                    column.Item().PaddingVertical(10).Text("Monthly Performance Trends").SemiBold().FontSize(14);
                                     column.Item().Table(table =>
                                     {
                                         table.ColumnsDefinition(columns =>
                                         {
                                             columns.RelativeColumn(2);
                                             columns.RelativeColumn(1);
-                                        });
-
-                                        table.Header(header =>
-                                        {
-                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Status").FontColor(Colors.White).SemiBold();
-                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Count").FontColor(Colors.White).SemiBold();
-                                        });
-
-                                        foreach (var status in report.FaultsByStatus)
-                                        {
-                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(status.Key);
-                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(status.Value.ToString()).SemiBold();
-                                        }
-                                    });
-                                }
-
-                                // Priority Distribution
-                                if (report.FaultsByPriority.Any())
-                                {
-                                    column.Item().PaddingVertical(10).Text("Fault Attended Distribution by Priority").SemiBold().FontSize(14);
-                                    column.Item().Table(table =>
-                                    {
-                                        table.ColumnsDefinition(columns =>
-                                        {
-                                            columns.RelativeColumn(2);
+                                            columns.RelativeColumn(1);
                                             columns.RelativeColumn(1);
                                         });
 
                                         table.Header(header =>
                                         {
-                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Priority").FontColor(Colors.White).SemiBold();
-                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Count").FontColor(Colors.White).SemiBold();
+                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Month").FontColor(Colors.White).SemiBold();
+                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Total").FontColor(Colors.White).SemiBold();
+                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Completed").FontColor(Colors.White).SemiBold();
+                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Rate").FontColor(Colors.White).SemiBold();
                                         });
 
-                                        foreach (var priority in report.FaultsByPriority)
+                                        foreach (var trend in report.MonthlyTrends)
                                         {
-                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(priority.Key);
-                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(priority.Value.ToString()).SemiBold();
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(trend.Month);
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(trend.TotalFaults.ToString());
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(trend.CompletedFaults.ToString());
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{trend.CompletionRate:F1}%");
                                         }
                                     });
                                 }
 
-                                // Recent Faults (Top 10)
+                                // Recent Fault Details (Top 5)
                                 if (report.FaultDetails.Any())
                                 {
                                     column.Item().PaddingVertical(10).Text("Recent Attended Fault Details").SemiBold().FontSize(14);
@@ -455,20 +515,20 @@ namespace FridgeManagementSystem.Repositories
 
                                         table.Header(header =>
                                         {
-                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("#").FontColor(Colors.White).SemiBold();
-                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Title").FontColor(Colors.White).SemiBold();
-                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Priority").FontColor(Colors.White).SemiBold();
-                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Status").FontColor(Colors.White).SemiBold();
-                                            header.Cell().Background(Colors.Grey.Medium).Padding(5).Text("Reported").FontColor(Colors.White).SemiBold();
+                                            header.Cell().Background(Colors.Grey.Darken1).Padding(5).Text("#").FontColor(Colors.White).SemiBold();
+                                            header.Cell().Background(Colors.Grey.Darken1).Padding(5).Text("Title").FontColor(Colors.White).SemiBold();
+                                            header.Cell().Background(Colors.Grey.Darken1).Padding(5).Text("Priority").FontColor(Colors.White).SemiBold();
+                                            header.Cell().Background(Colors.Grey.Darken1).Padding(5).Text("Status").FontColor(Colors.White).SemiBold();
+                                            header.Cell().Background(Colors.Grey.Darken1).Padding(5).Text("Reported").FontColor(Colors.White).SemiBold();
                                         });
 
-                                        foreach (var fault in report.FaultDetails.Take(10))
+                                        foreach (var fault in report.FaultDetails.Take(5))
                                         {
-                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(fault.FaultId);
-                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(fault.Title.Length > 50 ? fault.Title.Substring(0, 50) + "..." : fault.Title);
-                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(fault.Priority);
-                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(fault.Status);
-                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(fault.ReportedDate.ToString("dd MMM yyyy"));
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(5).Text(fault.FaultId);
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(5).Text(fault.Title.Length > 50 ? fault.Title.Substring(0, 50) + "..." : fault.Title);
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(5).Text(fault.Priority);
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(5).Text(fault.Status);
+                                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(5).Text(fault.ReportedDate.ToString("dd MMM yyyy"));
                                         }
                                     });
                                 }
@@ -491,7 +551,6 @@ namespace FridgeManagementSystem.Repositories
             }
             catch (Exception ex)
             {
-                // Log the exception
                 Console.WriteLine($"PDF Generation Error: {ex.Message}");
                 throw new Exception("Failed to generate PDF report", ex);
             }
@@ -630,15 +689,18 @@ namespace FridgeManagementSystem.Repositories
 
         private void CreateMetricsTable(ExcelWorksheet sheet, TechnicianReportViewModel report, int startRow)
         {
+            // Get all status counts for the detailed metrics
             var metrics = new[]
             {
-        new { Category = "Fault Status", Metric = "Reported", Value = report.Performance.ReportedFaults },
-        new { Category = "Fault Status", Metric = "Scheduled", Value = report.Performance.ScheduledFaults },
-        new { Category = "Fault Status", Metric = "In Progress", Value = report.Performance.InProgressFaults },
-        new { Category = "Fault Status", Metric = "Cancelled", Value = report.Performance.CancelledFaults },
-        new { Category = "Priority", Metric = "Critical", Value = report.Performance.CriticalFaults },
-        new { Category = "Priority", Metric = "High", Value = report.Performance.HighPriorityFaults }
-
+        new { Category = "Fault Status", Metric = "Reported", Value = report.AllStatusesWithCounts["Reported"] },
+        new { Category = "Fault Status", Metric = "Scheduled", Value = report.AllStatusesWithCounts["Scheduled"] },
+        new { Category = "Fault Status", Metric = "In Progress", Value = report.AllStatusesWithCounts["InProgress"] },
+        new { Category = "Fault Status", Metric = "Completed", Value = report.AllStatusesWithCounts["Completed"] },
+        new { Category = "Fault Status", Metric = "Cancelled", Value = report.AllStatusesWithCounts["Cancelled"] },
+        new { Category = "Priority", Metric = "Critical", Value = report.AllPrioritiesWithCounts["Critical"] },
+        new { Category = "Priority", Metric = "High", Value = report.AllPrioritiesWithCounts["High"] },
+        new { Category = "Priority", Metric = "Medium", Value = report.AllPrioritiesWithCounts["Medium"] },
+        new { Category = "Priority", Metric = "Low", Value = report.AllPrioritiesWithCounts["Low"] }
     };
 
             // Headers
@@ -654,6 +716,13 @@ namespace FridgeManagementSystem.Repositories
                 sheet.Cells[startRow + i + 1, 1].Value = metrics[i].Category;
                 sheet.Cells[startRow + i + 1, 2].Value = metrics[i].Metric;
                 sheet.Cells[startRow + i + 1, 3].Value = metrics[i].Value;
+
+                // Alternate row colors
+                if (i % 2 == 0)
+                {
+                    sheet.Cells[startRow + i + 1, 1, startRow + i + 1, 3].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    sheet.Cells[startRow + i + 1, 1, startRow + i + 1, 3].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                }
             }
 
             var tableRange = sheet.Cells[startRow, 1, startRow + metrics.Length, 3];
@@ -691,7 +760,10 @@ namespace FridgeManagementSystem.Repositories
                 sheet.Cells[i + 4, 4].Value = fault.Status;
                 sheet.Cells[i + 4, 5].Value = fault.ReportedDate;
                 sheet.Cells[i + 4, 5].Style.Numberformat.Format = "dd-mm-yyyy";
-                sheet.Cells[i + 4, 6].Value = fault.ResolutionDays;
+
+                sheet.Cells[i + 4, 6].Value = Math.Round(fault.ResolutionDays, 1);
+                sheet.Cells[i + 4, 6].Style.Numberformat.Format = "0.0";
+
                 sheet.Cells[i + 4, 7].Value = fault.FridgeType;
                 sheet.Cells[i + 4, 8].Value = fault.CustomerName;
 
@@ -716,50 +788,86 @@ namespace FridgeManagementSystem.Repositories
         {
             int currentRow = 1;
 
-            // Status Distribution
-            if (report.FaultsByStatus.Any())
+            // Complete Status Distribution (All Statuses)
+            if (report.AllStatusesWithCounts.Any())
             {
-                sheet.Cells[currentRow, 1].Value = "Fault Distribution by Status";
+                sheet.Cells[currentRow, 1].Value = "Fault Distribution by Statuses";
                 sheet.Cells[currentRow, 1].Style.Font.Size = 14;
                 sheet.Cells[currentRow, 1].Style.Font.Bold = true;
                 currentRow++;
 
                 sheet.Cells[currentRow, 1].Value = "Status";
                 sheet.Cells[currentRow, 2].Value = "Count";
-                sheet.Cells[currentRow, 1, currentRow, 2].Style.Font.Bold = true;
+                sheet.Cells[currentRow, 3].Value = "Percentage";
+                sheet.Cells[currentRow, 1, currentRow, 3].Style.Font.Bold = true;
+                sheet.Cells[currentRow, 1, currentRow, 3].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                sheet.Cells[currentRow, 1, currentRow, 3].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue);
                 currentRow++;
 
-                foreach (var status in report.FaultsByStatus)
+                var totalFaults = report.Performance.TotalFaults;
+                var statusOrder = new List<string> { "Reported", "Scheduled", "InProgress", "Completed", "Cancelled" };
+
+                foreach (var status in statusOrder)
                 {
-                    sheet.Cells[currentRow, 1].Value = status.Key;
-                    sheet.Cells[currentRow, 2].Value = status.Value;
+                    var count = report.AllStatusesWithCounts.ContainsKey(status) ? report.AllStatusesWithCounts[status] : 0;
+                    var percentage = totalFaults > 0 ? (count / (double)totalFaults * 100) : 0;
+
+                    sheet.Cells[currentRow, 1].Value = status;
+                    sheet.Cells[currentRow, 2].Value = count;
+                    sheet.Cells[currentRow, 3].Value = percentage / 100; // Convert to decimal for percentage format
+                    sheet.Cells[currentRow, 3].Style.Numberformat.Format = "0.0%";
                     currentRow++;
                 }
                 currentRow += 2;
             }
 
-            // Priority Distribution
-            if (report.FaultsByPriority.Any())
+            // Complete Priority Distribution (All Priorities)
+            if (report.AllPrioritiesWithCounts.Any())
             {
-                sheet.Cells[currentRow, 1].Value = "Fault Distribution by Priority";
+                sheet.Cells[currentRow, 1].Value = "Fault Distribution by Priorities";
                 sheet.Cells[currentRow, 1].Style.Font.Size = 14;
                 sheet.Cells[currentRow, 1].Style.Font.Bold = true;
                 currentRow++;
 
                 sheet.Cells[currentRow, 1].Value = "Priority";
                 sheet.Cells[currentRow, 2].Value = "Count";
-                sheet.Cells[currentRow, 1, currentRow, 2].Style.Font.Bold = true;
+                sheet.Cells[currentRow, 3].Value = "Percentage";
+                sheet.Cells[currentRow, 1, currentRow, 3].Style.Font.Bold = true;
+                sheet.Cells[currentRow, 1, currentRow, 3].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                sheet.Cells[currentRow, 1, currentRow, 3].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGreen);
                 currentRow++;
 
-                foreach (var priority in report.FaultsByPriority)
+                var totalFaults = report.Performance.TotalFaults;
+                var priorityOrder = new List<string> { "Critical", "High", "Medium", "Low" };
+
+                foreach (var priority in priorityOrder)
                 {
-                    sheet.Cells[currentRow, 1].Value = priority.Key;
-                    sheet.Cells[currentRow, 2].Value = priority.Value;
+                    var count = report.AllPrioritiesWithCounts.ContainsKey(priority) ? report.AllPrioritiesWithCounts[priority] : 0;
+                    var percentage = totalFaults > 0 ? (count / (double)totalFaults * 100) : 0;
+
+                    sheet.Cells[currentRow, 1].Value = priority;
+                    sheet.Cells[currentRow, 2].Value = count;
+                    sheet.Cells[currentRow, 3].Value = percentage / 100; // Convert to decimal for percentage format
+                    sheet.Cells[currentRow, 3].Style.Numberformat.Format = "0.0%";
                     currentRow++;
                 }
             }
 
             sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+
+            // Add borders to the tables
+            var statusTableRange = sheet.Cells[2, 1, 2 + 5, 3]; // 5 statuses + header
+            statusTableRange.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            statusTableRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            statusTableRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            statusTableRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+
+            var priorityStartRow = 2 + 5 + 2 + 1; // After status table with gap
+            var priorityTableRange = sheet.Cells[priorityStartRow, 1, priorityStartRow + 4, 3]; // 4 priorities + header
+            priorityTableRange.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            priorityTableRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            priorityTableRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            priorityTableRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
         }
 
         private void GenerateTrendsSheet(ExcelWorksheet sheet, TechnicianReportViewModel report)
@@ -788,7 +896,17 @@ namespace FridgeManagementSystem.Repositories
                 sheet.Cells[i + 4, 3].Value = trend.CompletedFaults;
                 sheet.Cells[i + 4, 4].Value = trend.CompletionRate / 100; // Convert to decimal for percentage format
                 sheet.Cells[i + 4, 4].Style.Numberformat.Format = "0.0%";
-                sheet.Cells[i + 4, 5].Value = trend.AverageResolutionDays;
+
+                if (trend.AverageResolutionDays > 0)
+                {
+                    sheet.Cells[i + 4, 5].Value = Math.Round(trend.AverageResolutionDays, 2);
+                    sheet.Cells[i + 4, 5].Style.Numberformat.Format = "0.00";
+                }
+                else
+                {
+                    sheet.Cells[i + 4, 5].Value = "-";
+                    sheet.Cells[i + 4, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                }
             }
 
             sheet.Cells[sheet.Dimension.Address].AutoFitColumns();

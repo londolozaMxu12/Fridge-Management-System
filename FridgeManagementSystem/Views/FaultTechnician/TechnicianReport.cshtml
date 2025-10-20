@@ -10,8 +10,8 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="page-header">
-                <h2 class="h2 mb-0">
-                    <i class="fas fa-chart-bar text-primary me-2"></i>Fault Technician Performance Report
+                <h2 class="h2 mb-0 text-light">
+                    <i class="fas fa-chart-bar text-light me-2"></i>Fault Technician Performance Report
                 </h2>
                
             </div>
@@ -21,10 +21,10 @@
     <!-- Report Filters Card -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white py-3">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-filter text-secondary me-2"></i>Report Filters
+            <div class="card ">
+                <div class="card-header bg-primary py-3">
+                    <h5 class="card-title text-light mb-0">
+                        <i class="fas fa-filter text-light me-2"></i>Report Filters
                     </h5>
                 </div>
                 <div class="card-body">
@@ -185,9 +185,9 @@
         <div class="row mb-4">
             <div class="col-lg-6 mb-4">
                 <div class="card shadow-sm h-100">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-chart-line text-primary me-2"></i>Performance Metrics
+                    <div class="card-header bg-success py-3">
+                        <h5 class="card-title text-light mb-0">
+                            <i class="fas fa-chart-line text-light me-2"></i>Performance Metrics
                         </h5>
                     </div>
                     <div class="card-body">
@@ -233,9 +233,9 @@
             <!-- Workload Distribution -->
             <div class="col-lg-6 mb-4">
                 <div class="card shadow-sm h-100">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-chart-pie text-primary me-2"></i>Workload Distribution
+                    <div class="card-header bg-info py-3">
+                        <h5 class="card-title text-light mb-0">
+                            <i class="fas fa-chart-pie text-light me-2"></i>Workload Distribution
                         </h5>
                     </div>
                     <div class="card-body">
@@ -262,9 +262,9 @@
         <div class="row mb-4">
             <div class="col-lg-6 mb-4">
                 <div class="card shadow-sm h-100">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-chart-bar text-primary me-2"></i>Faults by Priority
+                    <div class="card-header bg-secondary py-3">
+                        <h5 class="card-title text-light mb-0">
+                            <i class="fas fa-chart-bar text-light me-2"></i>Faults by Priority
                         </h5>
                     </div>
                     <div class="card-body">
@@ -287,9 +287,9 @@
             </div>
             <div class="col-lg-6 mb-4">
                 <div class="card shadow-sm h-100">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-chart-line text-primary me-2"></i>Monthly Completion Trend
+                    <div class="card-header bg-primary py-3">
+                        <h5 class="card-title text-light mb-0">
+                            <i class="fas fa-chart-line text-light me-2"></i>Monthly Completion Trend
                         </h5>
                     </div>
                     <div class="card-body">
@@ -316,16 +316,16 @@
         <div class="row" id="faultDetails">
             <div class="col-12">
                 <div class="card shadow-sm">
-                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-list text-primary me-2"></i>Recent Attended Fault Details
+                    <div class="card-header bg-primary py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="card-title text-light mb-0">
+                            <i class="fas fa-list text-light me-2"></i>Recent Attended Fault Details
                         </h5>
-                        <span class="badge bg-primary fs-6">@Model.FaultDetails.Count Total Attended Faults</span>
+                        <span class="badge bg-secondary fs-6">@Model.FaultDetails.Count Total Attended Faults</span>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-hover table-striped">
-                                <thead class="table-light">
+                            <table class="table table-striped table-hover mb-0">
+                                <thead class="table-primary">
                                     <tr>
                                         <th scope="col">#</th>
                                         <th scope="col">Title</th>
@@ -440,135 +440,6 @@
     }
 </div>
 
-@* @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeCharts();
-        });
-
-        function initializeCharts() {
-            @if (Model.HasChartData)
-            {
-                    <text>
-                    // Status Distribution Chart
-                    initializeStatusChart();
-
-                    // Priority Distribution Chart
-                    initializePriorityChart();
-
-                    // Monthly Trend Chart
-                    initializeTrendChart();
-                    </text>
-            }
-        }
-
-        function initializeStatusChart() {
-            const statusCtx = document.getElementById('statusChart')?.getContext('2d');
-            if (!statusCtx) return;
-
-            const statusData = @Html.Raw(Json.Serialize(Model.FaultsByStatus));
-            console.log("Status Data:", statusData); // Debug log
-
-            if (!statusData || Object.keys(statusData).length === 0) {
-                console.log("No status data available");
-                return;
-            }
-
-            new Chart(statusCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(statusData),
-                    datasets: [{
-                        data: Object.values(statusData),
-                        backgroundColor: ['#28a745', '#007bff', '#17a2b8', '#ffc107', '#dc3545'],
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    }]
-                },
-                options: getDoughnutOptions()
-            });
-        }
-
-        function initializePriorityChart() {
-            const priorityCtx = document.getElementById('priorityChart')?.getContext('2d');
-            if (!priorityCtx) return;
-
-            const priorityData = @Html.Raw(Json.Serialize(Model.FaultsByPriority));
-            if (Object.keys(priorityData).length === 0) return;
-
-            new Chart(priorityCtx, {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(priorityData),
-                    datasets: [{
-                        data: Object.values(priorityData),
-                        backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745'],
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    }]
-                },
-                options: getDoughnutOptions()
-            });
-        }
-
-        function initializeTrendChart() {
-            const trendCtx = document.getElementById('trendChart')?.getContext('2d');
-            if (!trendCtx) return;
-
-            const trendData = @Html.Raw(Json.Serialize(Model.MonthlyCompletionRate));
-            if (Object.keys(trendData).length === 0) return;
-
-            new Chart(trendCtx, {
-                type: 'line',
-                data: {
-                    labels: Object.keys(trendData),
-                    datasets: [{
-                        label: 'Completion Rate %',
-                        data: Object.values(trendData),
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        borderWidth: 3
-                    }]
-                },
-                options: getLineOptions()
-            });
-        }
-
-        function getDoughnutOptions() {
-            return {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            };
-        }
-
-        function getLineOptions() {
-            return {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        }
-                    }
-                }
-            };
-        }
-    </script>
-} *@
-
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -605,61 +476,112 @@
         @if (Model.Performance.TotalFaults > 0 && Model.IncludeCharts)
         {
                 <text>
-                // Status Distribution Chart
-                var statusCtx = document.getElementById('statusChart').getContext('2d');
-                var statusChart = new Chart(statusCtx, {
+                            // Status Distribution Chart - Now shows all statuses
+            var statusCtx = document.getElementById('statusChart')?.getContext('2d');
+            if (statusCtx) {
+                const statusData = @Html.Raw(Json.Serialize(Model.AllStatusesWithCounts));
+
+                // Define colors for all statuses in a consistent order
+                const statusColors = {
+                    'Reported': '#ffc107',    // Yellow
+                    'Scheduled': '#17a2b8',   // Teal
+                    'InProgress': '#007bff',  // Blue
+                    'Completed': '#28a745',   // Green
+                    'Cancelled': '#dc3545'    // Red
+                };
+
+                const statusLabels = Object.keys(statusData);
+                const statusValues = Object.values(statusData);
+                const backgroundColors = statusLabels.map(label => statusColors[label] || '#6c757d');
+
+                new Chart(statusCtx, {
                     type: 'doughnut',
                     data: {
-                        labels: @Html.Raw(Json.Serialize(Model.FaultsByStatus.Keys)),
+                        labels: statusLabels,
                         datasets: [{
-                            data: @Html.Raw(Json.Serialize(Model.FaultsByStatus.Values)),
-                            backgroundColor: ['#28a745', '#007bff', '#17a2b8', '#ffc107', '#dc3545'],
+                            data: statusValues,
+                            backgroundColor: backgroundColors,
+                            borderColor: '#fff',
                             borderWidth: 2,
-                            borderColor: '#fff'
+                            hoverOffset: 10
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 20,
-                                    usePointStyle: true
-                                }
-                            }
-                        }
-                    }
+                    options: getDoughnutOptions('Status Distribution')
                 });
+            }
 
-                // Priority Distribution Chart
-                var priorityCtx = document.getElementById('priorityChart').getContext('2d');
-                var priorityChart = new Chart(priorityCtx, {
+            // Priority Distribution Chart - Now shows all priorities
+            var priorityCtx = document.getElementById('priorityChart')?.getContext('2d');
+            if (priorityCtx) {
+                const priorityData = @Html.Raw(Json.Serialize(Model.AllPrioritiesWithCounts));
+
+                // Define colors for all priorities in a consistent order
+                const priorityColors = {
+                    'Low': '#28a745',     // Green
+                    'Medium': '#ffc107',  // Yellow
+                    'High': '#fd7e14',    // Orange
+                    'Critical': '#dc3545' // Red
+                };
+
+                const priorityLabels = Object.keys(priorityData);
+                const priorityValues = Object.values(priorityData);
+                const backgroundColors = priorityLabels.map(label => priorityColors[label] || '#6c757d');
+
+                new Chart(priorityCtx, {
                     type: 'pie',
                     data: {
-                        labels: @Html.Raw(Json.Serialize(Model.FaultsByPriority.Keys)),
+                        labels: priorityLabels,
                         datasets: [{
-                            data: @Html.Raw(Json.Serialize(Model.FaultsByPriority.Values)),
-                            backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745'],
+                            data: priorityValues,
+                            backgroundColor: backgroundColors,
+                            borderColor: '#fff',
                             borderWidth: 2,
-                            borderColor: '#fff'
+                            hoverOffset: 10
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 20,
-                                    usePointStyle: true
+                    options: getDoughnutOptions('Priority Distribution')
+                });
+            }
+
+            // Update the helper function to include title
+            function getDoughnutOptions(title) {
+                return {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: title,
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            padding: 10
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
                                 }
                             }
                         }
                     }
-                });
+                };
+            }
 
                             // Monthly Trend Chart - Enhanced
             var trendCtx = document.getElementById('trendChart').getContext('2d');

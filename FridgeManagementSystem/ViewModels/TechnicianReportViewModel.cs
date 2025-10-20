@@ -37,6 +37,13 @@ namespace FridgeManagementSystem.ViewModels
         public bool HasStatusData => FaultsByStatus?.Any() == true;
         public bool HasPriorityData => FaultsByPriority?.Any() == true;
         public bool HasTrendData => MonthlyCompletionRate?.Any() == true;
+
+        public Dictionary<string, int> AllStatusesWithCounts { get; set; } = new();
+        public Dictionary<string, int> AllPrioritiesWithCounts { get; set; } = new();
+
+        // Helper properties to get all possible values
+        public static List<string> AllStatuses => Enum.GetNames(typeof(FaultStatus)).ToList();
+        public static List<string> AllPriorities => Enum.GetNames(typeof(FaultPriority)).ToList();
     }
 }
 
