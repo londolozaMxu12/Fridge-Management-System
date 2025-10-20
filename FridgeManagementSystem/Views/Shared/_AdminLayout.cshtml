@@ -51,7 +51,7 @@
                             <a class="nav-link text-white" style="white-space:nowrap" asp-controller="EmployeeType" asp-action="Index">
                                 <i class="bi bi-people-fill"></i> <span class="d-none d-sm-inline ms-2">Employee Types</span>
                             </a>
-                            <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Suppliers" asp-action="Index" ">
+                            <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Suppliers" asp-action="Index">
                                 <i class="bi bi-people-fill"></i> <span class="d-none d-sm-inline ms-2">Suppliers</span>
                             </a>
                             <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Fridge" asp-action="Index" asp-area="">
@@ -74,12 +74,18 @@
                                 @await Component.InvokeAsync("Notifications")
                             </a>
 
-                            <a class="nav-link text-white" style="white-space:nowrap" asp-controller="FaultTechnician" asp-action="TechnicianReport">
-                                <i class="bi bi-file-earmark-bar-graph"></i><span class="d-none d-sm-inline ms-2">Fault Technician Reports</span>
+                            <a class="nav-link text-white position-relative collapsed" href="#managementCollapse" data-bs-toggle="collapse" aria-expanded="false">
+                                <i class="bi bi-file-earmark-bar-graph"></i><span class="d-none d-sm-inline ms-2">Generate Reports</span>
+                                
                             </a>
-                           @*  <a class="nav-link text-white" style="white-space:nowrap" asp-controller="Admin" asp-action="PendingApprovals">
-                                <i class="bi bi-hourglass-split"></i> <span class="d-none d-sm-inline ms-2">Pending Approvals</span>
-                            </a> *@
+                            <div class="collapse" id="managementCollapse">
+                                
+                                <a class="nav-link text-white" style="white-space:nowrap" asp-controller="FaultTechnician" asp-action="TechnicianReport">
+                                    <i class="bi bi-tools"></i><span class="d-none d-sm-inline ms-2">Fault Technician Reports</span>
+                                </a>
+                                
+                           </div>
+                            
                         </nav>
                     </ul>
                     @* <partial name="_LoginPartial" /> *@

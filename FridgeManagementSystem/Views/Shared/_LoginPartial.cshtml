@@ -22,7 +22,8 @@
 <ul class="navbar-nav">
     @if (SignInManager.IsSignedIn(User))
     {
-        // 🔹 Load full user with Employee + EmployeeType
+        //Load full user with Employee + EmployeeType
+
         var appUser = await UserManager.Users
         .Include(u => u.Employees)
         .ThenInclude(e => e.EmployeeType)
@@ -40,15 +41,15 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a class="dropdown-item" asp-area="Admin" asp-controller="Profile" asp-action="Index">
+                            <a class="dropdown-item" asp-controller="#" asp-action="#">
                                 <i class="bi bi-person me-2"></i>My Profile
                             </a>
                         </li>
-                        <li>
+                        @* <li>
                             <a class="dropdown-item" asp-area="Admin" asp-controller="Profile" asp-action="Edit">
                                 <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
-                        </li>
+                        </li> *@
 
                         <li><hr class="dropdown-divider"></li>
                         <li class="nav-item">
@@ -79,15 +80,15 @@
                     
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a class="dropdown-item" asp-area="Customer" asp-controller="Profile" asp-action="Index">
+                            <a class="dropdown-item" asp-controller="#" asp-action="#">
                                 <i class="bi bi-person me-2"></i>My Profile
                             </a>
                         </li>
-                        <li>
+                        @* <li>
                             <a class="dropdown-item" asp-area="Customer" asp-controller="Profile" asp-action="Edit">
                                 <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
-                        </li>
+                        </li> *@
 
                         <li><hr class="dropdown-divider"></li>
                         <li class="nav-item">
@@ -117,15 +118,15 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a class="dropdown-item" asp-area="FaultTechnician" asp-controller="Profile" asp-action="Index">
+                            <a class="dropdown-item" asp-controller="#" asp-action="#">
                                 <i class="bi bi-person me-2"></i>My Profile
                             </a>
                         </li>
-                        <li>
+                       @*  <li>
                             <a class="dropdown-item" asp-area="FaultTechnician" asp-controller="Profile" asp-action="Edit">
                                 <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
-                        </li>
+                        </li> *@
 
                         <li><hr class="dropdown-divider"></li>
                         <li class="nav-item">
@@ -154,15 +155,15 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a class="dropdown-item" asp-area="MaintenanceTechnician" asp-controller="Profile" asp-action="Index">
+                            <a class="dropdown-item" asp-controller="#" asp-action="#">
                                 <i class="bi bi-person me-2"></i>My Profile
                             </a>
                         </li>
-                        <li>
+                        @* <li>
                             <a class="dropdown-item" asp-area="MaintenanceTechnician" asp-controller="Profile" asp-action="Edit">
                                 <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
-                        </li>
+                        </li> *@
 
                         <li><hr class="dropdown-divider"></li>
                         <li class="nav-item">
@@ -191,15 +192,15 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a class="dropdown-item" asp-area="InventoryLiaison" asp-controller="Profile" asp-action="Index">
+                            <a class="dropdown-item" asp-area="InventoryLiaison" asp-controller="#" asp-action="#">
                                 <i class="bi bi-person me-2"></i>My Profile
                             </a>
                         </li>
-                        <li>
+                        @* <li>
                             <a class="dropdown-item" asp-area="InventoryLiaison" asp-controller="Profile" asp-action="Edit">
                                 <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
-                        </li>
+                        </li> *@
 
                         <li><hr class="dropdown-divider"></li>
                         <li class="nav-item">
@@ -228,15 +229,15 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a class="dropdown-item" asp-area="PurchasingManager" asp-controller="Profile" asp-action="Index">
+                            <a class="dropdown-item" asp-area="PurchasingManager" asp-controller="#" asp-action="#">
                                 <i class="bi bi-person me-2"></i>My Profile
                             </a>
                         </li>
-                        <li>
+                        @* <li>
                             <a class="dropdown-item" asp-area="PurchasingManager" asp-controller="Profile" asp-action="Edit">
                                 <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
-                        </li>
+                        </li> *@
 
                         <li><hr class="dropdown-divider"></li>
                         <li class="nav-item">
@@ -264,15 +265,15 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a class="dropdown-item" asp-area="CustomerManagement" asp-controller="Profile" asp-action="Index">
+                            <a class="dropdown-item" asp-area="CustomerManagement" asp-controller="#" asp-action="#">
                                 <i class="bi bi-person me-2"></i>My Profile
                             </a>
                         </li>
-                        <li>
+                        @* <li>
                             <a class="dropdown-item" asp-area="CustomerManagement" asp-controller="Profile" asp-action="Edit">
                                 <i class="bi bi-pencil-square me-2"></i>Update Profile
                             </a>
-                        </li>
+                        </li> *@
                         
                         <li><hr class="dropdown-divider"></li>
                         <li class="nav-item">

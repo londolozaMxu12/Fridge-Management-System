@@ -72,7 +72,7 @@
                                     <i class="bi-clipboard-data me-2"></i>My Reported Faults
                                 </a>
                             </li>
-                            <li>
+                            @* <li>
                                 <a class="dropdown-item" asp-area="Customer" asp-controller="CustomerFault" asp-action="Create">
                                     <i class="bi bi-exclamation-triangle me-2"></i>Report Fault
                                 </a>
@@ -81,11 +81,11 @@
                                 <a class="dropdown-item" asp-area="Customer" asp-controller="FaultReports" asp-action="History">
                                     <i class="bi bi-clock-history me-2"></i>Fault History
                                 </a>
-                            </li>
+                            </li> *@
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item" asp-area="Customer" asp-controller="Maintenance" asp-action="Schedule">
-                                    <i class="bi bi-calendar-check me-2"></i>Maintenance Schedule
+                                    <i class="bi bi-calendar-check me-2"></i>My Maintenance Schedule
                                 </a>
                             </li>
                             
@@ -100,8 +100,8 @@
                     </li> *@
                     <li class="nav-item">
                         <a class="nav-link" style="white-space:nowrap" href="#" data-bs-toggle="modal" data-bs-target="#notificationsModal">
-                            <i class="bi bi-bell me-1"></i>
-                            <span class="d-none d-sm-inline ms-2">Notifications</span>
+                            <i class="bi bi-bell me-1"></i>Notifications
+                            
                             @await Component.InvokeAsync("Notifications")
                         </a>
                     </li>
@@ -172,7 +172,7 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <h5 class="fw-bold">
-                        <i class="bi bi-refrigerator me-2"></i>Fridge Management System - Customer 
+                        <i class="bi bi-person-circle text-light me-2"></i> Customer Portal
                     </h5>
                     <p class="mb-2">Ensuring proper refrigeration for your beverages</p>
                   
