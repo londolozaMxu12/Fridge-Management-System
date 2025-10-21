@@ -11,6 +11,7 @@ namespace FridgeManagementSystem.Models
         public string Description { get; set; }
         [Required]
         [Display(Name = "ScheduledDate")]
+        [DataType(DataType.DateTime)]
         public DateTime ScheduledDate { get; set; }
 
         [Required]
@@ -19,6 +20,7 @@ namespace FridgeManagementSystem.Models
         public Employee MaintenanceTechnician { get; set; }
 
         public ICollection<MaintenanceRecord> MaintenanceRecords { get; set; }
+
 
     }
 }

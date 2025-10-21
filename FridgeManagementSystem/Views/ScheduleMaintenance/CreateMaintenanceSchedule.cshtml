@@ -1,6 +1,8 @@
-﻿@model FridgeManagementSystem.Models.ScheduleMaintenance
-
+﻿
+@model FridgeManagementSystem.Models.ScheduleMaintenance
+@using FridgeManagementSystem.Controllers
 <!DOCTYPE html>
+<html>
     <head>
         <style>
         body {
@@ -32,26 +34,50 @@
         <a class="btn btn-primary" asp-action="CustomerList" asp-controller="MaintenanceManagement">BACK</a>
         </div>
     <h2>Create Appointment</h2>
-
     @using (Html.BeginForm())
     {
         @Html.AntiForgeryToken()
-
         <div class="form-horizontal">
             <div class="form-group">
-                @Html.LabelFor(model => model.ScheduledDate, htmlAttributes: new { @class = "control-label col-md-4" })
+                @Html.LabelFor(m => m.Description, htmlAttributes: new { @class = "control-label" })
+                @Html.TextBoxFor(m => m.Description, new { @class = "form-control", @placeholder = " " })
+                @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
+                </div>
+            
+            <div class="form-group">
+                @Html.LabelFor(m => m.ScheduledDate, new { @class = "control-label col-md-2" })
                 <div class="col-md-10">
-                    @Html.TextBoxFor(model => model.ScheduledDate, new { @class = "form-control", type = "date" })
-                    @Html.ValidationMessageFor(model => model.ScheduledDate, "", new { @class = "text-danger" })
+                    @Html.TextBoxFor(m => m.ScheduledDate, new { @class = "form-control", @id = "datepicker", @autocomplete = "off" })
+                    @Html.ValidationMessageFor(m => m.ScheduledDate, "", new { @class = "text-danger" })
                 </div>
             </div>
 
             <div class="form-group">
                 <div class="col-md-offset-2 col-md-10">
-                    <input type="submit" value="Create" class="btn btn-primary" />
+                    <input type="submit" value="Save" class="btn btn-primary" />
                 </div>
             </div>
         </div>
     }
+    
     </body>
 </html>
+@section Scripts {
+    <link rel="stylesheet"
+          href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+    <script>
+        $(function () {
+            $("#datepicker").datepicker({
+                dateFormat: "yy-mm-dd",
+                changeMonth: true,
+                changeYear: true
+            });
+        });
+    </script>
+}
+@* <div class="col-md-offset-2 col-md-10">
+    <input type="submit" value="Create" class="btn btn-primary" />
+</div> *@

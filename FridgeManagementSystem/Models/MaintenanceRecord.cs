@@ -33,5 +33,6 @@ namespace FridgeManagementSystem.Models
         public Fridge Fridge { get; set; }
         
         public ICollection<FaultReport> FaultReports { get; set; }
+
     }
 }
