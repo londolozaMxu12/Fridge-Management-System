@@ -4,6 +4,7 @@
 @using System.Linq
 
 <!DOCTYPE html>
+<html>
 <head>
     <style>
         body {
@@ -41,6 +42,7 @@
         h1{
             align-content:center;
         }
+
 
     </style>
 </head>
@@ -112,7 +114,7 @@
                         <a asp-action="EditUser" asp-route-Id="@item.Id">View History</a>
 
 
-                        <a asp-controller="ScheduleMaintenance" asp-action="CreateMaintenanceSchedule">Schedule Visit</a>
+                        <a asp-controller="ScheduleMaintenance" asp-action="Create">Schedule Visit</a>
 
 
                     </td>

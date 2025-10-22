@@ -1,0 +1,95 @@
+﻿@model IEnumerable<FridgeManagementSystem.Models.ScheduleMaintenance>
+
+@{
+    ViewBag.Title = "Maintenance Schedules";
+}
+<!DOCTYPE html>
+<html>
+    <head>
+    <style>
+        body {
+            background-image: url('images\\broken-fridge-repair-by-african-260nw-2299218251.jpg');
+            margin: 0; /* remove default spacing */
+            padding: 0;
+            height: 100vh;
+            background-size: cover;
+            color: black;
+        }
+
+            body::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 123, 255, 0.5); /* dark overlay */
+
+                z-index: -2;
+            }
+
+        a {
+            color: purple;
+            font-weight: bold;
+        }
+
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 16px;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        thead {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+    </style>
+    </head>
+    <body>
+    <div class="btn">
+        <a onclick="location.href='@Url.Action("Index")'" style="float: left   " class="btn btn-primary">BACK</a>
+
+    </div>
+    <div></div>
+    <h2>Maintenance Schedules</h2>
+
+    <p>
+        @Html.ActionLink("Add New Schedule", "Create", null, new { @class = "btn btn-success" })
+    </p>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.ScheduledDate)</th>
+            <th>@Html.DisplayNameFor(model => model.Description)</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.ScheduledDate.ToShortDateString()</td>
+                <td>@item.Description</td>
+                <td>
+                    @Html.ActionLink("View Details", "Details", new { id = item.scheduleMaintenanceId }, new { @class = "btn btn-info btn-sm" })
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    </body>
+</html>
+

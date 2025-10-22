@@ -1,5 +1,8 @@
-﻿using System;
+﻿using FridgeManagementSystem.Areas.Identity.Data;
+using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 
 namespace FridgeManagementSystem.Models
 {
@@ -7,7 +10,7 @@ namespace FridgeManagementSystem.Models
     {
         [Key]
         public int scheduleMaintenanceId { get; set; }
-
+        [Required]
         public string Description { get; set; }
         [Required]
         [Display(Name = "ScheduledDate")]
@@ -17,6 +20,7 @@ namespace FridgeManagementSystem.Models
         [Required]
         [Display(Name = "Maintenance Technician")]
         public int MaintenanceTechnicianId { get; set; }
+        [ForeignKey("MaintenanceTechnicianId")]
         public Employee MaintenanceTechnician { get; set; }
 
         public ICollection<MaintenanceRecord> MaintenanceRecords { get; set; }

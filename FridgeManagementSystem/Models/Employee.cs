@@ -42,7 +42,6 @@ namespace FridgeManagementSystem.Models
         public ICollection<PurchasingOrder> PurchasingOrders { get; set; }
         public ICollection<MaintenanceRecord> MaintenanceRecords { get; set; }
         public ICollection<ScheduleMaintenance> ScheduledMaintenances { get; set; }
-        
         //For Fault Reporting and Scheduling
         public ICollection<Fault> ReportedFaults { get; set; }
         
