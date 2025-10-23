@@ -1,5 +1,6 @@
 ﻿using FridgeManagementSystem.Areas.Identity.Data;
 using FridgeManagementSystem.Data;
+using FridgeManagementSystem.Helpers;
 using FridgeManagementSystem.Models;
 using FridgeManagementSystem.Repositories;
 using FridgeManagementSystem.ViewModels;
@@ -29,6 +30,20 @@ namespace FridgeManagementSystem.Controllers
             _logger = logger;
             _homeRepository = homeRepository;
         }
+
+        private async Task<bool> CheckAndSetAccess()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            var isAdmin = User.IsInRole("Admin");
+            var isCustomerLiaison = currentUser?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+            var isCustomer = User.IsInRole("Customer");
+
+            ViewBag.IsCustomerLiaison = isCustomerLiaison && !isAdmin;
+            ViewBag.UserRole = isAdmin ? "Admin" : (isCustomerLiaison ? "CustomerLiaison" : (isCustomer ? "Customer" : "Unauthorized"));
+
+            return isAdmin || isCustomerLiaison || isCustomer;
+        }
+
         public IActionResult index()
         {
             return View();
@@ -36,6 +51,8 @@ namespace FridgeManagementSystem.Controllers
 
         public async Task<IActionResult> Home(string searchTerm = "", int fridgeTypeId = 0)
         {
+            if (!await CheckAndSetAccess())
+                return Forbid();
             IEnumerable<Fridge> fridges = await _homeRepository.GetFridges(searchTerm, fridgeTypeId);
             IEnumerable<FridgeType> fridgeTypes = await _homeRepository.FridgeTypes();
             FridgeDisplayModel FridgeModel = new FridgeDisplayModel
@@ -52,6 +69,8 @@ namespace FridgeManagementSystem.Controllers
 
         public async Task<IActionResult> MyFridges()
         {
+            if (!await CheckAndSetAccess())
+                return Forbid();
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var fridges = await _context.Fridges
@@ -65,6 +84,8 @@ namespace FridgeManagementSystem.Controllers
         // GET: Customer/MyProfile
         public async Task<IActionResult> MyProfile()
         {
+            if (!await CheckAndSetAccess())
+                return Forbid();
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var customer = await _context.Customers
@@ -81,7 +102,8 @@ namespace FridgeManagementSystem.Controllers
         }
         public async Task<IActionResult> ListCustomers(string searchString)
         {
-
+            if (!await CheckAndSetAccess())
+                return Forbid();
             //var user = userManager.Users.ToList();
             var customer = await _userManager.GetUsersInRoleAsync("Customer");
             if (!String.IsNullOrEmpty(searchString))
@@ -92,7 +114,7 @@ namespace FridgeManagementSystem.Controllers
             return View(customer);
         }
 
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> CustomerManagement(int pageNumber = 1, int pageSize = 5, string sortBy = "CreatedAt",
            string sortOrder = "desc",
            string searchString = "",
@@ -100,6 +122,17 @@ namespace FridgeManagementSystem.Controllers
            string statusFilter = "active",
            string approvalFilter = "")
         {
+            // Set ViewBag for layout detection
+            var currentUser = await _userManager.GetUserAsync(User);
+            var userWithDetails = await _context.Users
+                .Include(u => u.Employees)
+                .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+            var isCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+            ViewBag.IsCustomerLiaison = isCustomerLiaison && !User.IsInRole("Admin");
+            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
             try
             {
                 // Build base query with includes
@@ -226,9 +259,20 @@ namespace FridgeManagementSystem.Controllers
             }
         }
         // GET: Admin/CustomerDetails/5
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> CustomerDetails(int id)
         {
+            // Set ViewBag for layout detection
+            var currentUser = await _userManager.GetUserAsync(User);
+            var userWithDetails = await _context.Users
+                .Include(u => u.Employees)
+                .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+            var isCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+            ViewBag.IsCustomerLiaison = isCustomerLiaison && !User.IsInRole("Admin");
+            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
             try
             {
                 var customer = await _context.Customers
@@ -256,10 +300,21 @@ namespace FridgeManagementSystem.Controllers
                 return RedirectToAction(nameof(CustomerManagement));
             }
         }
-        [Authorize(Roles = "Admin")]
-public async Task<IActionResult> EditCustomer(int id)
+        [Authorize(Policy = "CustomerLiaisonAccess")]
+        public async Task<IActionResult> EditCustomer(int id)
 {
-    try
+            // Set ViewBag for layout detection
+            var currentUser = await _userManager.GetUserAsync(User);
+            var userWithDetails = await _context.Users
+                .Include(u => u.Employees)
+                .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+            var isCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+            ViewBag.IsCustomerLiaison = isCustomerLiaison && !User.IsInRole("Admin");
+            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
+            try
     {
         var customer = await _context.Customers
             .Include(c => c.User)
@@ -315,10 +370,21 @@ public async Task<IActionResult> EditCustomer(int id)
 // POST: Admin/EditCustomer/5
 [HttpPost]
 [ValidateAntiForgeryToken]
-[Authorize(Roles = "Admin")]
-public async Task<IActionResult> EditCustomer(int id, EditCustomerViewModel model)
+        [Authorize(Policy = "CustomerLiaisonAccess")]
+        public async Task<IActionResult> EditCustomer(int id, EditCustomerViewModel model)
 {
-    if (id != model.Id)
+            // Set ViewBag for layout detection
+            var currentUser = await _userManager.GetUserAsync(User);
+            var userWithDetails = await _context.Users
+                .Include(u => u.Employees)
+                .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+            var isCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+            ViewBag.IsCustomerLiaison = isCustomerLiaison && !User.IsInRole("Admin");
+            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
+            if (id != model.Id)
     {
         TempData["Error"] = "Invalid customer ID.";
         return RedirectToAction(nameof(CustomerManagement));
@@ -396,9 +462,20 @@ public async Task<IActionResult> EditCustomer(int id, EditCustomerViewModel mode
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> DeactivateCustomer(int id)
         {
+            // Set ViewBag for layout detection
+            var currentUser = await _userManager.GetUserAsync(User);
+            var userWithDetails = await _context.Users
+                .Include(u => u.Employees)
+                .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+            var isCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+            ViewBag.IsCustomerLiaison = isCustomerLiaison && !User.IsInRole("Admin");
+            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
             try
             {
                 var customer = await _context.Customers
@@ -431,9 +508,20 @@ public async Task<IActionResult> EditCustomer(int id, EditCustomerViewModel mode
         // POST: Admin/ActivateCustomer/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> ActivateCustomer(int id)
         {
+            // Set ViewBag for layout detection
+            var currentUser = await _userManager.GetUserAsync(User);
+            var userWithDetails = await _context.Users
+                .Include(u => u.Employees)
+                .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+            var isCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+            ViewBag.IsCustomerLiaison = isCustomerLiaison && !User.IsInRole("Admin");
+            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
             try
             {
                 var customer = await _context.Customers

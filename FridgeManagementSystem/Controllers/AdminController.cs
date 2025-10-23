@@ -1,5 +1,6 @@
 ﻿using FridgeManagementSystem.Areas.Identity.Data;
 using FridgeManagementSystem.Data;
+using FridgeManagementSystem.Helpers;
 using FridgeManagementSystem.Models;
 using FridgeManagementSystem.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -12,7 +13,7 @@ using System.Security.Claims;
 
 namespace FridgeManagementSystem.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     public class AdminController : Controller
     {
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -29,9 +30,33 @@ namespace FridgeManagementSystem.Controllers
             _logger = logger;
         }
 
+        private async Task<bool> CheckAndSetAccess()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            var isAdmin = User.IsInRole("Admin");
+            var isCustomerLiaison = currentUser?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+
+            ViewBag.IsCustomerLiaison = isCustomerLiaison && !isAdmin;
+            ViewBag.UserRole = isAdmin ? "Admin" : (isCustomerLiaison ? "CustomerLiaison" : "Unauthorized");
+
+            return isAdmin || isCustomerLiaison;
+        }
+
         // GET: Admin/PendingApprovals
+        [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> PendingApprovals()
         {
+            // Set ViewBag for layout detection
+            var currentUser = await _userManager.GetUserAsync(User);
+            var userWithDetails = await _context.Users
+                .Include(u => u.Employees)
+                .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+            var isCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+            ViewBag.IsCustomerLiaison = isCustomerLiaison && !User.IsInRole("Admin");
+            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
             var pendingUsers = await _userManager.Users
                 .Where(u => u.ApprovalStatus == "Pending" && u.Customers != null)
                 .Include(u => u.Customers)
@@ -42,8 +67,20 @@ namespace FridgeManagementSystem.Controllers
         }
 
         // GET: Admin/ApproveCustomer/5
+        [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> ApproveCustomer(string id)
         {
+            // Set ViewBag for layout detection
+            var currentUser = await _userManager.GetUserAsync(User);
+            var userWithDetails = await _context.Users
+                .Include(u => u.Employees)
+                .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+            var isCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+            ViewBag.IsCustomerLiaison = isCustomerLiaison && !User.IsInRole("Admin");
+            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
             if (id == null)
             {
                 return NotFound();
@@ -70,8 +107,20 @@ namespace FridgeManagementSystem.Controllers
         // POST: Admin/ApproveCustomer/5
         [HttpPost, ActionName("ApproveCustomer")]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> ApproveCustomerConfirmed(string id)
         {
+            // Set ViewBag for layout detection
+            var currentUser = await _userManager.GetUserAsync(User);
+            var userWithDetails = await _context.Users
+                .Include(u => u.Employees)
+                .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+            var isCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+            ViewBag.IsCustomerLiaison = isCustomerLiaison && !User.IsInRole("Admin");
+            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
@@ -134,8 +183,20 @@ namespace FridgeManagementSystem.Controllers
         // POST: Admin/RejectCustomer
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> RejectCustomer(string id, string reason)
         {
+            // Set ViewBag for layout detection
+            var currentUser = await _userManager.GetUserAsync(User);
+            var userWithDetails = await _context.Users
+                .Include(u => u.Employees)
+                .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+            var isCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+            ViewBag.IsCustomerLiaison = isCustomerLiaison && !User.IsInRole("Admin");
+            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {

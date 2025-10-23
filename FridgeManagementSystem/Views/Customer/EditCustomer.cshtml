@@ -1,7 +1,16 @@
 ﻿@model FridgeManagementSystem.ViewModels.EditCustomerViewModel
 @{
-    Layout = "_AdminLayout";
-    ViewData["Title"] = "Edit Customer";
+    // Use ViewBag set in controller to determine layout
+    if (ViewBag.IsCustomerLiaison)
+    {
+        Layout = "_CustomerLiaisonLayout";
+        ViewData["Title"] = "Edit Customer - Liaison View";
+    }
+    else
+    {
+        Layout = "_AdminLayout";
+        ViewData["Title"] = "Edit Customer - Admin View";
+    }
 }
 
 
@@ -17,6 +26,10 @@
 <div class="card">
     <div class="card-header bg-primary text-white">
         <h5 class="mb-0"><i class="fas fa-user-edit"></i> Edit Customer Information</h5>
+        @if (ViewBag.IsCustomerLiaison)
+        {
+            <small class="text-warning">Customer Liaison Edit Mode</small>
+        }
     </div>
     <div class="card-body">
         <form asp-action="EditCustomer" method="post">

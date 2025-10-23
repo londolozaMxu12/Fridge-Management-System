@@ -1,7 +1,16 @@
 ﻿@model FridgeManagementSystem.Models.Customer
 @{
-    Layout = "_AdminLayout";
-    ViewData["Title"] = "Customer Details";
+    // Use ViewBag set in controller to determine layout
+    if (ViewBag.IsCustomerLiaison)
+    {
+        Layout = "_CustomerLiaisonLayout";
+        ViewData["Title"] = "Customer Details - Liaison View";
+    }
+    else
+    {
+        Layout = "_AdminLayout";
+        ViewData["Title"] = "Customer Details - Admin View";
+    }
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -10,9 +19,13 @@
         <a asp-action="CustomerManagement" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to List
         </a>
-        <a asp-action="EditCustomer" asp-route-id="@Model.Id" class="btn btn-warning">
-            <i class="fas fa-edit"></i> Edit Customer
-        </a>
+        <!-- Only show Edit button for Admin, not Customer Liaison -->
+        @if (!ViewBag.IsCustomerLiaison)
+        {
+            <a asp-action="EditCustomer" asp-route-id="@Model.Id" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit Customer
+            </a>
+        }
     </div>
 </div>
 
