@@ -1,0 +1,119 @@
+﻿@model List<Fridge>
+@{
+    ViewData["Title"] = "Fridge Store";
+    Layout = "_CustomerLayout";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between text-black align-items-center mb-4">
+        <h2>Available Fridges</h2>
+    </div>
+
+    <div class="row text-black g-4">
+        @foreach (var fridge in Model)
+        {
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-img-top text-center p-3" style="height: 200px; background: #f8f9fa;">
+                        <img src="/Images/Fridges/@fridge.ImageFileName"
+                             alt="@fridge.FridgeType.Name"
+                             class="img-fluid h-100"
+                             style="object-fit: contain;"
+                             onerror="this.src='/Images/Fridges/default-fridge.jpg'">
+                             <hr />
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@fridge.FridgeType.Name</h5>
+                        <p class="card-text text-muted small">
+                            <strong>Brand:</strong> @fridge.FridgeType.Brand<br>
+                            <strong>Model:</strong> @fridge.FridgeType.Model<br>
+                            <strong>Category:</strong> @fridge.Category
+                        </p>
+                        <p class="card-text">@fridge.Description</p>
+
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="text-success mb-0">R @fridge.Price.ToString("F2")</h4>
+                                <span class="badge bg-success">In Stock</span>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <a asp-action="Details" asp-route-id="@fridge.FridgeId"
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-info-circle me-1"></i>Details
+                                </a>
+                                <button type="button"
+                                        class="btn btn-warning btn-sm"
+                                        onclick="addToCart(this, @fridge.FridgeId)">
+                                    <i class="bi bi-cart-plus me-1"></i>Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-refrigerator display-1 text-muted"></i>
+            <h4 class="mt-3">No fridges available</h4>
+            <p class="text-muted">Check back later for new arrivals.</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Ensure cart functions are available
+        if (typeof addToCart === 'undefined') {
+            function addToCart(button, fridgeId) {
+                // Get anti-forgery token
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                // Show loading state
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+                button.disabled = true;
+
+                fetch('/Cart/AddToCart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token
+                    },
+                    body: `fridgeId=${fridgeId}&quantity=1`
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Add to cart response:', data);
+                    if (data.success) {
+                        // Update cart count
+                        if (typeof loadCartCount === 'function') {
+                            loadCartCount();
+                        }
+                        showAlert(data.message, 'success');
+                    } else {
+                        showAlert(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('An error occurred while adding to cart', 'danger');
+                })
+                .finally(() => {
+                    // Reset button
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                });
+            }
+        }
+    </script>
+}

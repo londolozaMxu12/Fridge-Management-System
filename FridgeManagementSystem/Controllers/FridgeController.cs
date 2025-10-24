@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Security.Claims;
 
 namespace FridgeManagementSystem.Controllers
@@ -29,7 +30,7 @@ namespace FridgeManagementSystem.Controllers
         }
 
         // GET: Fridge
-        public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 5, string sortBy = "PurchaseDate",
+        public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 5, string sortBy = "AcquisitionDate",
             string sortOrder = "desc",
             string searchString = "",
             string statusFilter = "",
@@ -97,7 +98,7 @@ namespace FridgeManagementSystem.Controllers
                 "status" => sortOrder == "desc" ? query.OrderByDescending(f => f.Status) : query.OrderBy(f => f.Status),
                 "supplier" => sortOrder == "desc" ? query.OrderByDescending(f => f.Supplier.User.FullName ?? f.Supplier.CompanyName) : query.OrderBy(f => f.Supplier.User.FullName ?? f.Supplier.CompanyName),
                 "acquisitiondate" => sortOrder == "desc" ? query.OrderByDescending(f => f.AcquisitionDate) : query.OrderBy(f => f.AcquisitionDate),
-                _ => sortOrder == "desc" ? query.OrderByDescending(f => f.PurchaseDate) : query.OrderBy(f => f.PurchaseDate)
+                _ => sortOrder == "desc" ? query.OrderByDescending(f => f.AcquisitionDate) : query.OrderBy(f => f.AcquisitionDate)
             };
 
             var totalCount = await query.CountAsync();
@@ -124,7 +125,7 @@ namespace FridgeManagementSystem.Controllers
                 .OrderBy(s => s)
                 .ToListAsync();
 
-            var statuses = new List<string> { "Available", "Allocated", "InService", "Scrapped", "Maintenance" };
+            var statuses = new List<string> { "Available", "Allocated", "InService", "Scrapped" };
 
             var viewModel = new FridgeManagementViewModel
             {
@@ -158,7 +159,7 @@ namespace FridgeManagementSystem.Controllers
                 .ThenInclude(s => s.User)
                 .Include(f => f.CreatedBy)
                 .Where(f => !f.IsActive)
-                .OrderByDescending(f => f.PurchaseDate)
+                .OrderByDescending(f => f.AcquisitionDate)
                 .ToListAsync();
 
             return View(inactiveFridges);
@@ -242,46 +243,43 @@ namespace FridgeManagementSystem.Controllers
                         Description = model.Description,
                         SerialNumber = model.SerialNumber?.Trim(),
                         AcquisitionDate = model.AcquisitionDate,
-                        PurchaseDate = DateTime.Now,
                         Status = model.Status,
                         IsActive = true,
-                        IsAvailable = model.Status == "Available",
                         FridgeTypeId = model.FridgeTypeId,
                         SupplierId = model.SupplierId,
                         CreatedById = User.FindFirstValue(ClaimTypes.NameIdentifier),
                         NextServiceDate = model.NextServiceDate,
-                        ServiceDate = model.ServiceDate
+                        Category = model.Category ?? "Refrigerator",
+                        CreatedAt = DateTime.Now
                     };
 
                     // Handle image upload
-                    if (model.ImageFileName != null && model.ImageFileName.Length > 0)
+                    if (model.ImageFile != null && model.ImageFile.Length > 0)
                     {
                         // Validate image file
-                        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-                        var fileExtension = Path.GetExtension(model.ImageFileName.FileName).ToLower();
+                        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png"};
+                        var fileExtension = Path.GetExtension(model.ImageFile.FileName).ToLower();
 
                         if (!allowedExtensions.Contains(fileExtension))
                         {
-                            ModelState.AddModelError("ImageFileName", "Only image files (JPG, JPEG, PNG, GIF) are allowed.");
+                            ModelState.AddModelError("ImageFile", "Only image files (JPG, JPEG, PNG) are allowed.");
                             await LoadViewData();
                             return View(model);
                         }
 
                         // Check file size (e.g., 5MB limit)
-                        if (model.ImageFileName.Length > 5 * 1024 * 1024)
+                        if (model.ImageFile.Length > 5 * 1024 * 1024)
                         {
-                            ModelState.AddModelError("ImageFileName", "Image file size must be less than 5MB.");
+                            ModelState.AddModelError("ImageFile", "Image file size must be less than 5MB.");
                             await LoadViewData();
                             return View(model);
                         }
 
-                        fridge.ImageFile = await SaveImage(model.ImageFileName);
+                        fridge.ImageFileName = await SaveImage(model.ImageFile);
                     }
                     else
                     {
-                        ModelState.AddModelError("ImageFileName", "Please upload an image");
-                        await LoadViewData();
-                        return View(model);
+                        fridge.ImageFileName = "default-fridge.jpg";
                     }
 
                     // Generate serial number if not provided
@@ -304,11 +302,12 @@ namespace FridgeManagementSystem.Controllers
                     _context.Fridges.Add(fridge);
                     await _context.SaveChangesAsync();
 
-                    TempData["Success"] = $"Fridge created successfully! Type: {selectedFridgeType.Brand} {selectedFridgeType.Name} {selectedFridgeType.Model}";
+                    TempData["Success"] = $"Fridge created successfully! Type: {selectedFridgeType.Name}, {selectedFridgeType.Brand}, {selectedFridgeType.Model}";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
                 {
+                    _logger.LogError(ex, "Error creating fridge");
                     ModelState.AddModelError("", "An error occurred while creating the fridge: " + ex.Message);
                 }
             }
@@ -358,10 +357,10 @@ namespace FridgeManagementSystem.Controllers
                     FridgeTypeId = fridge.FridgeTypeId,
                     SupplierId = fridge.SupplierId,
                     NextServiceDate = fridge.NextServiceDate,
-                    ServiceDate = fridge.ServiceDate,
-                    ExistingImagePath = fridge.ImageFile ?? string.Empty,
+                    Category = fridge.Category ?? "Refrigerator",
+                    ExistingImagePath = fridge.ImageFileName ?? string.Empty,
                     SelectedFridgeTypeDisplay = fridge.FridgeType != null ?
-                        $"{fridge.FridgeType.Brand} - {fridge.FridgeType.Name} - {fridge.FridgeType.Model}" : "Not Set"
+                        $" {fridge.FridgeType.Name} - {fridge.FridgeType.Brand} - {fridge.FridgeType.Model}" : "Not Set"
                 };
 
                 await LoadViewData();
@@ -369,9 +368,7 @@ namespace FridgeManagementSystem.Controllers
             }
             catch (Exception ex)
             {
-                // Log the full error
                 _logger.LogError(ex, "Error loading fridge for edit. FridgeId: {FridgeId}", id);
-
                 TempData["Error"] = "An error occurred while loading the fridge for editing. Please try again.";
                 return RedirectToAction(nameof(Index));
             }
@@ -419,39 +416,38 @@ namespace FridgeManagementSystem.Controllers
                     fridge.SerialNumber = model.SerialNumber?.Trim();
                     fridge.AcquisitionDate = model.AcquisitionDate;
                     fridge.Status = model.Status;
-                    fridge.IsAvailable = model.Status == "Available";
                     fridge.FridgeTypeId = model.FridgeTypeId;
                     fridge.SupplierId = model.SupplierId;
                     fridge.NextServiceDate = model.NextServiceDate;
-                    fridge.ServiceDate = model.ServiceDate;
+                    fridge.Category = model.Category ?? "Refrigerator";
 
                     // Handle image upload
-                    if (model.ImageFileName != null && model.ImageFileName.Length > 0)
+                    if (model.ImageFile != null && model.ImageFile.Length > 0)
                     {
                         // Validate image file
-                        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-                        var fileExtension = Path.GetExtension(model.ImageFileName.FileName).ToLower();
+                        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                        var fileExtension = Path.GetExtension(model.ImageFile.FileName).ToLower();
 
                         if (!allowedExtensions.Contains(fileExtension))
                         {
-                            ModelState.AddModelError("ImageFileName", "Only image files (JPG, JPEG, PNG, GIF) are allowed.");
+                            ModelState.AddModelError("ImageFile", "Only image files (JPG, JPEG, PNG) are allowed.");
                             await LoadViewData();
                             return View(model);
                         }
 
-                        if (model.ImageFileName.Length > 5 * 1024 * 1024)
+                        if (model.ImageFile.Length > 5 * 1024 * 1024)
                         {
-                            ModelState.AddModelError("ImageFileName", "Image file size must be less than 5MB.");
+                            ModelState.AddModelError("ImageFile", "Image file size must be less than 5MB.");
                             await LoadViewData();
                             return View(model);
                         }
 
-                        // Delete old image if exists
-                        if (!string.IsNullOrEmpty(fridge.ImageFile))
+                        // Delete old image if exists and not default
+                        if (!string.IsNullOrEmpty(fridge.ImageFileName) && fridge.ImageFileName != "default-fridge.jpg")
                         {
-                            DeleteImage(fridge.ImageFile);
+                            DeleteImage(fridge.ImageFileName);
                         }
-                        fridge.ImageFile = await SaveImage(model.ImageFileName);
+                        fridge.ImageFileName = await SaveImage(model.ImageFile);
                     }
 
                     _context.Fridges.Update(fridge);
@@ -470,6 +466,11 @@ namespace FridgeManagementSystem.Controllers
                     {
                         throw;
                     }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error updating fridge. FridgeId: {FridgeId}", id);
+                    ModelState.AddModelError("", "An error occurred while updating the fridge: " + ex.Message);
                 }
             }
 
@@ -505,22 +506,29 @@ namespace FridgeManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var fridge = await _context.Fridges.FindAsync(id);
-            if (fridge != null)
+            try
             {
-                // Soft delete - set IsActive to false
-                fridge.IsActive = false;
-                fridge.IsAvailable = false;
-                fridge.Status = "Inactive";
+                var fridge = await _context.Fridges.FindAsync(id);
+                if (fridge != null)
+                {
+                    // Soft delete - set IsActive to false
+                    fridge.IsActive = false;
+                    fridge.Status = "Inactive";
 
-                _context.Fridges.Update(fridge);
-                await _context.SaveChangesAsync();
+                    _context.Fridges.Update(fridge);
+                    await _context.SaveChangesAsync();
 
-                TempData["Success"] = "Fridge deleted successfully!";
+                    TempData["Success"] = "Fridge deleted successfully!";
+                }
+                else
+                {
+                    TempData["Error"] = "Fridge not found!";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                TempData["Error"] = "Fridge not found!";
+                _logger.LogError(ex, "Error deleting fridge. FridgeId: {FridgeId}", id);
+                TempData["Error"] = "An error occurred while deleting the fridge.";
             }
 
             return RedirectToAction(nameof(Index));
@@ -531,22 +539,29 @@ namespace FridgeManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Restore(int id)
         {
-            var fridge = await _context.Fridges.FindAsync(id);
-            if (fridge != null)
+            try
             {
-                // Restore - set IsActive to true
-                fridge.IsActive = true;
-                fridge.IsAvailable = true;
-                fridge.Status = "Available";
+                var fridge = await _context.Fridges.FindAsync(id);
+                if (fridge != null)
+                {
+                    // Restore - set IsActive to true and status to Available
+                    fridge.IsActive = true;
+                    fridge.Status = "Available";
 
-                _context.Fridges.Update(fridge);
-                await _context.SaveChangesAsync();
+                    _context.Fridges.Update(fridge);
+                    await _context.SaveChangesAsync();
 
-                TempData["Success"] = "Fridge restored successfully!";
+                    TempData["Success"] = "Fridge restored successfully!";
+                }
+                else
+                {
+                    TempData["Error"] = "Fridge not found!";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                TempData["Error"] = "Fridge not found!";
+                _logger.LogError(ex, "Error restoring fridge. FridgeId: {FridgeId}", id);
+                TempData["Error"] = "An error occurred while restoring the fridge.";
             }
 
             return RedirectToAction(nameof(Inactive));
@@ -590,17 +605,26 @@ namespace FridgeManagementSystem.Controllers
 
             ViewData["StatusList"] = new SelectList(new[]
             {
-            new { Value = "Available", Text = "Available" },
-            new { Value = "Allocated", Text = "Allocated" },
-            new { Value = "InService", Text = "In-Service" },
-            new { Value = "Scrapped", Text = "Scrapped" },
-            new { Value = "Maintenance", Text = "Under-Maintenance" }
-        }, "Value", "Text");
+                new { Value = "Available", Text = "Available" },
+                new { Value = "Allocated", Text = "Allocated" },
+                new { Value = "InService", Text = "In-Service" },
+                new { Value = "Scrapped", Text = "Scrapped" }
+                
+            }, "Value", "Text");
+
+            ViewData["Categories"] = new SelectList(new[]
+            {
+                "Refrigerator",
+                "Freezer",
+                "Wine Cooler",
+                "Commercial Fridge"
+                
+            });
         }
 
         private async Task<string> SaveImage(IFormFile imageFile)
         {
-            var uploadsFolder = Path.Combine(_environment.WebRootPath, "Images", "Fridges");
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, "Images/Fridges");
             if (!Directory.Exists(uploadsFolder))
             {
                 Directory.CreateDirectory(uploadsFolder);
@@ -614,14 +638,14 @@ namespace FridgeManagementSystem.Controllers
                 await imageFile.CopyToAsync(fileStream);
             }
 
-            return "/Images/Fridges/" + uniqueFileName;
+            return uniqueFileName;
         }
 
-        private void DeleteImage(string imagePath)
+        private void DeleteImage(string imageFileName)
         {
-            if (!string.IsNullOrEmpty(imagePath))
+            if (!string.IsNullOrEmpty(imageFileName) && imageFileName != "default-fridge.jpg")
             {
-                var fullPath = Path.Combine(_environment.WebRootPath, imagePath.TrimStart('/'));
+                var fullPath = Path.Combine(_environment.WebRootPath, "Images/Fridges", imageFileName);
                 if (System.IO.File.Exists(fullPath))
                 {
                     System.IO.File.Delete(fullPath);
@@ -631,12 +655,12 @@ namespace FridgeManagementSystem.Controllers
 
         private async Task<string> GenerateSerialNumber()
         {
-            var today = DateTime.Now.ToString("yyyyMMdd");
+            var today = DateTime.Now.ToString("ddMMyyyy");
             var count = await _context.Fridges
-                .Where(f => f.SerialNumber.StartsWith($"FRG{today}"))
+                .Where(f => f.SerialNumber.StartsWith($"SN{today}"))
                 .CountAsync();
 
-            return $"FRG{today}{(count + 1).ToString("D3")}";
+            return $"SN{today}{(count + 1).ToString("D3")}";
         }
     }
 }

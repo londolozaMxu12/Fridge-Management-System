@@ -19,16 +19,16 @@ namespace FridgeManagementSystem.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly FridgeManagementSystemContext _context;
         private readonly ILogger<CustomerController> _logger;
-        private readonly IHomeRepository _homeRepository;
+       
 
         public CustomerController(RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context, IHomeRepository homeRepository, ILogger<CustomerController> logger)
+            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context,ILogger<CustomerController> logger)
         {
             _roleManager = roleManager;
             _userManager = userManager;
             _context = context;
             _logger = logger;
-            _homeRepository = homeRepository;
+            
         }
 
         private async Task<bool> CheckAndSetAccess()
@@ -53,6 +53,7 @@ namespace FridgeManagementSystem.Controllers
         {
             if (!await CheckAndSetAccess())
                 return Forbid();
+
             IEnumerable<Fridge> fridges = await _homeRepository.GetFridges(searchTerm, fridgeTypeId);
             IEnumerable<FridgeType> fridgeTypes = await _homeRepository.FridgeTypes();
             FridgeDisplayModel FridgeModel = new FridgeDisplayModel
@@ -63,9 +64,9 @@ namespace FridgeManagementSystem.Controllers
                 FridgeTypeId = fridgeTypeId
             };
 
-            return View(FridgeModel);
+        //    return View(FridgeModel);
 
-        }
+            //}
 
         public async Task<IActionResult> MyFridges()
         {

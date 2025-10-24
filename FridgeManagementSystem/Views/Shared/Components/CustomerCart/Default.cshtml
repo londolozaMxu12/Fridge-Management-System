@@ -1,0 +1,13 @@
+﻿@model bool
+
+
+@if (Model)
+{
+    <li class="nav-item">
+        <a class="nav-link" asp-area="" asp-controller="Cart" asp-action="Index">
+            <i class="bi bi-cart4 me-1 text-light"></i>
+            <span id="cartCount" class="badge rounded-pill bg-info" style="vertical-align: top">0</span>
+            
+        </a>
+    </li>
+}

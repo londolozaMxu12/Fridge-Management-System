@@ -1,6 +1,7 @@
 using FridgeManagementSystem.Areas.Identity.Data;
 using FridgeManagementSystem.Areas.Identity.Pages.Account.Manage;
 using FridgeManagementSystem.Data;
+using FridgeManagementSystem.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -45,7 +46,6 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(
     .AddRoles<IdentityRole>().AddEntityFrameworkStores<FridgeManagementSystemContext>()
     .AddDefaultTokenProviders();
 //.AddUserValidator<ActiveUserValidator<ApplicationUser>>();
-
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("CustomerLiaisonAccess", policy =>
@@ -64,7 +64,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddScoped<IAuthorizationHandler, CustomerLiaisonAuthorizationHandler>();
-
+builder.Services.AddScoped<IOrderNotificationRepository, OrderNotificationRepository>();
 builder.Services.AddScoped<IFaultNotificationRepository, FaultNotificationRepository>();
 builder.Services.AddScoped<ITechnicianReportRepository, TechnicianReportRepository>();
 builder.Services.AddScoped<IEmployeeNumberService, EmployeeNumberService>();
@@ -75,8 +75,8 @@ builder.Services.AddScoped<IAdminSeedService, AdminSeedService>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IEmailSender, DummyEmailSender>();
 builder.Services.AddRazorPages();
-builder.Services.AddTransient<IHomeRepository, HomeRepository>();
-builder.Services.AddTransient<ICartRepository, CartRepository>();
+//builder.Services.AddTransient<IHomeRepository, HomeRepository>();
+//builder.Services.AddTransient<ICartRepository, CartRepository>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

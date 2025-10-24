@@ -19,7 +19,7 @@
     </body>
 </html> *@
 
-<ul class="navbar-nav">
+<ul class="navbar-nav ms-auto">
     @if (SignInManager.IsSignedIn(User))
     {
         //Load full user with Employee + EmployeeType
@@ -293,13 +293,15 @@
     }
     else
     {
+        
         <li class="nav-item">
-            <a class="nav-link text-white" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
+            <a class="btn btn-outline-primary me-2" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-white" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
+            <a class="btn btn-primary" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
         </li>
     }
+    
 </ul>
 
 

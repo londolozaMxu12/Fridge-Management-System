@@ -75,10 +75,8 @@
                                     @if (item.FridgeType != null)
                                     {
                                         <small class="text-muted">@item.FridgeType.Brand</small>
-                            
                                         <br />
                                         <strong>@item.FridgeType.Name</strong>
-
                                         <br />
                                         <small class="text-muted">@item.FridgeType.Model</small>
                                     }
@@ -87,7 +85,7 @@
                                         <span class="text-danger">Not set</span>
                                     }
                                 </td>
-                                <td>@item.Price.ToString("C")</td>
+                                <td>R@(item.Price.ToString("F2"))</td>
                                 <td>
                                     <span class="badge bg-secondary">@item.Status</span>
                                 </td>
@@ -102,7 +100,7 @@
                                     }
                                 </td>
                                 <td>
-                                    <small class="text-muted">@item.PurchaseDate.ToString("yyyy-MM-dd")</small>
+                                    <small class="text-muted">@item.CreatedAt.ToString("yyyy-MM-dd")</small>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
@@ -114,7 +112,6 @@
                                                 <i class="fas fa-undo m-1"></i>
                                             </button>
                                         </form>
-                                        
                                     </div>
                                 </td>
                             </tr>

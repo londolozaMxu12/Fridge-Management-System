@@ -23,9 +23,9 @@
 
                 <div class="row">
                     <div class="col-md-4 text-center">
-                        @if (!string.IsNullOrEmpty(Model.ImageFile))
+                        @if (!string.IsNullOrEmpty(Model.ImageFileName))
                         {
-                            <img src="@Model.ImageFile" alt="Fridge Image" class="img-fluid rounded" style="max-height: 200px;" />
+                            <img src="/products/@Model.ImageFileName" alt="Fridge Image" class="img-fluid rounded" style="max-height: 200px;" />
                         }
                         else
                         {
@@ -57,7 +57,7 @@
                             </dd>
 
                             <dt class="col-sm-4">Price:</dt>
-                            <dd class="col-sm-8">@Model.Price.ToString("C")</dd>
+                            <dd class="col-sm-8">R@(Model.Price.ToString("F2"))</dd>
 
                             <dt class="col-sm-4">Status:</dt>
                             <dd class="col-sm-8">

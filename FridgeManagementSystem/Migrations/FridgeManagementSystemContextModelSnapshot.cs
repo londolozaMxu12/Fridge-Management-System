@@ -144,6 +144,9 @@ namespace FridgeManagementSystem.Migrations
                     b.Property<int>("FridgeId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("FridgeId1")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -156,8 +159,11 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("FridgeId")
-                        .IsUnique();
+                    b.HasIndex("FridgeId");
+
+                    b.HasIndex("FridgeId1")
+                        .IsUnique()
+                        .HasFilter("[FridgeId1] IS NOT NULL");
 
                     b.ToTable("Allocations");
                 });
@@ -192,6 +198,35 @@ namespace FridgeManagementSystem.Migrations
                     b.HasIndex("ShoppingCartId");
 
                     b.ToTable("CartDetails");
+                });
+
+            modelBuilder.Entity("FridgeManagementSystem.Models.CartItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FridgeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ShoppingCartId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FridgeId");
+
+                    b.HasIndex("ShoppingCartId");
+
+                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.City", b =>
@@ -359,6 +394,9 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("CreatedById");
 
+                    b.HasIndex("EmployeeNo")
+                        .IsUnique();
+
                     b.HasIndex("EmployeeTypeId");
 
                     b.HasIndex("UserId")
@@ -523,8 +561,15 @@ namespace FridgeManagementSystem.Migrations
                     b.Property<DateTime?>("AllocationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatedById")
+                    b.Property<string>("Category")
                         .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedById")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("CustomerId")
@@ -537,15 +582,12 @@ namespace FridgeManagementSystem.Migrations
                     b.Property<int>("FridgeTypeId")
                         .HasColumnType("int");
 
-                    b.Property<string>("ImageFile")
+                    b.Property<string>("ImageFileName")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("NextServiceDate")
@@ -555,16 +597,9 @@ namespace FridgeManagementSystem.Migrations
                         .HasPrecision(16, 2)
                         .HasColumnType("decimal(16,2)");
 
-                    b.Property<DateTime>("PurchaseDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("SerialNumber")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime?>("ServiceDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -572,6 +607,9 @@ namespace FridgeManagementSystem.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("SupplierId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SupplierId1")
                         .HasColumnType("int");
 
                     b.HasKey("FridgeId");
@@ -582,7 +620,12 @@ namespace FridgeManagementSystem.Migrations
 
                     b.HasIndex("FridgeTypeId");
 
+                    b.HasIndex("SerialNumber")
+                        .IsUnique();
+
                     b.HasIndex("SupplierId");
+
+                    b.HasIndex("SupplierId1");
 
                     b.ToTable("Fridges");
                 });
@@ -662,6 +705,9 @@ namespace FridgeManagementSystem.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -819,6 +865,99 @@ namespace FridgeManagementSystem.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("FridgeManagementSystem.Models.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("CustomerId1")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DeliveryAddress")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("FridgeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OrderStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentDetails")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("ShippingFee")
+                        .HasPrecision(16, 2)
+                        .HasColumnType("decimal(16,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("CustomerId1");
+
+                    b.HasIndex("FridgeId")
+                        .IsUnique()
+                        .HasFilter("[FridgeId] IS NOT NULL");
+
+                    b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("FridgeManagementSystem.Models.OrderItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FridgeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(16, 2)
+                        .HasColumnType("decimal(16,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FridgeId");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("OrderItems");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.OrderStatus", b =>
@@ -1117,20 +1256,17 @@ namespace FridgeManagementSystem.Migrations
 
             modelBuilder.Entity("FridgeManagementSystem.Models.ShoppingCart", b =>
                 {
-                    b.Property<int>("ShoppingCartId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ShoppingCartId"));
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("ShoppingCartId");
+                    b.HasKey("Id");
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -1369,7 +1505,8 @@ namespace FridgeManagementSystem.Migrations
                 {
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "ApprovedBy")
                         .WithMany()
-                        .HasForeignKey("ApprovedById");
+                        .HasForeignKey("ApprovedById")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("ApprovedBy");
                 });
@@ -1379,20 +1516,24 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "AllocatedBy")
                         .WithMany()
                         .HasForeignKey("AllocatedById")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("FridgeManagementSystem.Models.Customer", "Customer")
                         .WithMany("Allocations")
                         .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("FridgeManagementSystem.Models.Fridge", "Fridge")
-                        .WithOne("CurrentAllocation")
-                        .HasForeignKey("FridgeManagementSystem.Models.Allocation", "FridgeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .WithMany("Allocations")
+                        .HasForeignKey("FridgeId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("FridgeManagementSystem.Models.Fridge", null)
+                        .WithOne("CurrentAllocation")
+                        .HasForeignKey("FridgeManagementSystem.Models.Allocation", "FridgeId1");
 
                     b.Navigation("AllocatedBy");
 
@@ -1404,13 +1545,32 @@ namespace FridgeManagementSystem.Migrations
             modelBuilder.Entity("FridgeManagementSystem.Models.CartDetails", b =>
                 {
                     b.HasOne("FridgeManagementSystem.Models.Fridge", "Fridge")
-                        .WithMany("CartDetails")
+                        .WithMany()
                         .HasForeignKey("FridgeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("FridgeManagementSystem.Models.ShoppingCart", "ShoppingCart")
-                        .WithMany("CartDetails")
+                        .WithMany()
+                        .HasForeignKey("ShoppingCartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Fridge");
+
+                    b.Navigation("ShoppingCart");
+                });
+
+            modelBuilder.Entity("FridgeManagementSystem.Models.CartItem", b =>
+                {
+                    b.HasOne("FridgeManagementSystem.Models.Fridge", "Fridge")
+                        .WithMany("CartItems")
+                        .HasForeignKey("FridgeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FridgeManagementSystem.Models.ShoppingCart", "ShoppingCart")
+                        .WithMany("Items")
                         .HasForeignKey("ShoppingCartId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1436,7 +1596,7 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("FridgeManagementSystem.Models.Suburb", null)
                         .WithMany("Customers")
@@ -1445,7 +1605,7 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "User")
                         .WithOne("Customers")
                         .HasForeignKey("FridgeManagementSystem.Models.Customer", "UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CreatedBy");
@@ -1458,19 +1618,19 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("FridgeManagementSystem.Models.EmployeeType", "EmployeeType")
                         .WithMany()
                         .HasForeignKey("EmployeeTypeId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "User")
                         .WithOne("Employees")
                         .HasForeignKey("FridgeManagementSystem.Models.Employee", "UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CreatedBy");
@@ -1485,7 +1645,7 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Models.Employee", "FaultTechnician")
                         .WithMany("ReportedFaults")
                         .HasForeignKey("FaultTechnicianId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("FridgeManagementSystem.Models.Fridge", "Fridge")
                         .WithMany()
@@ -1494,7 +1654,7 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Models.Customer", "ReportedBy")
                         .WithMany("ReportedFaults")
                         .HasForeignKey("ReportedById")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("FaultTechnician");
@@ -1520,24 +1680,28 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("FridgeManagementSystem.Models.Customer", "Customer")
                         .WithMany("Fridges")
-                        .HasForeignKey("CustomerId");
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("FridgeManagementSystem.Models.FridgeType", "FridgeType")
                         .WithMany("Fridges")
                         .HasForeignKey("FridgeTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("FridgeManagementSystem.Models.Supplier", "Supplier")
-                        .WithMany("Fridges")
+                        .WithMany()
                         .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("FridgeManagementSystem.Models.Supplier", null)
+                        .WithMany("Fridges")
+                        .HasForeignKey("SupplierId1");
 
                     b.Navigation("CreatedBy");
 
@@ -1597,6 +1761,51 @@ namespace FridgeManagementSystem.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("FridgeManagementSystem.Models.Order", b =>
+                {
+                    b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", null)
+                        .WithMany("Orders")
+                        .HasForeignKey("ApplicationUserId");
+
+                    b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FridgeManagementSystem.Models.Customer", null)
+                        .WithMany("Orders")
+                        .HasForeignKey("CustomerId1");
+
+                    b.HasOne("FridgeManagementSystem.Models.Fridge", "Fridge")
+                        .WithOne("Order")
+                        .HasForeignKey("FridgeManagementSystem.Models.Order", "FridgeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Fridge");
+                });
+
+            modelBuilder.Entity("FridgeManagementSystem.Models.OrderItem", b =>
+                {
+                    b.HasOne("FridgeManagementSystem.Models.Fridge", "Fridge")
+                        .WithMany("OrderItems")
+                        .HasForeignKey("FridgeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FridgeManagementSystem.Models.Order", "Order")
+                        .WithMany("Items")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Fridge");
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("FridgeManagementSystem.Models.PurchaseRequest", b =>
                 {
                     b.HasOne("FridgeManagementSystem.Models.Employee", "PurchasingManager")
@@ -1646,7 +1855,7 @@ namespace FridgeManagementSystem.Migrations
             modelBuilder.Entity("FridgeManagementSystem.Models.PurchasingOrderDetails", b =>
                 {
                     b.HasOne("FridgeManagementSystem.Models.Fridge", "Fridge")
-                        .WithMany("OrderDetails")
+                        .WithMany()
                         .HasForeignKey("FridgeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1678,19 +1887,19 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("FridgeManagementSystem.Models.Fault", "Fault")
                         .WithMany("RepairSchedules")
                         .HasForeignKey("FaultId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("FridgeManagementSystem.Models.Employee", "FaultTechnician")
                         .WithMany("FaultSchedules")
                         .HasForeignKey("FaultTechnicianId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("CreatedBy");
@@ -1705,7 +1914,7 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Models.Employee", "MaintenanceTechnician")
                         .WithMany("ScheduledMaintenances")
                         .HasForeignKey("MaintenanceTechnicianId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("MaintenanceTechnician");
@@ -1716,7 +1925,7 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "User")
                         .WithOne("ShoppingCart")
                         .HasForeignKey("FridgeManagementSystem.Models.ShoppingCart", "UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -1738,13 +1947,13 @@ namespace FridgeManagementSystem.Migrations
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", "User")
                         .WithOne("Suppliers")
                         .HasForeignKey("FridgeManagementSystem.Models.Supplier", "UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CreatedBy");
@@ -1805,17 +2014,15 @@ namespace FridgeManagementSystem.Migrations
 
             modelBuilder.Entity("FridgeManagementSystem.Areas.Identity.Data.ApplicationUser", b =>
                 {
-                    b.Navigation("Customers")
-                        .IsRequired();
+                    b.Navigation("Customers");
 
-                    b.Navigation("Employees")
-                        .IsRequired();
+                    b.Navigation("Employees");
 
-                    b.Navigation("ShoppingCart")
-                        .IsRequired();
+                    b.Navigation("Orders");
 
-                    b.Navigation("Suppliers")
-                        .IsRequired();
+                    b.Navigation("ShoppingCart");
+
+                    b.Navigation("Suppliers");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.City", b =>
@@ -1830,6 +2037,8 @@ namespace FridgeManagementSystem.Migrations
                     b.Navigation("FridgeRequests");
 
                     b.Navigation("Fridges");
+
+                    b.Navigation("Orders");
 
                     b.Navigation("Quotations");
 
@@ -1860,14 +2069,17 @@ namespace FridgeManagementSystem.Migrations
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Fridge", b =>
                 {
-                    b.Navigation("CartDetails");
+                    b.Navigation("Allocations");
 
-                    b.Navigation("CurrentAllocation")
-                        .IsRequired();
+                    b.Navigation("CartItems");
+
+                    b.Navigation("CurrentAllocation");
 
                     b.Navigation("MaintenanceRecords");
 
-                    b.Navigation("OrderDetails");
+                    b.Navigation("Order");
+
+                    b.Navigation("OrderItems");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.FridgeType", b =>
@@ -1878,6 +2090,11 @@ namespace FridgeManagementSystem.Migrations
             modelBuilder.Entity("FridgeManagementSystem.Models.MaintenanceRecord", b =>
                 {
                     b.Navigation("FaultReports");
+                });
+
+            modelBuilder.Entity("FridgeManagementSystem.Models.Order", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Province", b =>
@@ -1897,7 +2114,7 @@ namespace FridgeManagementSystem.Migrations
 
             modelBuilder.Entity("FridgeManagementSystem.Models.ShoppingCart", b =>
                 {
-                    b.Navigation("CartDetails");
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("FridgeManagementSystem.Models.Suburb", b =>

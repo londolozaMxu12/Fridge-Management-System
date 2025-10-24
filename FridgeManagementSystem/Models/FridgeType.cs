@@ -22,6 +22,8 @@ namespace FridgeManagementSystem.Models
         [Display(Name = "Active")]
         public bool IsActive { get; set; } = true;
 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
         public ICollection<Fridge> Fridges { get; set; } = new List<Fridge>();
         // Display property for dropdown
         [NotMapped]

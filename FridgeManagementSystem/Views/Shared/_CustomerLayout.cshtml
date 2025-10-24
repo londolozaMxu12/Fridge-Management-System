@@ -18,16 +18,7 @@
     <link rel="stylesheet" href="~/css/customer.css" asp-append-version="true" />
 
     @await RenderSectionAsync("Styles", required: false)
-    <style>
-        #cartCount{
-            color: black;
-        }
-
-        body {
-            
-            background-color: deepskyblue;
-        }
-    </style>
+    
 </head>
 <body>
     <!-- Header -->
@@ -105,19 +96,18 @@
                             @await Component.InvokeAsync("Notifications")
                         </a>
                     </li>
-                    
+                    @* 
                     <li class="nav-item">
                         <a class="nav-link" asp-area="Customer" asp-controller="Requests" asp-action="Index">
                             <i class="bi bi-plus-circle me-1"></i>Request Fridge
                         </a>
-                    </li>
-                    <li>
-                        <a class="nav-item" href="/Cart/GetUserCart">
-                            <i class="bi bi-cart text-white"></i>
-                            <span class="badge text-bg-info" id="cartCount">0</span>
-                            
+                    </li> *@
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="Customer" asp-controller="CustomerStore" asp-action="Index">
+                            <i class="bi bi-shop me-1"></i>Store
                         </a>
                     </li>
+                    @await Component.InvokeAsync("CustomerCart")
                 </ul>
 
                 <!-- User Menu -->
@@ -431,20 +421,74 @@
             }
         });
 
-        loadCartCount();
-        async function loadCartCount(){
-            try{
-                var response = await fetch(`/Cart/GetTotalItemsInCart`);
-                if (response.status==200){
-                var result = await response.json();
-                var cartCountEl = document.getElementById("cartCount");
-                cartCountEl.innerHTML = result;
+                // Cart functionality for customer layout
+        async function loadCartCount() {
+            try {
+                var response = await fetch('/Cart/GetCartCount');
+                if (response.status == 200) {
+                    var result = await response.json();
+                    var cartCountEl = document.getElementById("cartCount");
+                    if (cartCountEl) {
+                        cartCountEl.innerHTML = result.count;
+                    }
                 }
             }
-            catch(err){
-                console.log(err);
+            catch(err) {
+                console.log('Error loading cart count:', err);
             }
         }
+
+        // Function to add item to cart (for use in store pages)
+        function addToCart(button, fridgeId) {
+            // Get anti-forgery token
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            // Show loading state
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            button.disabled = true;
+
+            fetch('/Cart/AddToCart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `fridgeId=${fridgeId}&quantity=1`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Add to cart response:', data);
+                if (data.success) {
+                    loadCartCount(); // Update cart count
+                    showAlert(data.message, 'success');
+                } else {
+                    showAlert(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred while adding to cart', 'danger');
+            })
+            .finally(() => {
+                // Reset button
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+        }
+
+        // Update cart count on page load and periodically
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCartCount();
+
+            // Refresh cart count every 30 seconds to stay in sync
+            setInterval(loadCartCount, 30000);
+        });
     </script>
     
 
