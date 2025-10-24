@@ -100,6 +100,41 @@ namespace FridgeManagementSystem.Controllers
 
             return View(customer);
         }
+
+        [Authorize(Policy = "CustomerLiaisonAccess")]
+        public async Task<IActionResult> GetCustomerStats()
+        {
+    
+                var totalCustomers = await _context.Customers
+                    .Include(c => c.User)
+                    .Where(c => c.User.ApprovalStatus == "Approved")
+                    .CountAsync();
+
+                var activeCustomers = await _context.Customers
+                    .Include(c => c.User)
+                    .Where(c => c.IsActive && c.User.IsActive && c.User.ApprovalStatus == "Approved")
+                    .CountAsync();
+
+                var inactiveCustomers = await _context.Customers
+                    .Include(c => c.User)
+                    .Where(c => (!c.IsActive || !c.User.IsActive) && c.User.ApprovalStatus == "Approved")
+                    .CountAsync();
+
+                var pendingApprovals = await _userManager.Users
+                    .Where(u => u.ApprovalStatus == "Pending" && u.Customers != null)
+                    .CountAsync();
+
+                var customers = new
+                {
+                    totalCustomers,
+                    activeCustomers,
+                    inactiveCustomers,
+                    pendingApprovals
+                };
+                
+            return Json(customers);
+        }
+
         public async Task<IActionResult> ListCustomers(string searchString)
         {
             if (!await CheckAndSetAccess())
@@ -549,6 +584,46 @@ namespace FridgeManagementSystem.Controllers
                 TempData["Error"] = "An error occurred while activating the customer.";
                 return RedirectToAction(nameof(CustomerManagement));
             }
+        }
+
+        // GET: Customer/ActiveCustomers
+        [Authorize(Policy = "CustomerLiaisonAccess")]
+        public async Task<IActionResult> ActiveCustomers(int pageNumber = 1, int pageSize = 10, string sortBy = "FullName",
+    string sortOrder = "asc", string searchString = "", string customerTypeFilter = "")
+        {
+            // Set ViewBag for layout detection
+            var currentUser = await _userManager.GetUserAsync(User);
+            var userWithDetails = await _context.Users
+                .Include(u => u.Employees)
+                .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+            ViewBag.IsCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison" && !User.IsInRole("Admin");
+            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
+            // Call existing CustomerManagement with active filter
+            return await CustomerManagement(pageNumber, pageSize, sortBy, sortOrder, searchString,
+                customerTypeFilter, "active", "");
+        }
+
+        // GET: Customer/InactiveCustomers
+        [Authorize(Policy = "CustomerLiaisonAccess")]
+        public async Task<IActionResult> InactiveCustomers(int pageNumber = 1, int pageSize = 10, string sortBy = "FullName",
+            string sortOrder = "asc", string searchString = "", string customerTypeFilter = "", string approvalFilter = "")
+        {
+            // Set ViewBag for layout detection
+            var currentUser = await _userManager.GetUserAsync(User);
+            var userWithDetails = await _context.Users
+                .Include(u => u.Employees)
+                .ThenInclude(e => e.EmployeeType)
+                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+            ViewBag.IsCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison" && !User.IsInRole("Admin");
+            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
+            // Call existing CustomerManagement with inactive filter
+            return await CustomerManagement(pageNumber, pageSize, sortBy, sortOrder, searchString,
+                customerTypeFilter, "inactive", approvalFilter);
         }
         public IActionResult AllocatedFridge()
         {

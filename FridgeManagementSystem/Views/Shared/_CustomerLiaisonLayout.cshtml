@@ -78,12 +78,12 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Customers" asp-action="Active">
+                                <a class="dropdown-item" asp-controller="Customer" asp-action="ActiveCustomers">
                                     <i class="bi bi-person-check me-2"></i>Active Customers
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Customers" asp-action="Inactive">
+                                <a class="dropdown-item" asp-controller="Customer" asp-action="InactiveCustomers">
                                     <i class="bi bi-person-x me-2"></i>Inactive Customers
                                 </a>
                             </li>
@@ -238,23 +238,63 @@
                         @RenderSection("HeaderActions", required: false)
 
                         <!-- Global Search -->
-                        <div class="input-group input-group-sm" style="width: 300px;">
+                        @* <div class="input-group input-group-sm" style="width: 300px;">
                             <input type="text" id="globalSearch" class="form-control" placeholder="Search customers, fridges, allocations...">
                             <button class="btn btn-outline-success" type="button" id="globalSearchBtn">
                                 <i class="bi bi-search"></i>
                             </button>
-                        </div>
+                        </div> *@
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Quick Stats Bar -->
-        <div class="container-fluid mb-4">
-            <div class="row g-3" id="quickStats">
-                <!-- Quick stats will be loaded dynamically -->
+        @* <div class="row g-4">
+            <!-- Total Customers -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 bg-primary text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-people-fill fs-1 mb-2"></i>
+                        <h5>Total Customers</h5>
+                        <h3>@ViewBag.totalCustomers</h3>
+                    </div>
+                </div>
             </div>
-        </div>
+
+            <!-- Active Customers -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-person-check-fill fs-1 mb-2"></i>
+                        <h5>Active Customers</h5>
+                        <h3>@ViewBag.activeCustomers</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inactive Customers -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <i class="bi bi-person-dash-fill fs-1 mb-2"></i>
+                        <h5>Inactive Customers</h5>
+                        <h3>@ViewBag.inactiveCustomers</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Approvals -->
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 bg-danger text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-hourglass-split fs-1 mb-2"></i>
+                        <h5>Pending Approvals</h5>
+                        <h3>@ViewBag.pendingApprovals</h3>
+                    </div>
+                </div>
+            </div>
+        </div> *@
 
         <!-- Content -->
         <div class="container-fluid">
@@ -351,45 +391,9 @@
             initializeDataTables();
         });
 
-        async function loadQuickStats() {
-            try {
-                // You can create an API endpoint for this or calculate from existing data
-                // For now, we'll set placeholder values
-                updateQuickStats({
-                    totalCustomers: 'Loading...',
-                    pendingApprovals: 'Loading...',
-                    activeCustomers: 'Loading...',
-                    todayApprovals: 'Loading...'
-                });
+            
+      
 
-                // If you want to load real data, you can create an API endpoint
-                // const response = await fetch('/Customer/GetCustomerStats');
-                // if (response.ok) {
-                //     const stats = await response.json();
-                //     updateQuickStats(stats);
-                // }
-
-                // Simulate loading data
-                setTimeout(() => {
-                    updateQuickStats({
-                        totalCustomers: '0',
-                        pendingApprovals: '0',
-                        activeCustomers: '0',
-                        todayApprovals: '0'
-                    });
-                }, 1000);
-
-            } catch (error) {
-                console.error('Failed to load quick stats:', error);
-            }
-        }
-
-        function updateQuickStats(stats) {
-            document.getElementById('totalCustomers').textContent = stats.totalCustomers;
-            document.getElementById('pendingApprovals').textContent = stats.pendingApprovals;
-            document.getElementById('activeCustomers').textContent = stats.activeCustomers;
-            document.getElementById('todayApprovals').textContent = stats.todayApprovals;
-        }
 
         function initializeGlobalSearch() {
             const searchInput = document.getElementById('globalSearch');

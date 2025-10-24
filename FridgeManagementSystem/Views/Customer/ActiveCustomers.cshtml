@@ -1,0 +1,395 @@
+﻿@using FridgeManagementSystem.ViewModels
+@model CustomerManagementViewModel
+
+@{
+    // Use ViewBag set in controller to determine layout
+    if (ViewBag.IsCustomerLiaison)
+    {
+        Layout = "_CustomerLiaisonLayout";
+        ViewData["Title"] = "Active Customers - Liaison View";
+    }
+    else
+    {
+        Layout = "_AdminLayout";
+        ViewData["Title"] = "Active Customers - Admin View";
+    }
+
+    // Calculate pagination variables
+    var totalPages = (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize);
+    var prevDisabled = Model.PageNumber <= 1 ? "disabled" : "";
+    var nextDisabled = Model.PageNumber >= totalPages ? "disabled" : "";
+
+    string GetCustomerTypeBadgeClass(string customerType)
+    {
+        return customerType?.ToLower() switch
+        {
+            "spazashop" => "bg-primary",
+            "liquor" => "bg-success",
+            "other" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-user-check text-success"></i> @ViewData["Title"]</h1>
+    <div>
+        <span class="badge bg-success fs-6">
+            <i class="fas fa-users me-1"></i> @Model.TotalCount Active Customers
+        </span>
+        <a asp-action="CustomerManagement" class="btn btn-secondary ms-2">
+            <i class="fas fa-arrow-left"></i> Back to All Customers
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body py-3">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a asp-action="CustomerManagement" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-list me-2"></i>All Customers
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a asp-action="InactiveCustomers" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-user-slash me-2"></i>View Inactive
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a asp-controller="Admin" asp-action="PendingApprovals" class="btn btn-outline-info w-100">
+                            <i class="fas fa-user-clock me-2"></i>Pending Approvals
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-success w-100" onclick="exportActiveCustomers()">
+                            <i class="fas fa-download me-2"></i>Export List
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-filter"></i> Filter Active Customers</h5>
+        <span class="badge bg-light text-dark">Showing only active customers</span>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <input type="hidden" name="statusFilter" value="active" />
+
+            <div class="col-md-4">
+                <label for="SearchString" class="form-label">Search Active Customers</label>
+                <input type="text" class="form-control" id="SearchString" name="searchString"
+                       value="@Model.SearchString" placeholder="Search active customers by name, business, email...">
+            </div>
+
+            <div class="col-md-3">
+                <label for="CustomerTypeFilter" class="form-label">Customer Type</label>
+                <select class="form-select" id="CustomerTypeFilter" name="customerTypeFilter">
+                    <option value="">All Types</option>
+                    @foreach (var type in ViewBag.CustomerTypes)
+                    {
+                        <option value="@type" selected="@(Model.CustomerTypeFilter == type)">@type</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="SortBy" class="form-label">Sort By</label>
+                <select class="form-select" id="SortBy" name="sortBy">
+                    <option value="FullName" selected="@(Model.SortBy == "FullName")">Name</option>
+                    <option value="BusinessName" selected="@(Model.SortBy == "BusinessName")">Business Name</option>
+                    <option value="CustomerType" selected="@(Model.SortBy == "CustomerType")">Customer Type</option>
+                    <option value="CreatedAt" selected="@(Model.SortBy == "CreatedAt")">Registration Date</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-success me-2 w-100">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-user-check me-2"></i>Active Customers</h5>
+        <span class="badge bg-light text-dark">Total: @Model.TotalCount active customers</span>
+    </div>
+    <div class="card-body">
+        @if (!Model.Customers.Any())
+        {
+            <div class="text-center py-4">
+                <i class="fas fa-user-check fa-3x text-muted mb-3"></i>
+                <h5>No active customers found</h5>
+                <p class="text-muted">No active customers match your current filters.</p>
+                <a asp-action="CustomerManagement" class="btn btn-primary">View All Customers</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-success">
+                        <tr>
+                            <th>
+                                <a asp-action="ActiveCustomers"
+                                   asp-route-sortBy="FullName"
+                                   asp-route-sortOrder="@(Model.SortBy == "FullName" && Model.SortOrder == "asc" ? "desc" : "asc")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-customerTypeFilter="@Model.CustomerTypeFilter"
+                                   class="text-decoration-none text-dark">
+                                    Customer Name
+                                    @if (Model.SortBy == "FullName")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-sort"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>Business Name</th>
+                            <th>Customer Type</th>
+                            <th>Contact Info</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var customer in Model.Customers)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-success text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            @if (!string.IsNullOrEmpty(customer.FullName))
+                                            {
+                                                var nameParts = customer.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                                if (nameParts.Length >= 2)
+                                                {
+                                                    <text>@(nameParts[0][0].ToString().ToUpper() + nameParts[1][0].ToString().ToUpper())</text>
+                                                }
+                                                else if (nameParts.Length == 1 && nameParts[0].Length > 0)
+                                                {
+                                                    <text>@(nameParts[0][0].ToString().ToUpper())</text>
+                                                }
+                                                else
+                                                {
+                                                    <i class="fas fa-user"></i>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-user"></i>
+                                            }
+                                        </div>
+                                        <div>
+                                            <strong>@customer.FullName</strong>
+                                            <br />
+                                            <small class="text-muted">@customer.Email</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong>@customer.BusinessName</strong>
+                                    @if (!string.IsNullOrEmpty(customer.City))
+                                    {
+                                        <br />
+                                        <small class="text-muted">@customer.City, @customer.Suburb</small>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge @GetCustomerTypeBadgeClass(customer.CustomerType)">@customer.CustomerType</span>
+                                </td>
+                                <td>
+                                    <div>
+                                        <i class="fas fa-phone text-muted me-1"></i> @customer.ContactNo
+                                    </div>
+                                    <small class="text-muted">Registered: @customer.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i> Active
+                                    </span>
+                                    <br />
+                                    <small class="text-muted">Approved: @customer.ApprovalStatus</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="CustomerDetails" asp-route-id="@customer.Id" class="btn btn-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a asp-action="EditCustomer" asp-route-id="@customer.Id" class="btn btn-warning" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form asp-action="DeactivateCustomer" asp-route-id="@customer.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-danger" title="Deactivate"
+                                                    onclick="return confirm('Are you sure you want to deactivate @customer.FullName? This will prevent them from accessing the system.')">
+                                                <i class="fas fa-user-slash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (totalPages > 1)
+            {
+                <nav aria-label="Active customers pagination">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @prevDisabled">
+                            <a class="page-link"
+                               asp-action="ActiveCustomers"
+                               asp-route-pageNumber="@(Model.PageNumber - 1)"
+                               asp-route-pageSize="@Model.PageSize"
+                               asp-route-sortBy="@Model.SortBy"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-customerTypeFilter="@Model.CustomerTypeFilter">
+                                Previous
+                            </a>
+                        </li>
+
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                <a class="page-link"
+                                   asp-action="ActiveCustomers"
+                                   asp-route-pageNumber="@i"
+                                   asp-route-pageSize="@Model.PageSize"
+                                   asp-route-sortBy="@Model.SortBy"
+                                   asp-route-sortOrder="@Model.SortOrder"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-customerTypeFilter="@Model.CustomerTypeFilter">
+                                    @i
+                                </a>
+                            </li>
+                        }
+
+                        <li class="page-item @nextDisabled">
+                            <a class="page-link"
+                               asp-action="ActiveCustomers"
+                               asp-route-pageNumber="@(Model.PageNumber + 1)"
+                               asp-route-pageSize="@Model.PageSize"
+                               asp-route-sortBy="@Model.SortBy"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-customerTypeFilter="@Model.CustomerTypeFilter">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+
+            <div class="row align-items-center mt-3">
+                <div class="col-md-6">
+                    <span class="text-muted">
+                        Showing @((Model.PageNumber - 1) * Model.PageSize + 1) to
+                        @Math.Min(Model.PageNumber * Model.PageSize, Model.TotalCount) of @Model.TotalCount active customers
+                    </span>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group">
+                        <span class="me-2">Page size:</span>
+                        @foreach (var size in new[] { 5, 10, 20, 50 })
+                        {
+                            <a class="btn btn-outline-secondary btn-sm @(Model.PageSize == size ? "active" : "")"
+                               asp-action="ActiveCustomers"
+                               asp-route-pageNumber="1"
+                               asp-route-pageSize="@size"
+                               asp-route-sortBy="@Model.SortBy"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-customerTypeFilter="@Model.CustomerTypeFilter">
+                                @size
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function exportActiveCustomers() {
+            // Get current filter parameters
+            const params = new URLSearchParams({
+                searchString: '@Model.SearchString',
+                customerTypeFilter: '@Model.CustomerTypeFilter',
+                sortBy: '@Model.SortBy',
+                sortOrder: '@Model.SortOrder',
+                export: 'true'
+            });
+
+            window.location.href = '/Customer/ExportActiveCustomers?' + params.toString();
+        }
+
+        // Auto-focus search input
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('SearchString');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        });
+    </script>
+
+    <style>
+        .avatar-circle {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(40, 167, 69, 0.075);
+        }
+
+        .page-item.active .page-link {
+            background-color: #198754;
+            border-color: #198754;
+        }
+
+        .quick-stat-card {
+            transition: transform 0.2s;
+        }
+
+            .quick-stat-card:hover {
+                transform: translateY(-2px);
+            }
+    </style>
+}
