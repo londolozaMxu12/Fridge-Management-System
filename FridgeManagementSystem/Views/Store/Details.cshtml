@@ -1,0 +1,91 @@
+﻿@model Fridge
+@{
+    ViewData["Title"] = "Fridge Details";
+}
+
+<div class="row text-black">
+    <div class="col-md-4 text-center">
+        <img src="/Images/Fridges/@Model.ImageFileName" class="img-fluid mb-3" alt="..." width="250" />
+    </div>
+    <div class="col-md-8">
+        <h3 class="mb-3">@Model.FridgeType.Name</h3>
+        <h3 class="text-success mb-3">R @(Model.Price)</h3>
+        <button type="button" class="btn btn-warning btn-sm" onclick="addToCart(this, @Model.FridgeId)">
+            Add to Cart <i class="bi bi-cart4"></i>
+        </button>
+
+        <hr />
+
+        <div class="row mb-3">
+            <div class="col-sm-3 fw-bold">
+                Brand:
+            </div>
+            <div class="col-sm-9">
+                @Model.FridgeType.Brand
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-sm-3 fw-bold">
+                Model:
+            </div>
+            <div class="col-sm-9">
+                @Model.FridgeType.Model
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-sm-3 fw-bold">
+                Category:
+            </div>
+            <div class="col-sm-9">
+                @Model.Category
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-sm-3 fw-bold">
+                Serial Number:
+            </div>
+            <div class="col-sm-9">
+                @Model.SerialNumber
+            </div>
+        </div>
+
+        <div class="fw-bold">Description</div>
+        <div style="white-space: pre-line">@Model.Description</div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function addToCart(button, fridgeId) {
+            fetch('@Url.Action("AddToCart", "Cart")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ fridgeId: fridgeId, quantity: 1 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateCartCount();
+                    alert('Fridge added to cart!');
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+        function updateCartCount() {
+            fetch('@Url.Action("GetCartCount", "Cart")')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('cart-count').textContent = data.count;
+                });
+        }
+
+
+    </script>
+}

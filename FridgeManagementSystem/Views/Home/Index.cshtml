@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Identity
+﻿@* @using Microsoft.AspNetCore.Identity
 @using FridgeManagementSystem.Areas.Identity.Pages.Account
 @{
     ViewData["Title"] = "Home Page";
@@ -69,3 +69,164 @@
 </body>
 
 </html>
+ *@
+
+@model List<Fridge>
+@{
+    ViewData["Title"] = "Home Page";
+    ViewData["HomePage"] = true;
+}
+
+<div style="background-color: #08618d;">
+    <div class="container text-white py-5">
+        <div class="row align-items-center g-5">
+            <div class="col-md-6">
+                <h1 class="mb-5 display-2"><strong>Best Store of Refrigerators</strong></h1>
+                <p>
+                    Find a large selection of high-quality refrigerators from most popular
+                    brands with affordable prices, excellent maintenance & repair services.
+                </p>
+            </div>
+            <div class="col-md-6 text-center">
+                <img src="/Images/IMG-20240814-WA0005.jpg" class="img-fluid" alt="smile fri" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-light text-black">
+    <div class="container py-4">
+        <h2 class="pb-4 text-center">Newest Refrigerators</h2>
+
+        <div class="row mb-5 g-3" id="fridges-slider">
+            @foreach (var fridge in Model)
+            {
+                <div class="col-lg-3 col-md-6 fridge-slide">
+                    <div class="rounded border shadow p-3 text-center h-100">
+                        <img src="/Images/Fridges/@fridge.ImageFileName" class="img-fluid" alt="..."
+                             style="height: 180px; object-fit: contain" />
+                        <hr />
+                        <h5 class="py-2">@fridge.FridgeType.Name</h5>
+                        <p>
+                            Brand: @fridge.FridgeType.Brand, Model: @fridge.FridgeType.Model
+                        </p>
+                        <h3 class="text-success mb-3">R @(fridge.Price)</h3>
+                        <a class="btn btn-primary btn-sm mb-2" asp-controller="Store"
+                           asp-action="Details" asp-route-id="@fridge.FridgeId" role="button">Details</a>
+                        <button type="button" class="btn btn-warning btn-sm mb-2" onclick="addToCart(this, @fridge.FridgeId)">
+                            Add to Cart <i class="bi bi-cart4"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-slide functionality for home page
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.fridge-slide');
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            const slider = document.getElementById('fridges-slider');
+            if (slider && slides.length > 0) {
+                const slideWidth = slides[0].offsetWidth + 30;
+                slider.scrollLeft = index * slideWidth;
+            }
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            showSlide(currentSlide);
+        }
+
+        // Start auto-sliding if there are slides
+        if (totalSlides > 0) {
+            setInterval(nextSlide, 2000);
+        }
+
+                function showToast(title, message, type) {
+            const toastId = 'toast-' + Date.now();
+            const bgColor = type === 'success' ? 'bg-success' : 'bg-danger';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0 position-fixed top-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <strong>${title}:</strong> ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+            // Create toast container if it doesn't exist
+            let toastContainer = document.querySelector('.toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+                document.body.appendChild(toastContainer);
+            }
+
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: true,
+                delay: 2000 // 2 seconds
+            });
+            toast.show();
+
+            // Remove toast from DOM after it hides
+            toastElement.addEventListener('hidden.bs.toast', function () {
+                this.remove();
+            });
+        }
+
+                function addToCart(button, fridgeId) {
+            // Get anti-forgery token
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            // Show loading state
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            button.disabled = true;
+
+            fetch('@Url.Action("AddToCart", "Cart")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `fridgeId=${fridgeId}&quantity=1`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Add to cart response:', data);
+                if (data.success) {
+                    updateCartCount();
+                    showToast('Success', data.message, 'success');
+                } else {
+                    showToast('Error', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error', 'An error occurred while adding to cart', 'error');
+            })
+            .finally(() => {
+                // Reset button
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+        }
+    </script>
+}

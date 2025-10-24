@@ -38,12 +38,12 @@
             padding-left: 0;
             margin-left: 20px;
         }*/
-        a {
+       /*  a {
             color: white;
         }
         header > a{
             color:white;
-        }
+        } */
         footer{
            /* background-color:black;*/
             margin-top:auto;
@@ -54,7 +54,7 @@
         .widget {
             margin-right: 300px;
         }
-        .nav-item{
+        /* .nav-item{
             font-weight:bold;
             font-size:15px;
 
@@ -65,7 +65,7 @@
             border-radius:3px;
             margin-left:20px;
         }
-        
+         */
         
         #footer{
             position: absolute;
@@ -110,7 +110,9 @@
 <body>
     <header>
 
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm  text-bg-dark p-3  py-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow" style="background-color: #1e3a8a;">
+             
+
             <div class="container">
                 
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
@@ -122,6 +124,50 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Store" asp-action="Index">Store</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="AboutUs">About Us</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="ContactUs">Contact Us</a>
+                        </li>
+                        
+                    </ul>
+
+                    @Html.AntiForgeryToken()
+                    @using FridgeManagementSystem.Helpers
+
+                    <ul class="navbar-nav me-2">
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Cart" asp-action="Index">
+                                <i class="bi bi-cart4 text-light h2"></i>
+                                <span id="cart-count" class="badge rounded-pill bg-info" style="vertical-align: top">
+                                    @CartHelper.GetCartSize(Context.Request, Context.Response)
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    @* <ul class="navbar-nav me-2">
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Cart" asp-action="Index">
+                                <i class="bi bi-cart4 text-light h2"></i>
+                                <span id="CartSize" class="badge rounded-pill bg-info" style="vertical-align: top">
+                                    @CartHelper.GetCartSize(Context.Request, Context.Response)
+                                </span>
+                            </a>
+                        </li>
+                    </ul> *@
+                    @await Html.PartialAsync("_LoginPartial")
+                    @* <ul class="navbar-nav flex-grow-1">
                         
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">
@@ -144,7 +190,7 @@
                         <div>
                             @await Html.PartialAsync("_LoginPartial")
                        </div>
-                    </ul>
+                    </ul> *@
 
                 </div>
                 @* <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
@@ -163,6 +209,9 @@
                     </ul>
 
                 </div> *@
+            </div>
+            <div class="toast-container position-fixed top-0 end-0 p-3">
+                <!-- Toasts will be inserted here dynamically -->
             </div>
         </nav>
 
@@ -250,6 +299,137 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+    <script>
+            function showToast(title, message, type) {
+            const toastId = 'toast-' + Date.now();
+            const bgColor = type === 'success' ? 'bg-success' : 'bg-danger';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <strong>${title}:</strong> ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+            document.querySelector('.toast-container').insertAdjacentHTML('beforeend', toastHtml);
+
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
+
+            // Remove toast from DOM after it hides
+            toastElement.addEventListener('hidden.bs.toast', function () {
+                this.remove();
+            });
+        }
+
+        // Global login state detection
+        let previousAuthState = @User.Identity.IsAuthenticated.ToString().ToLower();
+
+        // Check for auth state changes periodically
+        setInterval(() => {
+            const currentAuthState = @User.Identity.IsAuthenticated.ToString().ToLower();
+
+            if (!previousAuthState && currentAuthState) {
+                // User just logged in - transfer cart
+                console.log('User logged in detected, transferring cart...');
+                transferCartAfterLogin();
+            }
+
+            previousAuthState = currentAuthState;
+        }, 1000);
+
+        function transferCartAfterLogin() {
+            fetch('@Url.Action("TransferCart", "Cart")', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Cart transferred successfully');
+                    updateCartCount();
+                }
+            })
+            .catch(error => {
+                console.error('Error transferring cart:', error);
+            });
+        }
+    </script>
+
+    <script>
+        // Cart functionality for both anonymous and authenticated users
+        function addToCart(button, fridgeId) {
+            // Get anti-forgery token
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            // Show loading state
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            button.disabled = true;
+
+            fetch('@Url.Action("AddToCart", "Cart")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `fridgeId=${fridgeId}&quantity=1`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Add to cart response:', data);
+                if (data.success) {
+                    updateCartCount();
+                    showToast('Success', data.message, 'success');
+                } else {
+                    showToast('Error', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error', 'An error occurred while adding to cart', 'error');
+            })
+            .finally(() => {
+                // Reset button
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+        }
+
+        function updateCartCount() {
+            fetch('@Url.Action("GetCartCount", "Cart")')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Cart count:', data);
+                    document.getElementById('cart-count').textContent = data.count;
+                })
+                .catch(error => {
+                    console.error('Error updating cart count:', error);
+                });
+        }
+
+        function showToast(title, message, type) {
+            // Simple alert for now - you can enhance with Bootstrap toasts later
+            alert(`${title}: ${message}`);
+        }
+
+        // Initialize cart count on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartCount();
+        });
+    </script>
   
 </body>
 </html>

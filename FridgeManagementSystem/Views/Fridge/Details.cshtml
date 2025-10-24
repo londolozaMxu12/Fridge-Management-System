@@ -16,9 +16,9 @@
             <div class="card-body">
                 <div class="row mb-4">
                     <div class="col-md-6 text-center">
-                        @if (!string.IsNullOrEmpty(Model.ImageFile))
+                        @if (!string.IsNullOrEmpty(Model.ImageFileName))
                         {
-                            <img src="@Model.ImageFile" alt="Fridge Image" class="img-fluid rounded" style="max-height: 300px;" />
+                            <img src="/Images/Fridges/@Model.ImageFileName" alt="Fridge Image" class="img-fluid rounded" style="max-height: 300px;" />
                         }
                         else
                         {
@@ -43,7 +43,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="fw-bold text-primary">Price:</label>
-                            <p class="fs-5 text-success">@Model.Price.ToString("C")</p>
+                            <p class="fs-5 text-success">R@(Model.Price.ToString("F2"))</p>
                         </div>
                     </div>
                 </div>
@@ -67,6 +67,20 @@
                                 }
                             </dd>
 
+                            <dt class="col-sm-5">Category:</dt>
+
+                            <dd class="col-sm-7">
+                                
+                                @if (Model.Category != null)
+                                {
+                                    @Model.Category
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </dd>
+
                             <dt class="col-sm-5">Supplier:</dt>
                             <dd class="col-sm-7">
                                 @if (Model.Supplier?.User != null)
@@ -81,9 +95,6 @@
 
                             <dt class="col-sm-5">Acquisition Date:</dt>
                             <dd class="col-sm-7">@Model.AcquisitionDate.ToString("yyyy-MM-dd")</dd>
-
-                            <dt class="col-sm-5">Purchase Date:</dt>
-                            <dd class="col-sm-7">@Model.PurchaseDate.ToString("yyyy-MM-dd")</dd>
                         </dl>
                     </div>
                     <div class="col-md-6">
@@ -101,27 +112,15 @@
                                 }
                             </dd>
 
-                            <dt class="col-sm-5">Last Service Date:</dt>
+                            <dt class="col-sm-5">Allocation Date:</dt>
                             <dd class="col-sm-7">
-                                @if (Model.ServiceDate.HasValue)
+                                @if (Model.AllocationDate.HasValue)
                                 {
-                                    @Model.ServiceDate.Value.ToString("yyyy-MM-dd")
+                                    @Model.AllocationDate.Value.ToString("yyyy-MM-dd")
                                 }
                                 else
                                 {
-                                    <span class="text-muted">Never serviced</span>
-                                }
-                            </dd>
-
-                            <dt class="col-sm-5">Availability:</dt>
-                            <dd class="col-sm-7">
-                                @if (Model.IsAvailable)
-                                {
-                                    <span class="badge bg-success">Available</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger">Not Available</span>
+                                    <span class="text-muted">Not allocated</span>
                                 }
                             </dd>
 
@@ -136,6 +135,9 @@
                                     <span class="badge bg-danger">Inactive</span>
                                 }
                             </dd>
+
+                            <dt class="col-sm-5">Created Date:</dt>
+                            <dd class="col-sm-7">@Model.CreatedAt.ToString("yyyy-MM-dd")</dd>
                         </dl>
                     </div>
                 </div>

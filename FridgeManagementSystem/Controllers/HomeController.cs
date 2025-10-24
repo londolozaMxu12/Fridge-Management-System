@@ -7,15 +7,27 @@ namespace FridgeManagementSystem.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly FridgeManagementSystemContext _context;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, FridgeManagementSystemContext context)
         {
             _logger = logger;
+            _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var newestFridges = await _context.Fridges
+                .Where(f => f.IsActive && f.Status == "Available")
+                .Include(f => f.FridgeType)
+                .OrderByDescending(f => f.CreatedAt)
+                .Take(4)
+                .ToListAsync();
+
+            ViewData["Title"] = "Home Page";
+            ViewData["HomePage"] = true;
+
+            return View(newestFridges);
         }
 
         public IActionResult Privacy()

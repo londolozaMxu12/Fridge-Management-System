@@ -18,37 +18,37 @@ namespace FridgeManagementSystem.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly FridgeManagementSystemContext _context;
         private readonly ILogger<CustomerController> _logger;
-        private readonly IHomeRepository _homeRepository;
+       
 
         public CustomerController(RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context, IHomeRepository homeRepository, ILogger<CustomerController> logger)
+            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context,ILogger<CustomerController> logger)
         {
             _roleManager = roleManager;
             _userManager = userManager;
             _context = context;
             _logger = logger;
-            _homeRepository = homeRepository;
+            
         }
         public IActionResult index()
         {
             return View();
         }
 
-        public async Task<IActionResult> Home(string searchTerm = "", int fridgeTypeId = 0)
-        {
-            IEnumerable<Fridge> fridges = await _homeRepository.GetFridges(searchTerm, fridgeTypeId);
-            IEnumerable<FridgeType> fridgeTypes = await _homeRepository.FridgeTypes();
-            FridgeDisplayModel FridgeModel = new FridgeDisplayModel
-            {
-                Fridges = fridges,
-                FridgeTypes = fridgeTypes,
-                searchTerm = searchTerm,
-                FridgeTypeId = fridgeTypeId
-            };
+        //public async Task<IActionResult> Home(string searchTerm = "", int fridgeTypeId = 0)
+        //{
+        //    IEnumerable<Fridge> fridges = await _homeRepository.GetFridges(searchTerm, fridgeTypeId);
+        //    IEnumerable<FridgeType> fridgeTypes = await _homeRepository.FridgeTypes();
+        //    FridgeDisplayModel FridgeModel = new FridgeDisplayModel
+        //    {
+        //        Fridges = fridges,
+        //        FridgeTypes = fridgeTypes,
+        //        searchTerm = searchTerm,
+        //        FridgeTypeId = fridgeTypeId
+        //    };
 
-            return View(FridgeModel);
+        //    return View(FridgeModel);
 
-        }
+        //}
 
         public async Task<IActionResult> MyFridges()
         {

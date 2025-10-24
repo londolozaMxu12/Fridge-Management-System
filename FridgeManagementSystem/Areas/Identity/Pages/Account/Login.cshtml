@@ -7,6 +7,8 @@
 
 <h1>@ViewData["Title"]</h1>
 
+
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -49,16 +51,16 @@
                     </div>
                      
                     <div class="mt-3 text-center">
-                        <p class="mb-2">
+                        @* <p class="mb-2">
                             <a id="forgot-password" asp-page="./ForgotPassword" class="text-decoration-none fw-semibold">Forgot your password?</a>
-                        </p class="mb-2">
-                        <p>
+                        </p > *@
+                        <p class="mb-2">
                             Don't have an account?
                             <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="text-decoration-none fw-semibold">Register as Customer</a>
                         </p>
-                        <p class="mb-0">
+                        @* <p class="mb-0">
                             <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
-                        </p>
+                        </p> *@
                     </div>
                 </form>
             </section>
@@ -94,8 +96,10 @@
         </section>
         </div> *@
     </div>
+   
 </body>
 </html>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
+

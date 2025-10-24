@@ -31,13 +31,14 @@ namespace FridgeManagementSystem.Areas.Identity.Data
         public DateTime? ApprovedAt { get; set; }
 
         // Navigation properties
-        //public ICollection<Customer>  Customers { get; set; }
-        public Customer Customers { get; set; }
-        //public ICollection<Employee> Employees { get; set; }
-        public Employee Employees { get; set; }
-        //public ICollection<Supplier> Suppliers { get; set; }
-        public Supplier Suppliers { get; set; }
+        
+        public Customer? Customers { get; set; }
+        
+        public Employee? Employees { get; set; }
+        
+        public Supplier? Suppliers { get; set; }
 
-        public ShoppingCart ShoppingCart { get; set; }
+        public ShoppingCart? ShoppingCart { get; set; }
+        public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }

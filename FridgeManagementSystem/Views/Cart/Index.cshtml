@@ -1,0 +1,189 @@
+﻿@model FridgeManagementSystem.ViewModels.CheckoutViewModel
+@{
+    ViewData["Title"] = "Shopping Cart";
+}
+
+<div class="row border rounded-3">
+    <div class="col-md-8 p-3 text-black">
+        <h4>Shopping Cart</h4>
+        <hr />
+
+        @if (ViewBag.ErrorMessage != null)
+        {
+            <div class="alert alert-warning alert-dismissible fade show mt-4" role="alert">
+                <strong>@ViewBag.ErrorMessage</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <table class="table align-middle">
+            <tbody>
+                @foreach (var item in ViewBag.CartItems)
+                {
+                    <tr>
+                        <td>
+                            <img src="/Images/Fridges/@item.ImageFileName" width="100" class="rounded" alt="@item.FridgeName">
+                        </td>
+                        <td>
+                            <h4>@item.FridgeName</h4>
+                            <p>
+                                Brand: @item.FridgeBrand<br>
+                                Model: @item.FridgeModel<br>
+                                Price: R@(item.UnitPrice)
+                            </p>
+                        </td>
+                        <td style="white-space:nowrap">
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                    onclick="decrease(@item.FridgeId)">
+                                -
+                            </button>
+                            <span class="border rounded-3 p-2 m-1">@item.Quantity</span>
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                    onclick="increase(@item.FridgeId)">
+                                +
+                            </button>
+                        </td>
+                        <td>R @(item.UnitPrice* item.Quantity)</td>
+                        <td>
+                            <i class="bi bi-trash text-danger h4" style="cursor: pointer" onclick="remove(@item.FridgeId)"></i>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-4 text-black">
+        <div class="text-white rounded my-2 p-3" style="background-color: #08618d;">
+            <h4>Order Summary</h4>
+            <hr />
+
+            @if (!User.Identity.IsAuthenticated)
+            {
+                <div class="row">
+                    <div class="col">
+                        <p>Subtotal:</p>
+                    </div>
+                    <div class="col">
+                        <p class="text-end">R @(ViewBag.Subtotal)</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col d-grid">
+                        <a class="btn btn-light" asp-area="Identity" asp-page="/Account/Register">Register</a>
+                    </div>
+                    <div class="col d-grid">
+                        <a class="btn btn-outline-light" asp-area="Identity" asp-page="/Account/Login">Login</a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Delivery Address</label>
+                        <input type="text" class="form-control" asp-for="DeliveryAddress">
+                        <span asp-validation-for="DeliveryAddress" class="text-warning"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-select" asp-for="PaymentMethod">
+                            <option value="CashOnDelivery">Cash on Delivery</option>
+                            <option value="CreditCard">Credit Card</option>
+                            <option value="PayPal">PayPal</option>
+                        </select>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col">
+                            <p>Subtotal:</p>
+                        </div>
+                        <div class="col">
+                            <p class="text-end">R @(ViewBag.Subtotal)</p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <p>Shipping:</p>
+                        </div>
+                        <div class="col">
+                            <p class="text-end">R @(ViewBag.ShippingFee)</p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <p>Total:</p>
+                        </div>
+                        <div class="col">
+                            <p class="text-end">R @(ViewBag.Total)</p>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button class="btn btn-outline-light" type="submit">Checkout</button>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function increase(fridgeId) {
+            const currentQuantity = parseInt(event.target.parentElement.querySelector('span').textContent);
+            updateQuantity(fridgeId, currentQuantity + 1);
+        }
+
+        function decrease(fridgeId) {
+            const currentQuantity = parseInt(event.target.parentElement.querySelector('span').textContent);
+            if (currentQuantity > 1) {
+                updateQuantity(fridgeId, currentQuantity - 1);
+            }
+        }
+
+        function updateQuantity(fridgeId, quantity) {
+            const formData = new FormData();
+            formData.append('fridgeId', fridgeId);
+            formData.append('quantity', quantity);
+
+            fetch('@Url.Action("UpdateQuantity", "Cart")', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+        }
+
+        function remove(fridgeId) {
+            if (confirm('Are you sure you want to remove this Fridge from your cart?')) {
+                const formData = new FormData();
+                formData.append('fridgeId', fridgeId);
+
+                fetch('@Url.Action("RemoveItem", "Cart")', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    }
+                });
+            }
+        }
+    </script>
+}
