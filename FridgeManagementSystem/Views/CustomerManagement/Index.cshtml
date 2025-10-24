@@ -14,5 +14,52 @@
 </head>
 <body>
     <h1>Customer Liaison Dashboard</h1>
+
+    <div class="row g-4">
+        <!-- Total Customers -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-people-fill fs-1 mb-2"></i>
+                    <h5>Total Customers</h5>
+                    <h3>@ViewBag.totalCustomers</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Customers -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-person-check-fill fs-1 mb-2"></i>
+                    <h5>Active Customers</h5>
+                    <h3>@ViewBag.activeCustomers</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inactive Customers -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-warning text-dark">
+                <div class="card-body text-center">
+                    <i class="bi bi-person-dash-fill fs-1 mb-2"></i>
+                    <h5>Inactive Customers</h5>
+                    <h3>@ViewBag.inactiveCustomers</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Approvals -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-danger text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-hourglass-split fs-1 mb-2"></i>
+                    <h5>Pending Approvals</h5>
+                    <h3>@ViewBag.pendingApprovals</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

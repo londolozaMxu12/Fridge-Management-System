@@ -8,8 +8,15 @@ using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using QuestPDF.Infrastructure;
 using System.Globalization;
+using Microsoft.AspNetCore.Authorization;
+using FridgeManagementSystem.Authorization;
 //using FridgeManagementSystem.Managers.Validators;
 
+// Set QuestPDF license (Community version - free for non-commercial use)
+QuestPDF.Settings.License = LicenseType.Community;
+
+// Set EPPlus license context (EPPlus is free for non-commercial use)
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,7 +46,24 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(
     .AddRoles<IdentityRole>().AddEntityFrameworkStores<FridgeManagementSystemContext>()
     .AddDefaultTokenProviders();
 //.AddUserValidator<ActiveUserValidator<ApplicationUser>>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CustomerLiaisonAccess", policy =>
+        policy.RequireAssertion(context =>
+        {
+            // Admin always has access
+            if (context.User.IsInRole("Admin"))
+                return true;
 
+            // Employees will be checked by the custom handler
+            if (context.User.IsInRole("Employee"))
+                return true;
+
+            return false;
+        }));
+});
+
+builder.Services.AddScoped<IAuthorizationHandler, CustomerLiaisonAuthorizationHandler>();
 builder.Services.AddScoped<IOrderNotificationRepository, OrderNotificationRepository>();
 builder.Services.AddScoped<IFaultNotificationRepository, FaultNotificationRepository>();
 builder.Services.AddScoped<ITechnicianReportRepository, TechnicianReportRepository>();
@@ -77,6 +101,13 @@ using (var scope = app.Services.CreateScope())
     {
          
         await roleManager.CreateAsync(new IdentityRole("Admin"));
+    }
+
+    // ALSO ENSURE 'Employee' ROLE EXISTS
+    var employeeRole = await roleManager.FindByNameAsync("Employee");
+    if (employeeRole == null)
+    {
+        await roleManager.CreateAsync(new IdentityRole("Employee"));
     }
 }
 
