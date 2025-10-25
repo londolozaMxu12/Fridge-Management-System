@@ -180,3 +180,27 @@ body {
     .stats-card:hover {
         transform: translateY(-2px);
     }
+
+.skyblue-bg {
+    background-color: skyblue;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.empty-icon {
+    opacity: 0.8;
+    transform: scale(1);
+    animation: popIn 0.6s ease-out forwards;
+}
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+}

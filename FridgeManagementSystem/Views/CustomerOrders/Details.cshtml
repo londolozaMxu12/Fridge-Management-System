@@ -1,5 +1,7 @@
 ﻿@model Order
 @{
+    Layout = "_CustomerLayout";
+
     string paymentBadgeColor = "bg-danger";
     if (Model.PaymentStatus == "pending")
     {
@@ -11,11 +13,11 @@
     }
     else if (Model.PaymentStatus == "canceled")
     {
-        paymentBadgeColor = "bg-secondary";
+        paymentBadgeColor = "bg-danger";
     }
 
-    string orderBadgeColor = "bg-danger";
-    if (Model.OrderStatus == "Received")
+    string orderBadgeColor = "bg-secondary";
+    if (Model.OrderStatus == "received")
     {
         orderBadgeColor = "bg-warning text-dark";
     }
@@ -23,7 +25,7 @@
     {
         orderBadgeColor = "bg-success";
     }
-    else if (Model.OrderStatus == "canceled")
+    else if (Model.OrderStatus == "cancelled")
     {
         orderBadgeColor = "bg-secondary";
     }
@@ -43,46 +45,64 @@
 
 <h3 class="text-center mb-4">Order Details</h3>
 
-<a class="btn btn-link" asp-controller="ClientOrders" asp-action="Index">← Back to Orders</a>
+<a class="btn btn-link" asp-controller="CustomerOrders" asp-action="Index">← Back to Orders</a>
 
-<div class="row mb-4">
-    <div class="col">
+<div class="col-lg-9 col-md-8">
+    <div class="card">
+        <div class="card-header bg-success">
+            <h5 class="card-title mb-0 text-light">
+                @* <h3 class="mb-4">Order Details</h3> *@
+                Order Details
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="row mb-2 pb-2 border-bottom">
+                    <div class="col">Order ID</div>
+                    <div class="col">@Model.Id</div>
+                </div>
+
+                <div class="row mb-2 pb-2 border-bottom">
+                    <div class="col">Delivery Address</div>
+                    <div class="col">@Model.DeliveryAddress</div>
+                </div>
+
+                <div class="row mb-2 pb-2 border-bottom">
+                    <div class="col">Payment Method</div>
+                    <div class="col">@Model.PaymentMethod</div>
+                </div>
+
+                <div class="row mb-2 pb-2 border-bottom">
+                    <div class="col">Payment Status</div>
+                    <div class="col">
+                        <span class="badge rounded-pill @paymentBadgeColor">@Model.PaymentStatus</span>
+                    </div>
+                </div>
+
+                <div class="row mb-2 pb-2 border-bottom">
+                    <div class="col">Order Status</div>
+                    <div class="col">
+                        <span class="badge rounded-pill @orderBadgeColor">@Model.OrderStatus</span>
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col">Order Date</div>
+                    <div class="col">@Model.CreatedAt.ToString("MM/dd/yyyy HH:mm")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="card mt-4">
+    
+    <div class="col bg-light">
         <div class="border rounded py-3 px-4 h-100">
             <h3 class="mb-4">Order</h3>
 
-            <div class="row mb-2 pb-2 border-bottom">
-                <div class="col">Order ID</div>
-                <div class="col">@Model.Id</div>
-            </div>
-
-            <div class="row mb-2 pb-2 border-bottom">
-                <div class="col">Delivery Address</div>
-                <div class="col">@Model.DeliveryAddress</div>
-            </div>
-
-            <div class="row mb-2 pb-2 border-bottom">
-                <div class="col">Payment Method</div>
-                <div class="col">@Model.PaymentMethod</div>
-            </div>
-
-            <div class="row mb-2 pb-2 border-bottom">
-                <div class="col">Payment Status</div>
-                <div class="col">
-                    <span class="badge rounded-pill @paymentBadgeColor">@Model.PaymentStatus</span>
-                </div>
-            </div>
-
-            <div class="row mb-2 pb-2 border-bottom">
-                <div class="col">Order Status</div>
-                <div class="col">
-                    <span class="badge rounded-pill @orderBadgeColor">@Model.OrderStatus</span>
-                </div>
-            </div>
-
-            <div class="row mb-2">
-                <div class="col">Order Date</div>
-                <div class="col">@Model.CreatedAt.ToString("MM/dd/yyyy HH:mm")</div>
-            </div>
+            
         </div>
     </div>
 </div>
@@ -105,7 +125,7 @@
 
                 <tr>
                     <td>
-                        <img src="/products/@item.Fridge.ImageFileName" width="100" alt="..." />
+                        <img src="/Images/Fridges/@item.Fridge.ImageFileName" width="100" alt="..." />
                     </td>
                     <td>
                         <h4>
@@ -115,10 +135,10 @@
                             </a>
                         </h4>
                         @item.Fridge.FridgeType.Brand - @item.Fridge.FridgeType.Model<br>
-                        @(item.UnitPrice)$
+                        R @(item.UnitPrice)
                     </td>
                     <td>@item.Quantity</td>
-                    <td>@(item.UnitPrice* item.Quantity)$</td>
+                    <td>R @(item.UnitPrice* item.Quantity)</td>
                 </tr>
             }
         }
@@ -128,14 +148,14 @@
 <div class="ms-auto mb-3" style="width: 250px">
     <div class="row">
         <div class="col fw-bold">Subtotal:</div>
-        <div class="col text-end">@(subtotal)$</div>
+        <div class="col text-end">R @(subtotal)</div>
     </div>
     <div class="row">
         <div class="col fw-bold">Shipping Fee:</div>
-        <div class="col text-end">@(Model.ShippingFee)$</div>
+        <div class="col text-end">R @(Model.ShippingFee)</div>
     </div>
     <div class="row">
         <div class="col fw-bold">Total:</div>
-        <div class="col text-end">@(subtotal + Model.ShippingFee)$</div>
+        <div class="col text-end">R @(subtotal + Model.ShippingFee)</div>
     </div>
 </div>

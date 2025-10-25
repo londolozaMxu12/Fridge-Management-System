@@ -1,6 +1,7 @@
 ﻿@model Order
 @{
     ViewData["Title"] = "Order Confirmed";
+    Layout = "_CustomerLayout";
 }
 
 <div class="text-center py-5">
@@ -25,17 +26,17 @@
                         {
                             <div class="row mb-3">
                                 <div class="col-2">
-                                    <img src="/products/@item.Fridge.ImageFileName" width="50" alt="@item.Fridge.FridgeType.Name" />
+                                    <img src="/Images/Fridges/@item.Fridge.ImageFileName" width="50" alt="@item.Fridge.FridgeType.Name" />
                                 </div>
                                 <div class="col-6">
                                     <h6>@item.Fridge.FridgeType.Name</h6>
                                     <small>@item.Fridge.FridgeType.Brand - @item.Fridge.FridgeType.Model</small>
                                 </div>
                                 <div class="col-2 text-end">
-                                    <small>@item.Quantity x @(item.UnitPrice)$</small>
+                                    <small>@item.Quantity x R @(item.UnitPrice)</small>
                                 </div>
                                 <div class="col-2 text-end">
-                                    <strong>@(item.Quantity* item.UnitPrice)$</strong>
+                                    <strong>R @(item.Quantity* item.UnitPrice)</strong>
                                 </div>
                             </div>
                         }
@@ -43,7 +44,7 @@
                 </div>
 
                 <div class="mt-4">
-                    <a asp-controller="ClientOrders" asp-action="Index" class="btn btn-primary">View My Orders</a>
+                    <a asp-controller="CustomerOrders" asp-action="Index" class="btn btn-primary">View My Orders</a>
                     <a asp-controller="Store" asp-action="Index" class="btn btn-outline-secondary">Continue Shopping</a>
                 </div>
             </div>

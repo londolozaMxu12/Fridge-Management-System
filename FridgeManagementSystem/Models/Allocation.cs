@@ -23,6 +23,8 @@ namespace FridgeManagementSystem.Models
         public int FridgeId { get; set; }
         public Fridge Fridge { get; set; } = null!;
 
+        //public DateTime? ServiceDate { get; set; }
+
         [Display(Name = "Active")]
         public bool IsActive { get; set; } = true;
 
@@ -30,8 +32,7 @@ namespace FridgeManagementSystem.Models
         [Display(Name = "Allocation Date")]
         public DateTime AllocationDate { get; set; } = DateTime.Now;
 
-        [Display(Name = "Service Date")]
-        [DataType(DataType.Date)]
-        public DateTime? ServiceDate { get; set; }
+        public int? OrderId { get; set; }
+        public Order? Order { get; set; } = null!;
     }
 }

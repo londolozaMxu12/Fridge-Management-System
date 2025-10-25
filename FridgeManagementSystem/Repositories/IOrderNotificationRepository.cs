@@ -2,8 +2,12 @@
 {
     public interface IOrderNotificationRepository
     {
-        Task NotifyCustomerLiaisonsAboutNewOrder(Order order);
-        Task NotifyCustomerAboutOrderUpdate(Order order);
-        Task NotifyAboutFridgeAllocation(Allocation allocation, string allocatedByName);
+        Task NotifyCustomerAboutOrderUpdate(Order order, string previousStatus);
+        Task NotifyAboutFridgeAllocation(Order order, string allocatedBy, string customerId);
+        Task NotifyAboutStockShortage(int fridgeId, int orderId);
+        Task NotifyAboutPaymentStatusUpdate(Order order, string previousPaymentStatus);
+        Task NotifyLiaisonsAboutNewOrder(Order order);
+        Task NotifyAboutFreedFridges(Order order, List<int> freedFridgeIds);
+        Task NotifyLiaisonsAboutOrderReadyForAllocation(Order order);
     }
 }

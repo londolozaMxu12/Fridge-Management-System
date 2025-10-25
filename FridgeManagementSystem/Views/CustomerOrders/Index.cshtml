@@ -1,14 +1,23 @@
 ﻿@{
     ViewData["Title"] = "My Orders";
+    Layout = "_CustomerLayout";
+
 }
 
-<h3 class="text-center mb-4">List of Orders</h3>
+
+<h3 class="text-center text-light mb-4">
+    <i class="bi bi-bag-check text-light fs-2 me-2"></i> List of Orders
+</h3>
 
 @if (ViewBag.Orders == null || !((IEnumerable<Order>)ViewBag.Orders).Any())
 {
-    <div class="text-center py-5">
-        <h4>You have no orders yet</h4>
-        <a asp-controller="Store" asp-action="Index" class="btn btn-primary mt-3">Start Shopping</a>
+    <div class="text-center text-light py-5">
+        <i class="bi bi-bag-x display-4 text-muted mb-3 empty-icon"></i>
+        <h4 class="fw-semibold">You have no orders yet</h4>
+        <p class="text-secondary">Looks like you haven’t bought anything yet.</p>
+        <a asp-controller="Store" asp-action="Index" class="btn btn-primary mt-3">
+            Start Shopping
+        </a>
     </div>
 }
 else
@@ -79,13 +88,13 @@ else
 
                 <tr>
                     <td>@count</td>
-                    <td>@(total)$</td>
+                    <td>R @(total)</td>
                     <td>@order.PaymentMethod</td>
                     <td><span class="badge rounded-pill @paymentBadgeColor">@order.PaymentStatus</span></td>
                     <td><span class="badge rounded-pill @orderBadgeColor">@order.OrderStatus</span></td>
-                    <td>@order.CreatedAt.ToString("MM/dd/yyyy")</td>
+                    <td>@order.CreatedAt.ToString("dd/MM/yyyy")</td>
                     <td>
-                        <a class="btn btn-primary btn-sm" asp-controller="ClientOrders" asp-action="Details"
+                        <a class="btn btn-primary btn-sm" asp-controller="CustomerOrders" asp-action="Details"
                            asp-route-id="@order.Id">Details</a>
                     </td>
                 </tr>

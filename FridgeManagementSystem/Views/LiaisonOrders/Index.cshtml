@@ -1,5 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Orders Management";
+    Layout = "_CustomerLiaisonLayout";
 }
 
 <h3 class="text-center mb-4">List of Orders</h3>
@@ -15,7 +16,7 @@ else
     <table class="table">
         <thead>
             <tr>
-                <th>Id</th>
+                <th>#</th>
                 <th>Customer</th>
                 <th>Units</th>
                 <th>Total</th>
@@ -82,13 +83,13 @@ else
                     <td>@order.Id</td>
                     <td>@(order.Customer?.FullName ?? "N/A")</td>
                     <td>@count</td>
-                    <td>@(total)$</td>
+                    <td>R @(total)</td>
                     <td>@order.PaymentMethod</td>
                     <td><span class="badge rounded-pill @paymentBadgeColor">@order.PaymentStatus</span></td>
                     <td><span class="badge rounded-pill @orderBadgeColor">@order.OrderStatus</span></td>
                     <td>@order.CreatedAt.ToString("MM/dd/yyyy")</td>
                     <td>
-                        <a class="btn btn-primary btn-sm" asp-controller="AdminOrders" asp-action="Details"
+                        <a class="btn btn-primary btn-sm" asp-controller="LiaisonOrders" asp-action="Details"
                            asp-route-id="@order.Id">Details</a>
                     </td>
                 </tr>

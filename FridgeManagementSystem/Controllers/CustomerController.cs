@@ -49,20 +49,20 @@ namespace FridgeManagementSystem.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Home(string searchTerm = "", int fridgeTypeId = 0)
-        {
-            if (!await CheckAndSetAccess())
-                return Forbid();
+        //public async Task<IActionResult> Home(string searchTerm = "", int fridgeTypeId = 0)
+        //{
+        //    if (!await CheckAndSetAccess())
+        //        return Forbid();
 
-            IEnumerable<Fridge> fridges = await _homeRepository.GetFridges(searchTerm, fridgeTypeId);
-            IEnumerable<FridgeType> fridgeTypes = await _homeRepository.FridgeTypes();
-            FridgeDisplayModel FridgeModel = new FridgeDisplayModel
-            {
-                Fridges = fridges,
-                FridgeTypes = fridgeTypes,
-                searchTerm = searchTerm,
-                FridgeTypeId = fridgeTypeId
-            };
+        //    IEnumerable<Fridge> fridges = await _homeRepository.GetFridges(searchTerm, fridgeTypeId);
+        //    IEnumerable<FridgeType> fridgeTypes = await _homeRepository.FridgeTypes();
+        //    FridgeDisplayModel FridgeModel = new FridgeDisplayModel
+        //    {
+        //        Fridges = fridges,
+        //        FridgeTypes = fridgeTypes,
+        //        searchTerm = searchTerm,
+        //        FridgeTypeId = fridgeTypeId
+        //    };
 
         //    return View(FridgeModel);
 

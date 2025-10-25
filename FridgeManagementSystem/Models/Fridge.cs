@@ -44,7 +44,7 @@ namespace FridgeManagementSystem.Models
 
         [Required]
         [StringLength(50)]
-        public string Status { get; set; } = "Available";
+        public string Status { get; set; } = "Available"; // Available, Reserved, Allocated
 
         [Display(Name = "Next Service Date")]
         [DataType(DataType.Date)]
@@ -74,6 +74,7 @@ namespace FridgeManagementSystem.Models
         public ICollection<Allocation> Allocations { get; set; } = new List<Allocation>();
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
         public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
+        public ICollection<Fault> ReportedFaults { get; set; } = new List<Fault>();
         public Order? Order { get; set; }
 
         [NotMapped]

@@ -17,19 +17,36 @@ namespace FridgeManagementSystem.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<CartController> _logger;
         private readonly decimal _shippingFee;
+        private readonly IOrderNotificationRepository _notification;
 
         public CartController(FridgeManagementSystemContext context,
                             UserManager<ApplicationUser> userManager,
                             IConfiguration configuration,
-                            ILogger<CartController> logger)
+                            ILogger<CartController> logger, IOrderNotificationRepository notification)
         {
             _context = context;
             _userManager = userManager;
             _logger = logger;
+            _notification = notification;
             _shippingFee = configuration.GetValue<decimal>("CartSettings:ShippingFee", 0);
         }
 
-        public IActionResult Index()
+        private string BuildDeliveryAddress(ApplicationUser user)
+        {
+            if (user == null) return string.Empty;
+
+            var addressParts = new[]
+            {
+        user.Address,
+        user.Suburb,
+        user.City
+    };
+
+            // Filter out null/empty values and join with commas
+            return string.Join(", ", addressParts.Where(part => !string.IsNullOrWhiteSpace(part)));
+        }
+
+        public async Task<IActionResult> IndexAsync()
         {
             try
             {
@@ -83,11 +100,14 @@ namespace FridgeManagementSystem.Controllers
                 // If user is logged in, pre-fill the form with their address
                 if (User.Identity.IsAuthenticated)
                 {
-                    var user = _userManager.GetUserAsync(User).Result;
-                    var model = new CheckoutViewModel
+                    var user = await _userManager.GetUserAsync(User);
+                    var model = new CheckoutViewModel();
+
+                    if (user != null)
                     {
-                        DeliveryAddress = user?.Address ??", "+ user?.Suburb ?? ", " + user?.City ?? ""
-                    };
+                        model.DeliveryAddress = BuildDeliveryAddress(user);
+                    }
+
                     return View(model);
                 }
 
@@ -255,11 +275,10 @@ namespace FridgeManagementSystem.Controllers
                 return RedirectToAction("Index", "Cart");
             }
         }
-
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Confirm(int any)
+        public async Task<IActionResult> Confirm(string deliveryAddress, string paymentMethod)
         {
             try
             {
@@ -268,17 +287,20 @@ namespace FridgeManagementSystem.Controllers
 
                 if (user == null)
                 {
+                    TempData["ErrorMessage"] = "User not found. Please log in again.";
                     return RedirectToAction("Index", "Home");
                 }
 
                 List<CartItemViewModel> cartItems;
                 List<CartItem> dbCartItems = new List<CartItem>();
 
+                // Get cart items based on user authentication
                 if (User.Identity.IsAuthenticated)
                 {
                     var cart = await _context.ShoppingCart
                         .Include(c => c.Items)
                         .ThenInclude(i => i.Fridge)
+                        .ThenInclude(f => f.FridgeType)
                         .FirstOrDefaultAsync(c => c.UserId == userId);
 
                     if (cart == null || !cart.Items.Any())
@@ -292,7 +314,11 @@ namespace FridgeManagementSystem.Controllers
                         FridgeId = item.FridgeId,
                         Quantity = item.Quantity,
                         UnitPrice = item.Fridge.Price,
-                        Fridge = item.Fridge
+                        Fridge = item.Fridge,
+                        FridgeName = item.Fridge.FridgeType.Name,
+                        FridgeBrand = item.Fridge.FridgeType.Brand,
+                        FridgeModel = item.Fridge.FridgeType.Model,
+                        ImageFileName = item.Fridge.ImageFileName
                     }).ToList();
 
                     dbCartItems = cart.Items.ToList();
@@ -300,15 +326,45 @@ namespace FridgeManagementSystem.Controllers
                 else
                 {
                     cartItems = CartHelper.GetCartItems(Request, Response, _context);
+                    if (!cartItems.Any())
+                    {
+                        TempData["ErrorMessage"] = "Your cart is empty";
+                        return RedirectToAction("Index", "Cart");
+                    }
                 }
 
-                string deliveryAddress = TempData["DeliveryAddress"] as string ?? "";
-                string paymentMethod = TempData["PaymentMethod"] as string ?? "";
-                string notes = TempData["Notes"] as string ?? "";
-
-                if (!cartItems.Any() || deliveryAddress.Length == 0 || paymentMethod.Length == 0)
+                // Validate delivery address and payment method
+                if (string.IsNullOrEmpty(deliveryAddress) || string.IsNullOrEmpty(paymentMethod))
                 {
-                    return RedirectToAction("Index", "Home");
+                    // Fallback to TempData if parameters are empty
+                    deliveryAddress = TempData["DeliveryAddress"] as string ?? "";
+                    paymentMethod = TempData["PaymentMethod"] as string ?? "";
+                }
+
+                if (!cartItems.Any() || string.IsNullOrEmpty(deliveryAddress) || string.IsNullOrEmpty(paymentMethod))
+                {
+                    TempData["ErrorMessage"] = "Order information is missing. Please try again.";
+                    return RedirectToAction("Index", "Cart");
+                }
+
+                // Validate fridge availability before creating order
+                var unavailableFridges = new List<string>();
+                foreach (var item in cartItems)
+                {
+                    var fridge = await _context.Fridges
+                        .Include(f => f.FridgeType)
+                        .FirstOrDefaultAsync(f => f.FridgeId == item.FridgeId && f.IsActive);
+
+                    if (fridge == null || fridge.Status != "Available")
+                    {
+                        unavailableFridges.Add($"{item.FridgeName} (ID: {item.FridgeId})");
+                    }
+                }
+
+                if (unavailableFridges.Any())
+                {
+                    TempData["ErrorMessage"] = $"The following items are no longer available: {string.Join(", ", unavailableFridges)}. Please update your cart.";
+                    return RedirectToAction("Index", "Cart");
                 }
 
                 // Create the order
@@ -324,9 +380,11 @@ namespace FridgeManagementSystem.Controllers
                     Items = new List<OrderItem>()
                 };
 
-                // Add order items
+                // Add order items and reserve fridges
+                var reservedFridgeIds = new List<int>();
                 foreach (var item in cartItems)
                 {
+                    // Add order item
                     order.Items.Add(new OrderItem
                     {
                         FridgeId = item.FridgeId,
@@ -334,26 +392,41 @@ namespace FridgeManagementSystem.Controllers
                         UnitPrice = item.UnitPrice
                     });
 
-                    // Update fridge status to allocated
-                    var fridge = await _context.Fridges.FindAsync(item.FridgeId);
-                    if (fridge != null)
-                    {
-                        fridge.Status = "Allocated";
-                        fridge.AllocationDate = DateTime.UtcNow;
+                    // Reserve the fridge (change status from Available to Reserved)
+                    var fridge = await _context.Fridges
+                        .Include(f => f.FridgeType)
+                        .FirstOrDefaultAsync(f => f.FridgeId == item.FridgeId);
 
-                        // Find customer and associate with fridge
+                    if (fridge != null && fridge.Status == "Available")
+                    {
+                        fridge.Status = "Reserved";
+                        
+                        // Find customer and associate with fridge for reservation
                         var customer = await _context.Customers
                             .FirstOrDefaultAsync(c => c.UserId == userId);
                         if (customer != null)
                         {
                             fridge.CustomerId = customer.Id;
                         }
+
+                        reservedFridgeIds.Add(fridge.FridgeId);
+
+                        _logger.LogInformation($"Reserved fridge {fridge.FridgeId} ({fridge.FridgeType.Name}) for order");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Fridge {item.FridgeId} is not available for reservation. Status: {fridge?.Status}");
                     }
                 }
 
+                // Save the order to get the ID
                 _context.Orders.Add(order);
+                await _context.SaveChangesAsync();
 
-                // Clear the cart
+                // 🔔 NOTIFY ALL CUSTOMER LIAISONS ABOUT THE NEW ORDER
+                await _notification.NotifyLiaisonsAboutNewOrder(order);
+
+                // Clear the cart after successful order creation
                 if (User.Identity.IsAuthenticated)
                 {
                     // Clear database cart
@@ -364,25 +437,40 @@ namespace FridgeManagementSystem.Controllers
                     if (cart != null)
                     {
                         _context.CartItems.RemoveRange(cart.Items);
+                        _logger.LogInformation($"Cleared database cart for user {userId}");
                     }
                 }
                 else
                 {
                     // Clear cookie cart
                     CartHelper.ClearCart(Response);
+                    _logger.LogInformation("Cleared cookie cart");
                 }
 
+                // Final save to persist cart clearance
                 await _context.SaveChangesAsync();
 
-                ViewBag.SuccessMessage = "Order created successfully!";
+                // Log successful order creation
+                _logger.LogInformation($"Order {order.Id} created successfully for user {userId}. {reservedFridgeIds.Count} fridges reserved.");
+
+                // Set success message and return to confirmation view
+                ViewBag.SuccessMessage = $"Order created successfully! Your order ID is: {order.Id}. " +
+                                       $"We have reserved {reservedFridgeIds.Count} item(s) for you. " +
+                                       $"You will be notified when your order is processed.";
                 ViewBag.OrderId = order.Id;
 
                 return View();
             }
+            catch (DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, "Database error while confirming order");
+                ViewBag.ErrorMessage = "A database error occurred while creating your order. Please try again.";
+                return View();
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error confirming order");
-                ViewBag.ErrorMessage = "An error occurred while creating your order";
+                _logger.LogError(ex, "Unexpected error while confirming order");
+                ViewBag.ErrorMessage = "An unexpected error occurred while creating your order. Please contact support if the problem persists.";
                 return View();
             }
         }

@@ -39,6 +39,8 @@ namespace FridgeManagementSystem.Areas.Identity.Data
         public Supplier? Suppliers { get; set; }
 
         public ShoppingCart? ShoppingCart { get; set; }
+
+        //public Allocation? Allocations { get; set; }
         public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }

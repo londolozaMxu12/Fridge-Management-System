@@ -11,6 +11,7 @@ namespace FridgeManagementSystem.Models
         public int Id { get; set; }
 
         [Required]
+        [ForeignKey("Customer")]
         public string CustomerId { get; set; } = "";
         public ApplicationUser Customer { get; set; } = null!;
 
@@ -25,6 +26,8 @@ namespace FridgeManagementSystem.Models
         public string PaymentDetails { get; set; } = "";
         public string OrderStatus { get; set; } = "Received";
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public virtual ICollection<Allocation> Allocations { get; set; } = new List<Allocation>();
 
         public int? FridgeId { get; set; }
         public Fridge? Fridge { get; set; }

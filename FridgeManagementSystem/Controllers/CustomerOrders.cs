@@ -21,6 +21,7 @@ namespace FridgeManagementSystem.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            // Directly query orders using the userId (string == string)
             var query = _context.Orders
                 .Include(o => o.Items)
                 .ThenInclude(i => i.Fridge)
@@ -61,5 +62,36 @@ namespace FridgeManagementSystem.Controllers
 
             return View(order);
         }
+
+        //// Debug action to help identify the issue
+        //public async Task<IActionResult> DebugInfo()
+        //{
+        //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //    var userEmail = User.FindFirstValue(ClaimTypes.Email);
+
+        //    ViewBag.UserId = userId;
+        //    ViewBag.UserEmail = userEmail;
+
+        //    // Check orders for this user directly
+        //    var orders = await _context.Orders
+        //        .Where(o => o.CustomerId == userId) 
+        //        .ToListAsync();
+
+        //    ViewBag.OrderCount = orders.Count;
+        //    ViewBag.Orders = orders;
+
+        //    return View();
+        //}
+
+        //// Simple test action
+        //public async Task<IActionResult> Test()
+        //{
+        //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        //    var orderCount = await _context.Orders
+        //        .CountAsync(o => o.CustomerId == userId); 
+
+        //    return Content($"Found {orderCount} orders for user ID: {userId}");
+        //}
     }
 }

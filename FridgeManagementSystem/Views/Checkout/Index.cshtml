@@ -1,5 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Checkout";
+    Layout = "_CustomerLayout";
 }
 
 <div class="row justify-content-center">
@@ -9,7 +10,7 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Order Summary</h5>
-                <p>Total Amount: <strong>@(ViewBag.Total)$</strong></p>
+                <p>Total Amount: <strong>R @(ViewBag.Total)</strong></p>
                 <p>Delivery Address: <strong>@ViewBag.DeliveryAddress</strong></p>
                 <p class="text-muted">Payment Method: Cash on Delivery</p>
 

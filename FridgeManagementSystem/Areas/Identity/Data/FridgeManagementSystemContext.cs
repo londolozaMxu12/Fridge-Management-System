@@ -90,27 +90,37 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(u => u.ApprovedById)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // 2. Configure Allocation relationships
-        builder.Entity<Allocation>()
-            .HasOne(a => a.Customer)
-            .WithMany(c => c.Allocations)
-            .HasForeignKey(a => a.CustomerId)
-            .OnDelete(DeleteBehavior.Restrict);
+        // 2. Configure Allocation relationships - ONLY ONCE
+        builder.Entity<Allocation>(entity =>
+        {
+            entity.HasKey(a => a.AllocationId);
 
-        builder.Entity<Allocation>()
-            .HasOne(a => a.AllocatedBy)
-            .WithMany()
-            .HasForeignKey(a => a.AllocatedById)
-            .OnDelete(DeleteBehavior.Restrict);
+            // Customer relationship
+            entity.HasOne(a => a.Customer)
+                .WithMany(c => c.Allocations)
+                .HasForeignKey(a => a.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<Allocation>()
-            .HasOne(a => a.Fridge)
-            .WithMany(f => f.Allocations)
-            .HasForeignKey(a => a.FridgeId)
-            .OnDelete(DeleteBehavior.Restrict);
+            // Fridge relationship
+            entity.HasOne(a => a.Fridge)
+                .WithMany(f => f.Allocations)
+                .HasForeignKey(a => a.FridgeId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-        //3.Configure Fridge relationships
-        // TEMPORARILY COMMENT OUT UNIQUE CONSTRAINT:
+            // Order relationship
+            entity.HasOne(a => a.Order)
+                .WithMany(o => o.Allocations)
+                .HasForeignKey(a => a.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // AllocatedBy relationship
+            entity.HasOne(a => a.AllocatedBy)
+                .WithMany()
+                .HasForeignKey(a => a.AllocatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // 3. Configure Fridge relationships
         builder.Entity<Fridge>()
             .HasIndex(f => f.SerialNumber)
             .IsUnique();
@@ -203,12 +213,6 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .IsUnique();
 
         builder.Entity<Employee>()
-            .HasOne(e => e.EmployeeType)
-            .WithMany()
-            .HasForeignKey(e => e.EmployeeTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<Employee>()
             .HasOne(e => e.CreatedBy)
             .WithMany()
             .HasForeignKey(e => e.CreatedById)
@@ -244,24 +248,20 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .Property(r => r.EstimatedHours)
             .HasPrecision(5, 2);
 
-        // ScheduleMaintenance configuration
+        // 13. ScheduleMaintenance configuration
         builder.Entity<ScheduleMaintenance>(entity =>
         {
             entity.HasKey(e => e.scheduleMaintenanceId);
-
-
             entity.Property(e => e.Description)
                 .HasMaxLength(500);
-
 
             // Relationship with MaintenanceTechnician (Employee)
             entity.HasOne(e => e.MaintenanceTechnician)
                 .WithMany(e => e.ScheduledMaintenances)
                 .HasForeignKey(e => e.MaintenanceTechnicianId)
                 .OnDelete(DeleteBehavior.NoAction);
-
-
         });
+
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

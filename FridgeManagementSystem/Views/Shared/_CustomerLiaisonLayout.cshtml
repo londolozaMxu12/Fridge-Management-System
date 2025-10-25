@@ -59,7 +59,11 @@
                             <i class="bi bi-speedometer2 me-1"></i>Dashboard
                         </a>
                     </li>
-
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="LiaisonOrders" asp-action="Index">
+                            <i class="bi bi-receipt me-2"></i>Orders
+                        </a>
+                    </li>
                     <!-- Customer Management -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -89,7 +93,7 @@
                             </li>
                         </ul>
                     </li>
-
+                    
                     <!-- Fridge Allocation -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -97,8 +101,8 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li>
-                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="FridgeAllocations" asp-action="Index">
-                                    <i class="bi bi-list-check me-2"></i>All Allocations
+                                <a class="dropdown-item" asp-controller="Allocation" asp-action="Index">
+                                    <i class="bi bi-truck me-2"></i>All Allocations
                                 </a>
                             </li>
                             <li>
@@ -220,9 +224,7 @@
             <div class="container-fluid">
                 <div class="row align-items-center">
                     <div class="col">
-                        <h1 class="h3 mb-0">
-                            <i class="bi @ViewData["PageIcon"] me-2 text-success"></i>@ViewData["Title"]
-                        </h1>
+                        
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-0">
                                 <li class="breadcrumb-item"><a asp-area="CustomerLiaison" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
@@ -237,64 +239,10 @@
                     <div class="col-auto">
                         @RenderSection("HeaderActions", required: false)
 
-                        <!-- Global Search -->
-                        @* <div class="input-group input-group-sm" style="width: 300px;">
-                            <input type="text" id="globalSearch" class="form-control" placeholder="Search customers, fridges, allocations...">
-                            <button class="btn btn-outline-success" type="button" id="globalSearchBtn">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div> *@
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Quick Stats Bar -->
-        @* <div class="row g-4">
-            <!-- Total Customers -->
-            <div class="col-md-3">
-                <div class="card shadow-sm border-0 bg-primary text-white">
-                    <div class="card-body text-center">
-                        <i class="bi bi-people-fill fs-1 mb-2"></i>
-                        <h5>Total Customers</h5>
-                        <h3>@ViewBag.totalCustomers</h3>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Active Customers -->
-            <div class="col-md-3">
-                <div class="card shadow-sm border-0 bg-success text-white">
-                    <div class="card-body text-center">
-                        <i class="bi bi-person-check-fill fs-1 mb-2"></i>
-                        <h5>Active Customers</h5>
-                        <h3>@ViewBag.activeCustomers</h3>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Inactive Customers -->
-            <div class="col-md-3">
-                <div class="card shadow-sm border-0 bg-warning text-dark">
-                    <div class="card-body text-center">
-                        <i class="bi bi-person-dash-fill fs-1 mb-2"></i>
-                        <h5>Inactive Customers</h5>
-                        <h3>@ViewBag.inactiveCustomers</h3>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pending Approvals -->
-            <div class="col-md-3">
-                <div class="card shadow-sm border-0 bg-danger text-white">
-                    <div class="card-body text-center">
-                        <i class="bi bi-hourglass-split fs-1 mb-2"></i>
-                        <h5>Pending Approvals</h5>
-                        <h3>@ViewBag.pendingApprovals</h3>
-                    </div>
-                </div>
-            </div>
-        </div> *@
 
         <!-- Content -->
         <div class="container-fluid">
@@ -377,60 +325,6 @@
     <script src="~/js/customer-liaison.js" asp-append-version="true"></script>
 
     <script>
-
-            
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load quick stats
-            loadQuickStats();
-
-            // Initialize global search
-            initializeGlobalSearch();
-
-            // Initialize DataTables
-            initializeDataTables();
-        });
-
-            
-      
-
-
-        function initializeGlobalSearch() {
-            const searchInput = document.getElementById('globalSearch');
-            const searchBtn = document.getElementById('globalSearchBtn');
-
-            if (searchInput && searchBtn) {
-                searchBtn.addEventListener('click', performGlobalSearch);
-                searchInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        performGlobalSearch();
-                    }
-                });
-            }
-        }
-
-        function performGlobalSearch() {
-            const query = document.getElementById('globalSearch').value.trim();
-            if (query) {
-                // Redirect to customer management with search
-                window.location.href = `/Customer/CustomerManagement?searchString=${encodeURIComponent(query)}`;
-            }
-        }
-
-        function initializeDataTables() {
-            // Initialize DataTables on tables with the 'data-table' class
-            $('table[data-table]').DataTable({
-                responsive: true,
-                pageLength: 25,
-                language: {
-                    search: "Search:",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                    infoEmpty: "Showing 0 to 0 of 0 entries",
-                    infoFiltered: "(filtered from _MAX_ total entries)"
-                }
-            });
-        }
 
         // Global function to show alerts
         function showAlert(message, type = 'info') {

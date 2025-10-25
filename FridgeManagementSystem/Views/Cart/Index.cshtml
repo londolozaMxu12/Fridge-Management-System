@@ -1,11 +1,19 @@
 ﻿@model FridgeManagementSystem.ViewModels.CheckoutViewModel
 @{
+    if (User.Identity.IsAuthenticated)
+    {
+        Layout = "_CustomerLayout";
+    }
+    else
+    {
+        Layout = "_Layout"; // or whatever your default layout is
+    }
     ViewData["Title"] = "Shopping Cart";
 }
 
 <div class="row border rounded-3">
     <div class="col-md-8 p-3 text-black">
-        <h4>Shopping Cart</h4>
+        <h4 class="text-black">Shopping Cart</h4>
         <hr />
 
         @if (ViewBag.ErrorMessage != null)

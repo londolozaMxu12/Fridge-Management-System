@@ -97,7 +97,7 @@ namespace FridgeManagementSystem.Controllers
             _context.CartItems.RemoveRange(cart.Items);
             await _context.SaveChangesAsync();
 
-            await _notification.NotifyCustomerLiaisonsAboutNewOrder(order);
+            await _notification.NotifyLiaisonsAboutNewOrder(order);
 
             return Json(new { success = true, orderId = order.Id });
         }
