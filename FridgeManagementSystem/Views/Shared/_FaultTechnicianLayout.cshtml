@@ -79,14 +79,8 @@
         <div class="container-fluid">
             <!-- Brand -->
             
-            <a class="navbar-brand d-flex align-items-center" asp-controller="Dashboard" asp-action="Index">
-                <div class="d-flex flex-column align-items-center">
-                    <img src="~/Images/WhatsApp Image 2025-05-27 at 18.37.15_1c44df4a.jpg" height="50" width="100" />
-                    <span class="fw-bold mt-1" style="color: #001f3f; font-size: 0.9rem;">NM DESIGN HUB</span>
-                </div>
-            </a>
+            <img src="~/Images/WhatsApp Image 2025-05-27 at 18.37.15_1c44df4a.jpg" height="60" width="120" style="border-top-right-radius: 50rem; border-bottom-right-radius: 50rem;" />
             
-
             <!-- Mobile Toggle -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#faultTechNavbar">
                 <span class="navbar-toggler-icon"></span>
@@ -96,14 +90,14 @@
             <div class="collapse navbar-collapse" id="faultTechNavbar">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="FaultTechnician" asp-action="Dashboard">
+                        <a class="nav-link active" asp-controller="FaultTechnician" asp-action="Dashboard">
                             <i class="bi bi-speedometer2 me-1"></i>Dashboard
                         </a>
                     </li>
 
                     <!-- Fault Management -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link active dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="bi bi-exclamation-triangle me-1"></i>Fault Management
                         </a>
 
@@ -148,7 +142,7 @@
                     <!-- Repair Scheduling -->
 
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="FaultTechnician" asp-action="MySchedule">
+                        <a class="nav-link active" asp-controller="FaultTechnician" asp-action="MySchedule">
                             <i class="bi bi-calendar-event me-1"></i>My Schedule
                         </a>
                     </li>
@@ -156,14 +150,14 @@
                     <!-- Reports -->
 
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="FaultTechnician" asp-action="RepairHistory">
+                        <a class="nav-link active" asp-controller="FaultTechnician" asp-action="RepairHistory">
                             <i class="bi bi-clock-history me-1"></i>Repair History
                         </a>
                     </li>
 
                     <!-- For Communications -->
                     <li class="nav-item">
-                        <a class="nav-link" style="white-space:nowrap" href="#" data-bs-toggle="modal" data-bs-target="#notificationsModal">
+                        <a class="nav-link active" style="white-space:nowrap" href="#" data-bs-toggle="modal" data-bs-target="#notificationsModal">
                             <i class="bi bi-bell me-1"></i>Notifications
                             @* <span class="d-none d-sm-inline">Notifications</span> *@
                             @await Component.InvokeAsync("Notifications")

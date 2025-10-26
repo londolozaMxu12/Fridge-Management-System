@@ -179,7 +179,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                         }
                         if (role.Contains("Customer"))
                         {
-                            return RedirectToAction("Index", "Customer");
+                            return RedirectToAction("Index", "Home");
                         }
                         else if (role.Contains("Employee"))
                         {

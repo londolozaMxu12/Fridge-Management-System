@@ -17,27 +17,27 @@
     }
 
     string orderBadgeColor = "bg-secondary";
-    if (Model.OrderStatus == "received")
+    if (Model.OrderStatus == "Received")
     {
         orderBadgeColor = "bg-warning text-dark";
     }
-    else if (Model.OrderStatus == "accepted")
+    else if (Model.OrderStatus == "Accepted")
     {
         orderBadgeColor = "bg-success";
     }
-    else if (Model.OrderStatus == "cancelled")
+    else if (Model.OrderStatus == "Cancelled")
     {
         orderBadgeColor = "bg-secondary";
     }
-    else if (Model.OrderStatus == "shipped")
+    else if (Model.OrderStatus == "Shipped")
     {
         orderBadgeColor = "bg-primary";
     }
-    else if (Model.OrderStatus == "delivered")
+    else if (Model.OrderStatus == "Delivered")
     {
         orderBadgeColor = "bg-success";
     }
-    else if (Model.OrderStatus == "returned")
+    else if (Model.OrderStatus == "Returned")
     {
         orderBadgeColor = "bg-info text-dark";
     }

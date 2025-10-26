@@ -1,78 +1,13 @@
-﻿@* @using Microsoft.AspNetCore.Identity
-@using FridgeManagementSystem.Areas.Identity.Pages.Account
+﻿@model List<Fridge>
 @{
-    ViewData["Title"] = "Home Page";
-}
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>ViewData["Title"]</title>
-    <style>
-        body {
-            background-image: url('images/faded_gallery-OfdOEdGYiuk-unsplash.jpg');
-            background-size: cover;
-            background-position: center;
-        }
-
-        h1 {
-            text-align: center;
-            margin-top: 110px;
-            font-weight: bold;
-            font-size: 50px;
-        }
-
-        .btn-container {
-            display: flex;
-            align-content: center;
-            justify-content: center;
-            margin-top: 60px;
-            margin-bottom: 290px;
-        }
-
-        .btn-group button {
-            background-color: black; /* Green background */
-            border: 4px solid white; /* Green border */
-            color: white; /* White text */
-            padding: 10px 24px; /* Some padding */
-            cursor: pointer; /* Pointer/hand icon */
-            /*float: right;*/
-            border-radius: 6px;
-            align-items: center;
-        }
-
-        button {
-            width: 220px;
-            height: 70px;
-            font-weight: bold;
-            font-size: 20px;
-            margin-left: 40px;
-            background-color: black;
-        }
-    </style>
-</head>
-<body>
-    <div class="row mt-5">
-        <h1>Welcome to our incredeble deals <br>New customer? View Our Deals</h1>
-        <div class="btn-container">
-            <div class="btn-group">
-                <button type="button" onclick="location.href='@Url.Action("Fridge", "Fridges")'">
-                    View Our Offers
-                </button>
-                <button type="button" onclick="location.href='/Identity/Account/Login' ">
-                    Login
-                </button>
-            </div>
-        </div>
-    </div>
-
-</body>
-
-</html>
- *@
-
-@model List<Fridge>
-@{
+    if (User.Identity.IsAuthenticated)
+    {
+        Layout = "_CustomerLayout";
+    }
+    else
+    {
+        Layout = "_Layout";
+    }
     ViewData["Title"] = "Home Page";
     ViewData["HomePage"] = true;
 }
@@ -113,9 +48,24 @@
                         <h3 class="text-success mb-3">R @(fridge.Price)</h3>
                         <a class="btn btn-primary btn-sm mb-2" asp-controller="Store"
                            asp-action="Details" asp-route-id="@fridge.FridgeId" role="button">Details</a>
-                        <button type="button" class="btn btn-warning btn-sm mb-2" onclick="addToCart(this, @fridge.FridgeId)">
-                            Add to Cart <i class="bi bi-cart4"></i>
-                        </button>
+
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <!-- Authenticated users can add to cart directly -->
+                            <button type="button" class="btn btn-warning btn-sm mb-2" onclick="addToCart(this, @fridge.FridgeId)">
+                                Add to Cart <i class="bi bi-cart4"></i>
+                            </button>
+                        }
+                        else
+                        {
+                            <!-- Unauthenticated users see a button that triggers the modal -->
+                            <button type="button" class="btn btn-warning btn-sm mb-2"
+                                    data-bs-toggle="modal" data-bs-target="#loginRequiredModal"
+                                    data-fridge-id="@fridge.FridgeId"
+                                    data-fridge-name="@fridge.FridgeType.Name">
+                                Add to Cart <i class="bi bi-cart4"></i>
+                            </button>
+                        }
                     </div>
                 </div>
             }
@@ -123,37 +73,192 @@
     </div>
 </div>
 
+<!-- Login Required Modal -->
+<div class="modal fade" id="loginRequiredModal" tabindex="-1" aria-labelledby="loginRequiredModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title" id="loginRequiredModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Register/ Login
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="bi bi-cart-x text-danger" style="font-size: 3rem;"></i>
+                </div>
+
+                <!-- Dynamic fridge info -->
+                <div id="fridgeInfo" class="mb-3 p-3 bg-info rounded">
+                    <h6 class="mb-1" id="selectedFridgeName">Fridge Name</h6>
+                    <p class="text-muted mb-0" id="selectedFridgePrice">Price: R 0.00</p>
+                </div>
+
+                <h5 class="text-muted mb-3">If you want to add this fridge to your cart please:</h5>
+
+                <div class="d-grid gap-2 mb-4">
+                    <a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Register" onclick="storePendingFridge()">
+                        <i class="bi bi-person-plus me-2"></i>Register
+                    </a>
+                    <a class="btn btn-outline-primary" asp-area="Identity" asp-page="/Account/Login" onclick="storePendingFridge()">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                    </a>
+                </div>
+
+                <p class="text-muted mb-3">or</p>
+
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-arrow-left me-2"></i>Continue Shopping
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3"></div>
+
 @section Scripts {
     <script>
-        // Auto-slide functionality for home page
-        let currentSlide = 0;
-        const slides = document.querySelectorAll('.fridge-slide');
-        const totalSlides = slides.length;
+        
 
-        function showSlide(index) {
-            const slider = document.getElementById('fridges-slider');
-            if (slider && slides.length > 0) {
-                const slideWidth = slides[0].offsetWidth + 30;
-                slider.scrollLeft = index * slideWidth;
+        // Store the selected fridge when modal is shown
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginModal = document.getElementById('loginRequiredModal');
+            if (loginModal) {
+                loginModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const fridgeId = button.getAttribute('data-fridge-id');
+                    const fridgeName = button.getAttribute('data-fridge-name');
+                    const fridgePrice = button.closest('.rounded').querySelector('.text-success').textContent;
+
+                    // Update modal with fridge info
+                    document.getElementById('selectedFridgeName').textContent = fridgeName;
+                    document.getElementById('selectedFridgePrice').textContent = fridgePrice;
+
+                    // Store in sessionStorage for immediate use
+                    sessionStorage.setItem('pendingFridgeId', fridgeId);
+                    sessionStorage.setItem('pendingFridgeName', fridgeName);
+                    sessionStorage.setItem('pendingFridgePrice', fridgePrice);
+
+                    console.log('Stored pending fridge:', fridgeId, fridgeName);
+                });
+            }
+
+            // Check for pending fridge after authentication
+            checkPendingFridgeAfterAuth();
+
+            // Initialize cart count for authenticated users
+            updateCartCount();
+        });
+
+        // Store the fridge ID when user clicks register/login
+        function storePendingFridge() {
+            const fridgeId = sessionStorage.getItem('pendingFridgeId');
+            const fridgeName = sessionStorage.getItem('pendingFridgeName');
+            const fridgePrice = sessionStorage.getItem('pendingFridgePrice');
+
+            if (fridgeId) {
+                // Store in localStorage for persistence across page navigation
+                const pendingFridge = {
+                    id: fridgeId,
+                    name: fridgeName,
+                    price: fridgePrice,
+                    timestamp: new Date().getTime()
+                };
+
+                localStorage.setItem('pendingFridgeAfterAuth', JSON.stringify(pendingFridge));
+                console.log('Stored pending fridge in localStorage:', pendingFridge);
             }
         }
 
-        function nextSlide() {
-            currentSlide = (currentSlide + 1) % totalSlides;
-            showSlide(currentSlide);
+        // Check for pending fridge after authentication
+        function checkPendingFridgeAfterAuth() {
+            const pendingFridgeData = localStorage.getItem('pendingFridgeAfterAuth');
+
+            if (pendingFridgeData) {
+                const pendingFridge = JSON.parse(pendingFridgeData);
+                const now = new Date().getTime();
+                const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+
+                // Check if the data is not too old (within 1 hour)
+                if (now - pendingFridge.timestamp < oneHour) {
+                    console.log('Found pending fridge after auth:', pendingFridge);
+
+                    // Show a notification or automatically add to cart
+                    showPendingFridgeNotification(pendingFridge);
+
+                    // Clean up
+                    localStorage.removeItem('pendingFridgeAfterAuth');
+                    sessionStorage.removeItem('pendingFridgeId');
+                    sessionStorage.removeItem('pendingFridgeName');
+                    sessionStorage.removeItem('pendingFridgePrice');
+                } else {
+                    // Data is too old, clean up
+                    localStorage.removeItem('pendingFridgeAfterAuth');
+                    console.log('Removed expired pending fridge data');
+                }
+            }
         }
 
-        // Start auto-sliding if there are slides
-        if (totalSlides > 0) {
-            setInterval(nextSlide, 2000);
+                // Show notification about pending fridge
+        function showPendingFridgeNotification(fridge) {
+            const notificationHtml = `
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Welcome back!</strong> You wanted to add "${fridge.name}" to your cart.
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-success btn-sm me-2" onclick="addPendingFridgeToCart(${fridge.id})">
+                            <i class="bi bi-cart-plus me-1"></i>Add to Cart Now
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="dismissPendingFridge()">
+                            Maybe Later
+                        </button>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+
+            // Insert at the top of the main content area (inside the body)
+            const mainContent = document.querySelector('main .container-fluid');
+            if (mainContent) {
+                mainContent.insertAdjacentHTML('afterbegin', notificationHtml);
+            } else {
+                // Fallback: insert directly into main if container-fluid not found
+                const main = document.querySelector('main');
+                if (main) {
+                    main.insertAdjacentHTML('afterbegin', notificationHtml);
+                }
+            }
         }
 
-                function showToast(title, message, type) {
+        // Add pending fridge to cart
+        function addPendingFridgeToCart(fridgeId) {
+            // Create a temporary button to use the existing addToCart function
+            const tempButton = document.createElement('button');
+            addToCart(tempButton, fridgeId);
+
+            // Remove the alert
+            const alert = document.querySelector('.alert.alert-info');
+            if (alert) {
+                alert.remove();
+            }
+        }
+
+        // Dismiss pending fridge notification
+        function dismissPendingFridge() {
+            const alert = document.querySelector('.alert.alert-info');
+            if (alert) {
+                alert.remove();
+            }
+        }
+
+        function showToast(title, message, type) {
             const toastId = 'toast-' + Date.now();
             const bgColor = type === 'success' ? 'bg-success' : 'bg-danger';
 
             const toastHtml = `
-                <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0 position-fixed top-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
+                <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                     <div class="d-flex">
                         <div class="toast-body">
                             <strong>${title}:</strong> ${message}
@@ -163,20 +268,13 @@
                 </div>
             `;
 
-            // Create toast container if it doesn't exist
-            let toastContainer = document.querySelector('.toast-container');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-                document.body.appendChild(toastContainer);
-            }
-
+            const toastContainer = document.querySelector('.toast-container');
             toastContainer.insertAdjacentHTML('beforeend', toastHtml);
 
             const toastElement = document.getElementById(toastId);
             const toast = new bootstrap.Toast(toastElement, {
                 autohide: true,
-                delay: 2000 // 2 seconds
+                delay: 3000
             });
             toast.show();
 
@@ -186,14 +284,16 @@
             });
         }
 
-                function addToCart(button, fridgeId) {
+        function addToCart(button, fridgeId) {
             // Get anti-forgery token
             const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
-            // Show loading state
-            const originalText = button.innerHTML;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
-            button.disabled = true;
+            // Show loading state if button is visible
+            if (button.innerHTML) {
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Added';
+                button.disabled = true;
+            }
 
             fetch('@Url.Action("AddToCart", "Cart")', {
                 method: 'POST',
@@ -214,6 +314,10 @@
                 if (data.success) {
                     updateCartCount();
                     showToast('Success', data.message, 'success');
+
+                    // If this was a pending fridge, clean up
+                    localStorage.removeItem('pendingFridgeAfterAuth');
+                    sessionStorage.removeItem('pendingFridgeId');
                 } else {
                     showToast('Error', data.message, 'error');
                 }
@@ -223,10 +327,35 @@
                 showToast('Error', 'An error occurred while adding to cart', 'error');
             })
             .finally(() => {
-                // Reset button
-                button.innerHTML = originalText;
-                button.disabled = false;
+                // Reset button if it was visible
+                if (button.innerHTML) {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }
             });
+        }
+
+        function updateCartCount() {
+            // Only update cart count if user is authenticated
+            @if (User.Identity.IsAuthenticated)
+            {
+                    <text>
+                    fetch('@Url.Action("GetCartCount", "Cart")')
+                        .then(response => response.json())
+                        .then(data => {
+                            const cartCountElement = document.getElementById('cartCount');
+                            if (cartCountElement) {
+                                cartCountElement.textContent = data.count;
+                                if (data.count > 0) {
+                                    cartCountElement.style.display = 'inline';
+                                } else {
+                                    cartCountElement.style.display = 'none';
+                                }
+                            }
+                        })
+                        .catch(error => console.error('Error updating cart count:', error));
+                    </text>
+            }
         }
     </script>
 }

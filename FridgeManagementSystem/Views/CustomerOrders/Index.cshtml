@@ -1,4 +1,6 @@
-﻿@{
+﻿@model IEnumerable<Order>
+
+@{
     ViewData["Title"] = "My Orders";
     Layout = "_CustomerLayout";
 
@@ -9,7 +11,7 @@
     <i class="bi bi-bag-check text-light fs-2 me-2"></i> List of Orders
 </h3>
 
-@if (ViewBag.Orders == null || !((IEnumerable<Order>)ViewBag.Orders).Any())
+@if (Model == null || !Model.Any())
 {
     <div class="text-center text-light py-5">
         <i class="bi bi-bag-x display-4 text-muted mb-3 empty-icon"></i>
@@ -36,7 +38,7 @@ else
         </thead>
 
         <tbody>
-            @foreach (Order order in ViewBag.Orders)
+            @foreach (var order in Model)
             {
                 int count = 0;
                 decimal total = order.ShippingFee;
@@ -65,23 +67,23 @@ else
                 {
                     orderBadgeColor = "bg-warning text-dark";
                 }
-                else if (order.OrderStatus == "accepted")
+                else if (order.OrderStatus == "Accepted")
                 {
                     orderBadgeColor = "bg-success";
                 }
-                else if (order.OrderStatus == "canceled")
+                else if (order.OrderStatus == "Canceled")
                 {
                     orderBadgeColor = "bg-secondary";
                 }
-                else if (order.OrderStatus == "shipped")
+                else if (order.OrderStatus == "Shipped")
                 {
                     orderBadgeColor = "bg-primary";
                 }
-                else if (order.OrderStatus == "delivered")
+                else if (order.OrderStatus == "Delivered")
                 {
                     orderBadgeColor = "bg-success";
                 }
-                else if (order.OrderStatus == "returned")
+                else if (order.OrderStatus == "Returned")
                 {
                     orderBadgeColor = "bg-info text-dark";
                 }

@@ -1,5 +1,14 @@
 ﻿@model Fridge
 @{
+    if (User.Identity.IsAuthenticated)
+    {
+        Layout = "_CustomerLayout";
+    }
+    else
+    {
+        Layout = "_Layout";
+    }
+
     ViewData["Title"] = "Fridge Details";
 }
 
@@ -10,9 +19,31 @@
     <div class="col-md-8">
         <h3 class="mb-3">@Model.FridgeType.Name</h3>
         <h3 class="text-success mb-3">R @(Model.Price)</h3>
-        <button type="button" class="btn btn-warning btn-sm" onclick="addToCart(this, @Model.FridgeId)">
-            Add to Cart <i class="bi bi-cart4"></i>
-        </button>
+
+        <div class="d-flex gap-2 mb-4">
+            <!-- Back Button - Same size as Add to Cart -->
+            <button type="button" class="btn btn-outline-secondary" onclick="goBack()">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </button>
+
+            @if (User.Identity.IsAuthenticated)
+            {
+                <!-- Authenticated users can add to cart directly -->
+                <button type="button" class="btn btn-warning" onclick="addToCart(this, @Model.FridgeId)">
+                    Add to Cart <i class="bi bi-cart4"></i>
+                </button>
+            }
+            else
+            {
+                <!-- Unauthenticated users see a button that triggers the modal -->
+                <button type="button" class="btn btn-warning"
+                        data-bs-toggle="modal" data-bs-target="#loginRequiredModal"
+                        data-fridge-id="@Model.FridgeId"
+                        data-fridge-name="@Model.FridgeType.Name">
+                    Add to Cart <i class="bi bi-cart4"></i>
+                </button>
+            }
+        </div>
 
         <hr />
 
@@ -57,35 +88,340 @@
     </div>
 </div>
 
+<!-- Login Required Modal -->
+<div class="modal fade" id="loginRequiredModal" tabindex="-1" aria-labelledby="loginRequiredModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title" id="loginRequiredModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Register/ Login
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="bi bi-cart-x text-danger" style="font-size: 3rem;"></i>
+                </div>
+
+                <!-- Dynamic fridge info -->
+                <div id="fridgeInfo" class="mb-3 p-3 bg-info rounded">
+                    <h6 class="mb-1" id="selectedFridgeName">Fridge Name</h6>
+                    <p class="text-muted mb-0" id="selectedFridgePrice">Price: R 0.00</p>
+                </div>
+
+                <h5 class="text-muted mb-3">If you want to add this fridge to your cart please:</h5>
+
+                <div class="d-grid gap-2 mb-4">
+                    <a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Register" onclick="storePendingFridge()">
+                        <i class="bi bi-person-plus me-2"></i>Register
+                    </a>
+                    <a class="btn btn-outline-primary" asp-area="Identity" asp-page="/Account/Login" onclick="storePendingFridge()">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                    </a>
+                </div>
+
+                <p class="text-muted mb-3">or</p>
+
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-arrow-left me-2"></i>Continue Shopping
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3"></div>
+
 @section Scripts {
     <script>
+        // Store referrer information when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Store where the user came from
+            const referrer = document.referrer;
+            console.log('Referrer:', referrer);
+
+            // Store the referrer in sessionStorage for the back button
+            if (referrer && referrer.includes(window.location.hostname)) {
+                sessionStorage.setItem('detailsReferrer', referrer);
+            } else {
+                // Default to store if no valid referrer
+                sessionStorage.setItem('detailsReferrer', '@Url.Action("Index", "Store")');
+            }
+
+            // Also store the current page so we don't go back to ourselves
+            sessionStorage.setItem('currentDetailsPage', window.location.href);
+
+            // Modal event listener
+            const loginModal = document.getElementById('loginRequiredModal');
+            if (loginModal) {
+                loginModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const fridgeId = button.getAttribute('data-fridge-id');
+                    const fridgeName = button.getAttribute('data-fridge-name');
+
+                    // Store in sessionStorage for immediate use
+                    sessionStorage.setItem('pendingFridgeId', fridgeId);
+                    sessionStorage.setItem('pendingFridgeName', fridgeName);
+                    sessionStorage.setItem('pendingFridgePrice', 'R @Model.Price');
+
+                    console.log('Stored pending fridge from details:', fridgeId, fridgeName);
+                });
+            }
+
+            // Check for pending fridge after authentication
+            checkPendingFridgeAfterAuth();
+        });
+
+        // Enhanced back button functionality
+        function goBack() {
+            const referrer = sessionStorage.getItem('detailsReferrer');
+            const currentPage = sessionStorage.getItem('currentDetailsPage');
+
+            console.log('Going back from:', currentPage);
+            console.log('Referrer stored:', referrer);
+
+            // Check if we have a valid referrer that's not the current page
+            if (referrer && referrer !== currentPage) {
+                // Check if referrer is from home or store
+                if (referrer.includes('/Home/Index') || referrer.includes('/Home') ||
+                    referrer.endsWith('/') || !referrer.includes('/Store')) {
+                    // Came from Home - go to Home
+                    window.location.href = '@Url.Action("Index", "Home")';
+                } else if (referrer.includes('/Store')) {
+                    // Came from Store - go to Store
+                    window.location.href = '@Url.Action("Index", "Store")';
+                } else {
+                    // Default to store
+                    window.location.href = '@Url.Action("Index", "Store")';
+                }
+            } else {
+                // No valid referrer or same page - use browser history
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    // Default fallback to store page
+                    window.location.href = '@Url.Action("Index", "Store")';
+                }
+            }
+        }
+
+        // Store the fridge ID when user clicks register/login
+        function storePendingFridge() {
+            const fridgeId = sessionStorage.getItem('pendingFridgeId');
+            const fridgeName = sessionStorage.getItem('pendingFridgeName');
+            const fridgePrice = sessionStorage.getItem('pendingFridgePrice');
+
+            if (fridgeId) {
+                // Store in localStorage for persistence across page navigation
+                const pendingFridge = {
+                    id: fridgeId,
+                    name: fridgeName,
+                    price: fridgePrice,
+                    timestamp: new Date().getTime(),
+                    // Also store where they came from
+                    referrer: sessionStorage.getItem('detailsReferrer')
+                };
+
+                localStorage.setItem('pendingFridgeAfterAuth', JSON.stringify(pendingFridge));
+                console.log('Stored pending fridge in localStorage:', pendingFridge);
+            }
+        }
+
+        // Check for pending fridge after authentication
+        function checkPendingFridgeAfterAuth() {
+            const pendingFridgeData = localStorage.getItem('pendingFridgeAfterAuth');
+
+            if (pendingFridgeData) {
+                const pendingFridge = JSON.parse(pendingFridgeData);
+                const now = new Date().getTime();
+                const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+
+                // Check if the data is not too old (within 1 hour)
+                if (now - pendingFridge.timestamp < oneHour) {
+                    console.log('Found pending fridge after auth:', pendingFridge);
+
+                    // Restore the referrer if available
+                    if (pendingFridge.referrer) {
+                        sessionStorage.setItem('detailsReferrer', pendingFridge.referrer);
+                    }
+
+                    // Show a notification or automatically add to cart
+                    showPendingFridgeNotification(pendingFridge);
+
+                    // Clean up
+                    localStorage.removeItem('pendingFridgeAfterAuth');
+                    sessionStorage.removeItem('pendingFridgeId');
+                    sessionStorage.removeItem('pendingFridgeName');
+                    sessionStorage.removeItem('pendingFridgePrice');
+                } else {
+                    // Data is too old, clean up
+                    localStorage.removeItem('pendingFridgeAfterAuth');
+                    console.log('Removed expired pending fridge data');
+                }
+            }
+        }
+
+        // Show notification about pending fridge
+        function showPendingFridgeNotification(fridge) {
+            const notificationHtml = `
+                <div class="alert alert-info alert-dismissible fade show" role="alert" style="margin-bottom: 0; border-radius: 0;">
+                    <div class="container-fluid">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-info-circle me-3 fs-5"></i>
+                            <div class="flex-grow-1">
+                                <strong>Welcome back!</strong> You wanted to add "${fridge.name}" to your cart.
+                            </div>
+                            <div class="ms-3">
+                                <button type="button" class="btn btn-success btn-sm me-2" onclick="addPendingFridgeToCart(${fridge.id})">
+                                    <i class="bi bi-cart-plus me-1"></i>Add to Cart Now
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="dismissPendingFridge()">
+                                    Maybe Later
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Insert at the top of the main content area (right after page header)
+            const pageHeader = document.querySelector('.bg-light.border-bottom');
+            if (pageHeader) {
+                pageHeader.insertAdjacentHTML('afterend', notificationHtml);
+            } else {
+                // Fallback: insert at top of main content
+                const mainContent = document.querySelector('main .container-fluid');
+                if (mainContent) {
+                    mainContent.insertAdjacentHTML('afterbegin', notificationHtml);
+                }
+            }
+        }
+
+        // Add pending fridge to cart
+        function addPendingFridgeToCart(fridgeId) {
+            // Create a temporary button to use the existing addToCart function
+            const tempButton = document.createElement('button');
+            addToCart(tempButton, fridgeId);
+
+            // Remove the alert
+            const alert = document.querySelector('.alert.alert-info');
+            if (alert) {
+                alert.remove();
+            }
+        }
+
+        // Dismiss pending fridge notification
+        function dismissPendingFridge() {
+            const alert = document.querySelector('.alert.alert-info');
+            if (alert) {
+                alert.remove();
+            }
+        }
+
+        function showToast(title, message, type) {
+            const toastId = 'toast-' + Date.now();
+            const bgColor = type === 'success' ? 'bg-success' : 'bg-danger';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <strong>${title}:</strong> ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+            const toastContainer = document.querySelector('.toast-container');
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: true,
+                delay: 3000
+            });
+            toast.show();
+
+            // Remove toast from DOM after it hides
+            toastElement.addEventListener('hidden.bs.toast', function () {
+                this.remove();
+            });
+        }
+
         function addToCart(button, fridgeId) {
+            // Get anti-forgery token
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            // Show loading state if button is visible
+            if (button.innerHTML) {
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+                button.disabled = true;
+            }
+
             fetch('@Url.Action("AddToCart", "Cart")', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
                 },
-                body: JSON.stringify({ fridgeId: fridgeId, quantity: 1 })
+                body: `fridgeId=${fridgeId}&quantity=1`
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Add to cart response:', data);
                 if (data.success) {
                     updateCartCount();
-                    alert('Fridge added to cart!');
+                    showToast('Success', data.message, 'success');
+
+                    // If this was a pending fridge, clean up
+                    localStorage.removeItem('pendingFridgeAfterAuth');
+                    sessionStorage.removeItem('pendingFridgeId');
                 } else {
-                    alert(data.message);
+                    showToast('Error', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error', 'An error occurred while adding to cart', 'error');
+            })
+            .finally(() => {
+                // Reset button if it was visible
+                if (button.innerHTML) {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
                 }
             });
         }
 
         function updateCartCount() {
-            fetch('@Url.Action("GetCartCount", "Cart")')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('cart-count').textContent = data.count;
-                });
+            // Only update cart count if user is authenticated
+            @if (User.Identity.IsAuthenticated)
+            {
+                    <text>
+                    fetch('@Url.Action("GetCartCount", "Cart")')
+                        .then(response => response.json())
+                        .then(data => {
+                            const cartCountElement = document.getElementById('cartCount');
+                            if (cartCountElement) {
+                                cartCountElement.textContent = data.count;
+                                if (data.count > 0) {
+                                    cartCountElement.style.display = 'inline';
+                                } else {
+                                    cartCountElement.style.display = 'none';
+                                }
+                            }
+                        })
+                        .catch(error => console.error('Error updating cart count:', error));
+                    </text>
+            }
         }
-
-
     </script>
 }

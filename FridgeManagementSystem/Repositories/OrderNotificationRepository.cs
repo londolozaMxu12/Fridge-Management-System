@@ -289,9 +289,9 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                 var notification = new Notification
                 {
                     UserId = liaison.Id,
-                    Title = "📦 New Order Received",
+                    Title = "New Order Received",
                     Message = $"New order #{orderWithDetails.Id} received. " +
-                             $"{totalItems} items ({itemsSummary}) waiting for allocation.",
+                             $"{totalItems} items ({itemsSummary}) waiting for approval.",
                     IsRead = false,
                     CreatedAt = DateTime.Now,
                     Link = $"/LiaisonOrder/Details/{orderWithDetails.Id}"
@@ -343,7 +343,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                 var liaisonNotification = new Notification
                 {
                     UserId = liaison.Id,
-                    Title = "🔄 Fridges Freed from Cancelled Order",
+                    Title = "Fridges Freed from Cancelled Order",
                     Message = $"Order #{order.Id} was cancelled. {freedFridgeIds.Count} fridges ({fridgeSummary}) " +
                              $"are now available in the store inventory.",
                     IsRead = false,
@@ -393,7 +393,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                 var notification = new Notification
                 {
                     UserId = liaison.Id,
-                    Title = "📋 Order Ready for Allocation",
+                    Title = "Order Ready for Allocation",
                     Message = $"Order #{orderWithDetails.Id} from {orderWithDetails.Customer?.FullName} " +
                              $"is ready for fridge allocation. {totalItems} {itemsSummary} waiting.",
                     IsRead = false,

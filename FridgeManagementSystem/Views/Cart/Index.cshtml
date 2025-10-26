@@ -132,8 +132,12 @@
                         </div>
                     </div>
 
-                    <div class="d-grid">
+                    <div class="d-grid gap-2">
                         <button class="btn btn-outline-light" type="submit">Checkout</button>
+
+                        <button type="button" class="btn btn-outline-primary text-light" onclick="continueShopping()">
+                            <i class="bi bi-cart me-1"></i>Continue Shopping
+                        </button>
                     </div>
                 </form>
             }
@@ -143,6 +147,45 @@
 
 @section Scripts {
     <script>
+        // Store referrer information when checkout page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const referrer = document.referrer;
+            console.log('Checkout page referrer:', referrer);
+
+            // Store where the user came from for the continue shopping button
+            if (referrer && referrer.includes(window.location.hostname)) {
+                sessionStorage.setItem('checkoutReferrer', referrer);
+            } else {
+                // Default to store if no valid referrer
+                sessionStorage.setItem('checkoutReferrer', '@Url.Action("Index", "Store")');
+            }
+        });
+
+        // Smart continue shopping functionality
+        function continueShopping() {
+            const referrer = sessionStorage.getItem('checkoutReferrer');
+
+            console.log('Continue shopping from checkout, referrer:', referrer);
+
+            if (referrer) {
+                // Check if referrer is from home or store
+                if (referrer.includes('/Home/Index') || referrer.includes('/Home') ||
+                    referrer.endsWith('/') || !referrer.includes('/Store')) {
+                    // Came from Home - go to Home
+                    window.location.href = '@Url.Action("Index", "Home")';
+                } else if (referrer.includes('/Store')) {
+                    // Came from Store - go to Store
+                    window.location.href = '@Url.Action("Index", "Store")';
+                } else {
+                    // Default to store
+                    window.location.href = '@Url.Action("Index", "Store")';
+                }
+            } else {
+                // No referrer stored - default to store
+                window.location.href = '@Url.Action("Index", "Store")';
+            }
+        }
+
         function increase(fridgeId) {
             const currentQuantity = parseInt(event.target.parentElement.querySelector('span').textContent);
             updateQuantity(fridgeId, currentQuantity + 1);
