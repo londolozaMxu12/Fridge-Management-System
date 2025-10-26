@@ -170,10 +170,25 @@
 
                     console.log('Stored pending fridge:', fridgeId, fridgeName);
                 });
+
+                // Clear pending fridge if modal is closed without authentication
+                loginModal.addEventListener('hide.bs.modal', function () {
+                    // Only clear if user is still not authenticated
+                    if (!@(User.Identity.IsAuthenticated ? "true" : "false")) {
+                        console.log('Modal closed without authentication - clearing pending fridge');
+                        sessionStorage.removeItem('pendingFridgeId');
+                        sessionStorage.removeItem('pendingFridgeName');
+                        sessionStorage.removeItem('pendingFridgePrice');
+                        // Don't remove from localStorage here - it should persist for actual auth
+                    }
+                });
             }
 
             // Check for pending fridge after authentication
             checkPendingFridgeAfterAuth();
+
+            // Initialize cart count on page load
+            updateCartCount();
         });
 
         // Store the fridge ID when user clicks register/login
@@ -198,8 +213,6 @@
 
         // Check for pending fridge after authentication
         function checkPendingFridgeAfterAuth() {
-            // Check if user is authenticated (this would need to be handled by your auth system)
-            // For now, we'll check if there's a pending fridge and user just came from auth pages
             const pendingFridgeData = localStorage.getItem('pendingFridgeAfterAuth');
 
             if (pendingFridgeData) {
@@ -207,15 +220,12 @@
                 const now = new Date().getTime();
                 const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
 
-                // Check if the data is not too old (within 1 hour)
-                if (now - pendingFridge.timestamp < oneHour) {
-                    console.log('Found pending fridge after auth:', pendingFridge);
+                // Check if the data is not too old (within 1 hour) AND user is authenticated
+                if (now - pendingFridge.timestamp < oneHour && @(User.Identity.IsAuthenticated ? "true" : "false")) {
+                    console.log('Found pending fridge after successful auth:', pendingFridge);
 
                     // Show a notification or automatically add to cart
                     showPendingFridgeNotification(pendingFridge);
-
-                    // Optionally auto-add to cart (uncomment if you want this behavior)
-                    // autoAddPendingFridgeToCart(pendingFridge.id);
 
                     // Clean up
                     localStorage.removeItem('pendingFridgeAfterAuth');
@@ -223,14 +233,14 @@
                     sessionStorage.removeItem('pendingFridgeName');
                     sessionStorage.removeItem('pendingFridgePrice');
                 } else {
-                    // Data is too old, clean up
+                    // Data is too old OR user is not authenticated, clean up
                     localStorage.removeItem('pendingFridgeAfterAuth');
-                    console.log('Removed expired pending fridge data');
+                    console.log('Removed pending fridge data - user not authenticated or data expired');
                 }
             }
         }
 
-                // Show notification about pending fridge
+        // Show notification about pending fridge - ONLY when user is authenticated
         function showPendingFridgeNotification(fridge) {
             const notificationHtml = `
                 <div class="alert alert-info alert-dismissible fade show" role="alert">
@@ -268,7 +278,7 @@
             addToCart(tempButton, fridgeId);
 
             // Remove the alert
-            const alert = document.querySelector('.alert');
+            const alert = document.querySelector('.alert.alert-info');
             if (alert) {
                 alert.remove();
             }
@@ -276,7 +286,7 @@
 
         // Dismiss pending fridge notification
         function dismissPendingFridge() {
-            const alert = document.querySelector('.alert');
+            const alert = document.querySelector('.alert.alert-info');
             if (alert) {
                 alert.remove();
             }
@@ -387,10 +397,5 @@
                 })
                 .catch(error => console.error('Error updating cart count:', error));
         }
-
-        // Initialize cart count on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            updateCartCount();
-        });
     </script>
 }

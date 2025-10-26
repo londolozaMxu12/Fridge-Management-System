@@ -14,7 +14,7 @@ using System.Security.Claims;
 
 namespace FridgeManagementSystem.Controllers.F.Technician
 {
-    //[Authorize(Roles = "FaultTechnician,Admin")]
+    
     public class FaultTechnicianController : Controller
     {
         private readonly FridgeManagementSystemContext _context;
@@ -50,55 +50,113 @@ namespace FridgeManagementSystem.Controllers.F.Technician
         private async Task SetNavigationViewBagProperties()
         {
             var currentTechnician = await GetCurrentFaultTechnicianAsync();
+                        
             var baseQuery = _context.Faults.AsQueryable();
-
-            if (currentTechnician != null)
-            {
-                // For technicians, only show counts for their assigned faults + unassigned
-                baseQuery = baseQuery.Where(f => f.FaultTechnicianId == null || f.FaultTechnicianId == currentTechnician.Id);
-            }
 
             ViewBag.TotalFaultsCount = await baseQuery.CountAsync();
             ViewBag.PendingFaultsCount = await baseQuery.CountAsync(f => f.Status == FaultStatus.Reported);
             ViewBag.UrgentFaultsCount = await baseQuery.CountAsync(f => f.Priority == FaultPriority.Critical || f.Priority == FaultPriority.High);
             ViewBag.InProgressFaultsCount = await baseQuery.CountAsync(f => f.Status == FaultStatus.InProgress);
             ViewBag.CompletedFaultsCount = await baseQuery.CountAsync(f => f.Status == FaultStatus.Completed);
+
+            // faults attended by other technicians
+            if (currentTechnician != null)
+            {
+                ViewBag.AttendedByOthersCount = await baseQuery.CountAsync(f =>
+                    f.FaultTechnicianId != null && f.FaultTechnicianId != currentTechnician.Id);
+                ViewBag.AttendedByMeCount = await baseQuery.CountAsync(f =>
+                    f.FaultTechnicianId == currentTechnician.Id);
+                ViewBag.UnattendedCount = await baseQuery.CountAsync(f =>
+                    f.FaultTechnicianId == null);
+            }
         }
 
         public async Task<IActionResult> Dashboard()
         {
-            // Check if current user is a fault technician and filter accordingly
             var currentTechnician = await GetCurrentFaultTechnicianAsync();
             var isFaultTechnician = currentTechnician != null;
             var currentTechnicianId = currentTechnician?.Id;
 
             await SetNavigationViewBagProperties();
 
-            // Get only unattended faults (FaultTechnicianId == null)
-            var faults = await _context.Faults
+            // Get statistics for dashboard cards
+            var totalFaults = await _context.Faults.CountAsync();
+            var unattendedFaults = await _context.Faults.CountAsync(f => f.FaultTechnicianId == null);
+            var urgentFaults = await _context.Faults.CountAsync(f =>
+                f.FaultTechnicianId == null &&
+                (f.Priority == FaultPriority.Critical || f.Priority == FaultPriority.High));
+
+            var myActiveFaults = currentTechnicianId.HasValue ?
+                await _context.Faults.CountAsync(f => f.FaultTechnicianId == currentTechnicianId &&
+                                                    (f.Status == FaultStatus.InProgress || f.Status == FaultStatus.Scheduled)) : 0;
+
+            var myCompletedFaults = currentTechnicianId.HasValue ?
+                await _context.Faults.CountAsync(f => f.FaultTechnicianId == currentTechnicianId &&
+                                                    f.Status == FaultStatus.Completed) : 0;
+
+            // Get upcoming schedules (next 7 days)
+            var upcomingSchedules = currentTechnicianId.HasValue ?
+                await _context.RepairSchedules
+                    .Include(rs => rs.Fault)
+                        .ThenInclude(f => f.ReportedBy)
+                            .ThenInclude(c => c.User)
+                    .Include(rs => rs.Fault)
+                        .ThenInclude(f => f.Fridge)
+                            .ThenInclude(f => f.FridgeType)
+                    .Where(rs => rs.FaultTechnicianId == currentTechnicianId &&
+                                rs.ScheduledDate >= DateTime.Today &&
+                                rs.ScheduledDate <= DateTime.Today.AddDays(7))
+                    .OrderBy(rs => rs.ScheduledDate)
+                    .Take(3)
+                    .ToListAsync() : new List<RepairSchedule>();
+
+            // Get recent unattended faults (for quick action)
+            var recentUnattendedFaults = await _context.Faults
                 .Include(f => f.Fridge)
-                .ThenInclude(f => f.FridgeType)
+                    .ThenInclude(f => f.FridgeType)
                 .Include(f => f.ReportedBy)
-                .ThenInclude(c => c.User)
-                .Include(f => f.FaultTechnician)
-                .ThenInclude(t => t.User)
-                .Where(f => f.FaultTechnicianId == null)  // Only unattended faults
+                    .ThenInclude(c => c.User)
+                .Where(f => f.FaultTechnicianId == null)
                 .OrderByDescending(f => f.Priority)
                 .ThenByDescending(f => f.ReportedDate)
-                .Take(2)
+                .Take(3)
                 .ToListAsync();
 
-            // Get schedules for the stat cards
-            var schedules = currentTechnicianId.HasValue ?
-                await _context.RepairSchedules.Where(rs => rs.FaultTechnicianId == currentTechnicianId).ToListAsync()
-                : new List<RepairSchedule>();
+            // Get my recent faults
+            var myRecentFaults = currentTechnicianId.HasValue ?
+                await _context.Faults
+                    .Include(f => f.Fridge)
+                        .ThenInclude(f => f.FridgeType)
+                    .Include(f => f.ReportedBy)
+                        .ThenInclude(c => c.User)
+                    .Where(f => f.FaultTechnicianId == currentTechnicianId)
+                    .OrderByDescending(f => f.UpdatedAt)
+                    .Take(3)
+                    .ToListAsync() : new List<Fault>();
+
+            // Calculate completion rate
+            var completionRate = (myActiveFaults + myCompletedFaults) > 0 ?
+                (double)myCompletedFaults / (myActiveFaults + myCompletedFaults) * 100 : 0;
 
             var dashboardView = new TechnicianDashboardViewModel
             {
-                Faults = faults,
-                Schedules = schedules,
+                // Statistics
+                TotalFaults = totalFaults,
+                UnattendedFaults = unattendedFaults,
+                UrgentFaults = urgentFaults,
+                MyActiveFaults = myActiveFaults,
+                MyCompletedFaults = myCompletedFaults,
+                CompletionRate = completionRate,
+
+                // Lists
+                UpcomingSchedules = upcomingSchedules,
+                RecentUnattendedFaults = recentUnattendedFaults,
+                MyRecentFaults = myRecentFaults,
+
+                // Technician info
                 IsFaultTechnician = isFaultTechnician,
-                CurrentTechnicianId = currentTechnicianId
+                CurrentTechnicianId = currentTechnicianId,
+                TechnicianName = currentTechnician?.User?.FullName
             };
 
             // Pass data to view
@@ -147,16 +205,6 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                 }
             }
 
-            // Check if current user is a fault technician and filter accordingly
-            var currentTechnician = await GetCurrentFaultTechnicianAsync();
-            var isFaultTechnician = currentTechnician != null;
-            var currentTechnicianId = currentTechnician?.Id;
-
-            if (isFaultTechnician)
-            {
-                query = query.Where(f => f.FaultTechnicianId == null || f.FaultTechnicianId == currentTechnicianId);
-            }
-
             // Sort functionality (AFTER all filters)
             query = sort switch
             {
@@ -177,8 +225,8 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                 .ToListAsync();
 
             // Pass data to view
-            ViewBag.IsFaultTechnician = isFaultTechnician;
-            ViewBag.CurrentTechnicianId = currentTechnicianId;
+            ViewBag.IsFaultTechnician = await GetCurrentFaultTechnicianAsync() != null;
+            ViewBag.CurrentTechnicianId = (await GetCurrentFaultTechnicianAsync())?.Id;
             ViewBag.CurrentPriority = priority;
             ViewBag.CurrentStatus = status;
             ViewBag.TotalCount = totalCount;

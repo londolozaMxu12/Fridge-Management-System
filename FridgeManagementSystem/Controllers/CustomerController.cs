@@ -44,10 +44,10 @@ namespace FridgeManagementSystem.Controllers
             return isAdmin || isCustomerLiaison || isCustomer;
         }
 
-        public IActionResult index()
-        {
-            return View();
-        }
+        //public IActionResult index()
+        //{
+        //    return View();
+        //}
 
         //public async Task<IActionResult> Home(string searchTerm = "", int fridgeTypeId = 0)
         //{
@@ -298,7 +298,7 @@ namespace FridgeManagementSystem.Controllers
         [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> CustomerDetails(int id)
         {
-            // Set ViewBag for layout detection
+            // Set ViewBag for layout detection 
             var currentUser = await _userManager.GetUserAsync(User);
             var userWithDetails = await _context.Users
                 .Include(u => u.Employees)
@@ -319,6 +319,8 @@ namespace FridgeManagementSystem.Controllers
                     .Include(c => c.ReportedFaults)
                     .Include(c => c.Quotations)
                     .Include(c => c.Allocations)
+                    .Include(c => c.Orders) 
+                        .ThenInclude(o => o.Items) 
                     .FirstOrDefaultAsync(c => c.Id == id);
 
                 if (customer == null)
@@ -326,6 +328,20 @@ namespace FridgeManagementSystem.Controllers
                     TempData["Error"] = "Customer not found.";
                     return RedirectToAction(nameof(CustomerManagement));
                 }
+
+                // Count orders using the included collection
+                var completedStatuses = new[] { "Completed", "Cancelled", "Delivered", "Refunded" };
+
+                ViewBag.ActiveOrdersCount = customer.Orders?
+                    .Count(o => !completedStatuses.Contains(o.OrderStatus)) ?? 0;
+
+                ViewBag.TotalOrdersCount = customer.Orders?.Count ?? 0;
+                ViewBag.CompletedOrdersCount = customer.Orders?
+                    .Count(o => completedStatuses.Contains(o.OrderStatus)) ?? 0;
+                ViewBag.PendingOrdersCount = customer.Orders?
+                    .Count(o => o.OrderStatus == "Received") ?? 0;
+                ViewBag.ProcessingOrdersCount = customer.Orders?
+                    .Count(o => o.OrderStatus == "Processing") ?? 0;
 
                 return View(customer);
             }

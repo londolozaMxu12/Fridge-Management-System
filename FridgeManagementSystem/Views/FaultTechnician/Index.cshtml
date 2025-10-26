@@ -69,6 +69,18 @@
         </a>
     </div>
 
+    <!-- Optional: Show assignment breakdown if user is a technician -->
+    @if (ViewBag.IsFaultTechnician)
+    {
+        <div class="ms-3">
+            <small class="text-muted">
+                Breakdown:
+                <span class="badge bg-warning">@ViewBag.UnattendedCount unattended</span>
+                <span class="badge bg-success">@ViewBag.AttendedByMeCount attended by you</span>
+                <span class="badge bg-secondary">@ViewBag.AttendedByOthersCount attended by others</span>
+            </small>
+        </div>
+    }
 </div>
 
 <div class="card mb-4">
@@ -163,7 +175,7 @@ else
                             @fault.Title
                             @if (fault.FaultTechnicianId == null)
                             {
-                                <span class="badge bg-primary float-end">Un Attended</span>
+                                <span class="badge bg-warning float-end">Unattended</span>
                             }
                             else if (fault.FaultTechnicianId == ViewBag.CurrentTechnicianId)
                             {
@@ -206,11 +218,16 @@ else
                             @fault.ReportedDate.ToString("yyyy-MM-dd HH:mm")
                         </div>
 
+                        <!-- Updated: Always show technician info if assigned -->
                         @if (fault.FaultTechnicianId != null)
                         {
                             <div class="mb-2">
                                 <strong>Assigned Technician:</strong>
                                 @fault.FaultTechnician?.User?.FullName
+                                @if (fault.FaultTechnicianId != ViewBag.CurrentTechnicianId)
+                                {
+                                    <span class="text-muted">(Another technician)</span>
+                                }
                             </div>
                         }
                     </div>
@@ -238,6 +255,12 @@ else
                                    class="btn btn-warning" title="Update Fault">
                                     <i class="fas fa-edit"></i> Update
                                 </a>
+                            }
+                            else if (fault.FaultTechnicianId != null && fault.FaultTechnicianId != ViewBag.CurrentTechnicianId)
+                            {
+                                <button class="btn btn-outline-secondary" disabled title="Attended by another technician">
+                                    <i class="fas fa-user-clock"></i> Already Attended
+                                </button>
                             }
                         </div>
                     </div>

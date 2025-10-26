@@ -120,7 +120,28 @@
 
 @section Scripts {
     <script>
-        
+        // Auto-slide functionality for home page
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.fridge-slide');
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            const slider = document.getElementById('fridges-slider');
+            if (slider && slides.length > 0) {
+                const slideWidth = slides[0].offsetWidth + 30;
+                slider.scrollLeft = index * slideWidth;
+            }
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            showSlide(currentSlide);
+        }
+
+        // Start auto-sliding if there are slides
+        if (totalSlides > 0) {
+            setInterval(nextSlide, 2000);
+        }
 
         // Store the selected fridge when modal is shown
         document.addEventListener('DOMContentLoaded', function() {
@@ -142,6 +163,18 @@
                     sessionStorage.setItem('pendingFridgePrice', fridgePrice);
 
                     console.log('Stored pending fridge:', fridgeId, fridgeName);
+                });
+
+                // Clear pending fridge if modal is closed without authentication
+                loginModal.addEventListener('hide.bs.modal', function () {
+                    // Only clear if user is still not authenticated
+                    if (!@(User.Identity.IsAuthenticated ? "true" : "false")) {
+                        console.log('Modal closed without authentication - clearing pending fridge');
+                        sessionStorage.removeItem('pendingFridgeId');
+                        sessionStorage.removeItem('pendingFridgeName');
+                        sessionStorage.removeItem('pendingFridgePrice');
+                        // Don't remove from localStorage here - it should persist for actual auth
+                    }
                 });
             }
 
@@ -181,9 +214,9 @@
                 const now = new Date().getTime();
                 const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
 
-                // Check if the data is not too old (within 1 hour)
-                if (now - pendingFridge.timestamp < oneHour) {
-                    console.log('Found pending fridge after auth:', pendingFridge);
+                // Check if the data is not too old (within 1 hour) AND user is authenticated
+                if (now - pendingFridge.timestamp < oneHour && @(User.Identity.IsAuthenticated ? "true" : "false")) {
+                    console.log('Found pending fridge after successful auth:', pendingFridge);
 
                     // Show a notification or automatically add to cart
                     showPendingFridgeNotification(pendingFridge);
@@ -194,14 +227,14 @@
                     sessionStorage.removeItem('pendingFridgeName');
                     sessionStorage.removeItem('pendingFridgePrice');
                 } else {
-                    // Data is too old, clean up
+                    // Data is too old OR user is not authenticated, clean up
                     localStorage.removeItem('pendingFridgeAfterAuth');
-                    console.log('Removed expired pending fridge data');
+                    console.log('Removed pending fridge data - user not authenticated or data expired');
                 }
             }
         }
 
-                // Show notification about pending fridge
+        // Show notification about pending fridge - ONLY when user is authenticated
         function showPendingFridgeNotification(fridge) {
             const notificationHtml = `
                 <div class="alert alert-info alert-dismissible fade show" role="alert">

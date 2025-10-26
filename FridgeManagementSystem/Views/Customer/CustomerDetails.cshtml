@@ -150,17 +150,26 @@
                     <div class="col-sm-6">@Model.Fridges?.Count()</div>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-sm-6 fw-bold">Active Requests:</div>
-                   @*  <div class="col-sm-6">@Model.FridgeRequests?.Count(r => r.Status != "Completed")</div> *@
+                    <div class="col-sm-6 fw-bold">Active Orders:</div>
+                    <div class="col-sm-6">
+                        @if (ViewBag.ActiveOrdersCount > 0)
+                        {
+                            <span class="badge bg-warning text-dark">@ViewBag.ActiveOrdersCount active order(s)</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">No active orders</span>
+                        }
+                    </div>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-sm-6 fw-bold">Total Faults:</div>
+                    <div class="col-sm-6 fw-bold">Total Reported Faults:</div>
                     <div class="col-sm-6">@Model.ReportedFaults?.Count()</div>
                 </div>
-                <div class="row mb-3">
+                @* <div class="row mb-3">
                     <div class="col-sm-6 fw-bold">Quotations:</div>
                     <div class="col-sm-6">@Model.Quotations?.Count()</div>
-                </div>
+                </div> *@
                 <div class="row mb-3">
                     <div class="col-sm-6 fw-bold">Allocations:</div>
                     <div class="col-sm-6">@Model.Allocations?.Count()</div>

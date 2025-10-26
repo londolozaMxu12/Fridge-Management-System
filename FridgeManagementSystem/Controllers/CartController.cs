@@ -11,6 +11,7 @@ using System.Security.Claims;
 
 namespace FridgeManagementSystem.Controllers
 {
+    [Authorize] 
     public class CartController : Controller
     {
         private readonly FridgeManagementSystemContext _context;
@@ -22,7 +23,8 @@ namespace FridgeManagementSystem.Controllers
         public CartController(FridgeManagementSystemContext context,
                             UserManager<ApplicationUser> userManager,
                             IConfiguration configuration,
-                            ILogger<CartController> logger, IOrderNotificationRepository notification)
+                            ILogger<CartController> logger,
+                            IOrderNotificationRepository notification)
         {
             _context = context;
             _userManager = userManager;
@@ -37,59 +39,51 @@ namespace FridgeManagementSystem.Controllers
 
             var addressParts = new[]
             {
-        user.Address,
-        user.Suburb,
-        user.City
-    };
+                user.Address,
+                user.Suburb,
+                user.City
+            };
 
             // Filter out null/empty values and join with commas
             return string.Join(", ", addressParts.Where(part => !string.IsNullOrWhiteSpace(part)));
         }
 
+        [Authorize]
         public async Task<IActionResult> IndexAsync()
         {
             try
             {
+                // Get cart items from database for logged-in users
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var cart = await _context.ShoppingCart
+                    .Include(c => c.Items)
+                    .ThenInclude(i => i.Fridge)
+                    .ThenInclude(f => f.FridgeType)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
+
                 List<CartItemViewModel> cartItems;
                 decimal subtotal;
 
-                if (User.Identity.IsAuthenticated)
+                if (cart == null || !cart.Items.Any())
                 {
-                    // Get cart items from database for logged-in users
-                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    var cart = _context.ShoppingCart
-                        .Include(c => c.Items)
-                        .ThenInclude(i => i.Fridge)
-                        .ThenInclude(f => f.FridgeType)
-                        .FirstOrDefault(c => c.UserId == userId);
-
-                    if (cart == null || !cart.Items.Any())
-                    {
-                        cartItems = new List<CartItemViewModel>();
-                        subtotal = 0;
-                    }
-                    else
-                    {
-                        cartItems = cart.Items.Select(item => new CartItemViewModel
-                        {
-                            FridgeId = item.FridgeId,
-                            Quantity = item.Quantity,
-                            UnitPrice = item.Fridge.Price,
-                            Fridge = item.Fridge,
-                            FridgeName = item.Fridge.FridgeType.Name,
-                            FridgeBrand = item.Fridge.FridgeType.Brand,
-                            FridgeModel = item.Fridge.FridgeType.Model,
-                            ImageFileName = item.Fridge.ImageFileName
-                        }).ToList();
-
-                        subtotal = cartItems.Sum(item => item.Quantity * item.UnitPrice);
-                    }
+                    cartItems = new List<CartItemViewModel>();
+                    subtotal = 0;
                 }
                 else
                 {
-                    // Get cart items from cookies for anonymous users
-                    cartItems = CartHelper.GetCartItems(Request, Response, _context);
-                    subtotal = CartHelper.GetSubtotal(cartItems);
+                    cartItems = cart.Items.Select(item => new CartItemViewModel
+                    {
+                        FridgeId = item.FridgeId,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.Fridge.Price,
+                        Fridge = item.Fridge,
+                        FridgeName = item.Fridge.FridgeType.Name,
+                        FridgeBrand = item.Fridge.FridgeType.Brand,
+                        FridgeModel = item.Fridge.FridgeType.Model,
+                        ImageFileName = item.Fridge.ImageFileName
+                    }).ToList();
+
+                    subtotal = cartItems.Sum(item => item.Quantity * item.UnitPrice);
                 }
 
                 ViewBag.CartItems = cartItems;
@@ -97,21 +91,16 @@ namespace FridgeManagementSystem.Controllers
                 ViewBag.Subtotal = subtotal;
                 ViewBag.Total = subtotal + _shippingFee;
 
-                // If user is logged in, pre-fill the form with their address
-                if (User.Identity.IsAuthenticated)
+                // Pre-fill the form with user's address
+                var user = await _userManager.GetUserAsync(User);
+                var model = new CheckoutViewModel();
+
+                if (user != null)
                 {
-                    var user = await _userManager.GetUserAsync(User);
-                    var model = new CheckoutViewModel();
-
-                    if (user != null)
-                    {
-                        model.DeliveryAddress = BuildDeliveryAddress(user);
-                    }
-
-                    return View(model);
+                    model.DeliveryAddress = BuildDeliveryAddress(user);
                 }
 
-                return View(new CheckoutViewModel());
+                return View(model);
             }
             catch (Exception ex)
             {
@@ -122,50 +111,41 @@ namespace FridgeManagementSystem.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         [ValidateAntiForgeryToken]
-        public IActionResult Index(CheckoutViewModel model)
+        public async Task<IActionResult> IndexAsync(CheckoutViewModel model)
         {
             try
             {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var cart = await _context.ShoppingCart
+                    .Include(c => c.Items)
+                    .ThenInclude(i => i.Fridge)
+                    .ThenInclude(f => f.FridgeType)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
+
                 List<CartItemViewModel> cartItems;
                 decimal subtotal;
 
-                if (User.Identity.IsAuthenticated)
+                if (cart == null || !cart.Items.Any())
                 {
-                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    var cart = _context.ShoppingCart
-                        .Include(c => c.Items)
-                        .ThenInclude(i => i.Fridge)
-                        .ThenInclude(f => f.FridgeType)
-                        .FirstOrDefault(c => c.UserId == userId);
-
-                    if (cart == null || !cart.Items.Any())
-                    {
-                        cartItems = new List<CartItemViewModel>();
-                        subtotal = 0;
-                    }
-                    else
-                    {
-                        cartItems = cart.Items.Select(item => new CartItemViewModel
-                        {
-                            FridgeId = item.FridgeId,
-                            Quantity = item.Quantity,
-                            UnitPrice = item.Fridge.Price,
-                            Fridge = item.Fridge,
-                            FridgeName = item.Fridge.FridgeType.Name,
-                            FridgeBrand = item.Fridge.FridgeType.Brand,
-                            FridgeModel = item.Fridge.FridgeType.Model,
-                            ImageFileName = item.Fridge.ImageFileName
-                        }).ToList();
-
-                        subtotal = cartItems.Sum(item => item.Quantity * item.UnitPrice);
-                    }
+                    cartItems = new List<CartItemViewModel>();
+                    subtotal = 0;
                 }
                 else
                 {
-                    cartItems = CartHelper.GetCartItems(Request, Response, _context);
-                    subtotal = CartHelper.GetSubtotal(cartItems);
+                    cartItems = cart.Items.Select(item => new CartItemViewModel
+                    {
+                        FridgeId = item.FridgeId,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.Fridge.Price,
+                        Fridge = item.Fridge,
+                        FridgeName = item.Fridge.FridgeType.Name,
+                        FridgeBrand = item.Fridge.FridgeType.Brand,
+                        FridgeModel = item.Fridge.FridgeType.Model,
+                        ImageFileName = item.Fridge.ImageFileName
+                    }).ToList();
+
+                    subtotal = cartItems.Sum(item => item.Quantity * item.UnitPrice);
                 }
 
                 ViewBag.CartItems = cartItems;
@@ -178,7 +158,7 @@ namespace FridgeManagementSystem.Controllers
                     return View(model);
                 }
 
-                // Check if shopping cart is empty or not
+                // Check if shopping cart is empty
                 if (!cartItems.Any())
                 {
                     ViewBag.ErrorMessage = "Your cart is empty";
@@ -187,7 +167,6 @@ namespace FridgeManagementSystem.Controllers
 
                 TempData["DeliveryAddress"] = model.DeliveryAddress;
                 TempData["PaymentMethod"] = model.PaymentMethod;
-                
 
                 if (model.PaymentMethod == "CreditCard" || model.PaymentMethod == "PayPal")
                 {
@@ -205,54 +184,40 @@ namespace FridgeManagementSystem.Controllers
         }
 
         [Authorize]
-        public IActionResult Confirm()
+        public async Task<IActionResult> ConfirmAsync()
         {
             try
             {
-                List<CartItemViewModel> cartItems;
-                decimal subtotal;
-                int cartSize;
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var cart = await _context.ShoppingCart
+                    .Include(c => c.Items)
+                    .ThenInclude(i => i.Fridge)
+                    .ThenInclude(f => f.FridgeType)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
 
-                if (User.Identity.IsAuthenticated)
+                if (cart == null || !cart.Items.Any())
                 {
-                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    var cart = _context.ShoppingCart
-                        .Include(c => c.Items)
-                        .ThenInclude(i => i.Fridge)
-                        .ThenInclude(f => f.FridgeType)
-                        .FirstOrDefault(c => c.UserId == userId);
-
-                    if (cart == null || !cart.Items.Any())
-                    {
-                        TempData["ErrorMessage"] = "Your cart is empty";
-                        return RedirectToAction("Index", "Cart");
-                    }
-
-                    cartItems = cart.Items.Select(item => new CartItemViewModel
-                    {
-                        FridgeId = item.FridgeId,
-                        Quantity = item.Quantity,
-                        UnitPrice = item.Fridge.Price,
-                        Fridge = item.Fridge,
-                        FridgeName = item.Fridge.FridgeType.Name,
-                        FridgeBrand = item.Fridge.FridgeType.Brand,
-                        FridgeModel = item.Fridge.FridgeType.Model,
-                        ImageFileName = item.Fridge.ImageFileName
-                    }).ToList();
-
-                    subtotal = cartItems.Sum(item => item.Quantity * item.UnitPrice);
-                    cartSize = cart.Items.Sum(i => i.Quantity);
+                    TempData["ErrorMessage"] = "Your cart is empty";
+                    return RedirectToAction("Index", "Cart");
                 }
-                else
+
+                var cartItems = cart.Items.Select(item => new CartItemViewModel
                 {
-                    cartItems = CartHelper.GetCartItems(Request, Response, _context);
-                    subtotal = CartHelper.GetSubtotal(cartItems);
-                    cartSize = cartItems.Sum(i => i.Quantity);
-                }
+                    FridgeId = item.FridgeId,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.Fridge.Price,
+                    Fridge = item.Fridge,
+                    FridgeName = item.Fridge.FridgeType.Name,
+                    FridgeBrand = item.Fridge.FridgeType.Brand,
+                    FridgeModel = item.Fridge.FridgeType.Model,
+                    ImageFileName = item.Fridge.ImageFileName
+                }).ToList();
+
+                var subtotal = cartItems.Sum(item => item.Quantity * item.UnitPrice);
+                var cartSize = cart.Items.Sum(i => i.Quantity);
 
                 string deliveryAddress = TempData["DeliveryAddress"] as string ?? "";
                 string paymentMethod = TempData["PaymentMethod"] as string ?? "";
-                
 
                 if (cartSize == 0 || deliveryAddress.Length == 0 || paymentMethod.Length == 0)
                 {
@@ -261,7 +226,6 @@ namespace FridgeManagementSystem.Controllers
 
                 ViewBag.DeliveryAddress = deliveryAddress;
                 ViewBag.PaymentMethod = paymentMethod;
-                
                 ViewBag.Total = subtotal + _shippingFee;
                 ViewBag.CartSize = cartSize;
                 ViewBag.CartItems = cartItems;
@@ -275,10 +239,11 @@ namespace FridgeManagementSystem.Controllers
                 return RedirectToAction("Index", "Cart");
             }
         }
+
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Confirm(string deliveryAddress, string paymentMethod)
+        public async Task<IActionResult> ConfirmAsync(string deliveryAddress, string paymentMethod)
         {
             try
             {
@@ -291,47 +256,29 @@ namespace FridgeManagementSystem.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
-                List<CartItemViewModel> cartItems;
-                List<CartItem> dbCartItems = new List<CartItem>();
+                var cart = await _context.ShoppingCart
+                    .Include(c => c.Items)
+                    .ThenInclude(i => i.Fridge)
+                    .ThenInclude(f => f.FridgeType)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
 
-                // Get cart items based on user authentication
-                if (User.Identity.IsAuthenticated)
+                if (cart == null || !cart.Items.Any())
                 {
-                    var cart = await _context.ShoppingCart
-                        .Include(c => c.Items)
-                        .ThenInclude(i => i.Fridge)
-                        .ThenInclude(f => f.FridgeType)
-                        .FirstOrDefaultAsync(c => c.UserId == userId);
-
-                    if (cart == null || !cart.Items.Any())
-                    {
-                        TempData["ErrorMessage"] = "Your cart is empty";
-                        return RedirectToAction("Index", "Cart");
-                    }
-
-                    cartItems = cart.Items.Select(item => new CartItemViewModel
-                    {
-                        FridgeId = item.FridgeId,
-                        Quantity = item.Quantity,
-                        UnitPrice = item.Fridge.Price,
-                        Fridge = item.Fridge,
-                        FridgeName = item.Fridge.FridgeType.Name,
-                        FridgeBrand = item.Fridge.FridgeType.Brand,
-                        FridgeModel = item.Fridge.FridgeType.Model,
-                        ImageFileName = item.Fridge.ImageFileName
-                    }).ToList();
-
-                    dbCartItems = cart.Items.ToList();
+                    TempData["ErrorMessage"] = "Your cart is empty";
+                    return RedirectToAction("Index", "Cart");
                 }
-                else
+
+                var cartItems = cart.Items.Select(item => new CartItemViewModel
                 {
-                    cartItems = CartHelper.GetCartItems(Request, Response, _context);
-                    if (!cartItems.Any())
-                    {
-                        TempData["ErrorMessage"] = "Your cart is empty";
-                        return RedirectToAction("Index", "Cart");
-                    }
-                }
+                    FridgeId = item.FridgeId,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.Fridge.Price,
+                    Fridge = item.Fridge,
+                    FridgeName = item.Fridge.FridgeType.Name,
+                    FridgeBrand = item.Fridge.FridgeType.Brand,
+                    FridgeModel = item.Fridge.FridgeType.Model,
+                    ImageFileName = item.Fridge.ImageFileName
+                }).ToList();
 
                 // Validate delivery address and payment method
                 if (string.IsNullOrEmpty(deliveryAddress) || string.IsNullOrEmpty(paymentMethod))
@@ -400,7 +347,7 @@ namespace FridgeManagementSystem.Controllers
                     if (fridge != null && fridge.Status == "Available")
                     {
                         fridge.Status = "Reserved";
-                        
+
                         // Find customer and associate with fridge for reservation
                         var customer = await _context.Customers
                             .FirstOrDefaultAsync(c => c.UserId == userId);
@@ -427,30 +374,9 @@ namespace FridgeManagementSystem.Controllers
                 await _notification.NotifyLiaisonsAboutNewOrder(order);
 
                 // Clear the cart after successful order creation
-                if (User.Identity.IsAuthenticated)
-                {
-                    // Clear database cart
-                    var cart = await _context.ShoppingCart
-                        .Include(c => c.Items)
-                        .FirstOrDefaultAsync(c => c.UserId == userId);
-
-                    if (cart != null)
-                    {
-                        _context.CartItems.RemoveRange(cart.Items);
-                        _logger.LogInformation($"Cleared database cart for user {userId}");
-                    }
-                }
-                else
-                {
-                    // Clear cookie cart
-                    CartHelper.ClearCart(Response);
-                    _logger.LogInformation("Cleared cookie cart");
-                }
-
-                // Final save to persist cart clearance
+                _context.CartItems.RemoveRange(cart.Items);
                 await _context.SaveChangesAsync();
 
-                // Log successful order creation
                 _logger.LogInformation($"Order {order.Id} created successfully for user {userId}. {reservedFridgeIds.Count} fridges reserved.");
 
                 // Set success message and return to confirmation view
@@ -476,18 +402,55 @@ namespace FridgeManagementSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddToCart(int fridgeId, int quantity = 1)
+        [ValidateAntiForgeryToken]
+        public async Task<JsonResult> AddToCartAsync(int fridgeId, int quantity = 1)
         {
             try
             {
-                if (User.Identity.IsAuthenticated)
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var cart = await _context.ShoppingCart
+                    .Include(c => c.Items)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
+
+                if (cart == null)
                 {
-                    return await AddToDatabaseCart(fridgeId, quantity);
+                    cart = new ShoppingCart { UserId = userId };
+                    _context.ShoppingCart.Add(cart);
+                    await _context.SaveChangesAsync();
+                }
+
+                var fridge = await _context.Fridges
+                    .FirstOrDefaultAsync(f => f.FridgeId == fridgeId && f.Status == "Available" && f.IsActive);
+
+                if (fridge == null)
+                {
+                    return Json(new { success = false, message = "Fridge is no longer available" });
+                }
+
+                var existingItem = cart.Items.FirstOrDefault(i => i.FridgeId == fridgeId);
+                if (existingItem != null)
+                {
+                    existingItem.Quantity += quantity;
                 }
                 else
                 {
-                    return AddToCookieCart(fridgeId, quantity);
+                    cart.Items.Add(new CartItem
+                    {
+                        FridgeId = fridgeId,
+                        Quantity = quantity,
+                        AddedAt = DateTime.Now
+                    });
                 }
+
+                await _context.SaveChangesAsync();
+
+                var cartCount = cart.Items.Sum(i => i.Quantity);
+                return Json(new
+                {
+                    success = true,
+                    message = "Fridge added to cart successfully!",
+                    cartCount = cartCount
+                });
             }
             catch (Exception ex)
             {
@@ -496,114 +459,31 @@ namespace FridgeManagementSystem.Controllers
             }
         }
 
-        private async Task<JsonResult> AddToDatabaseCart(int fridgeId, int quantity)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            var cart = await _context.ShoppingCart
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
-
-            if (cart == null)
-            {
-                cart = new ShoppingCart { UserId = userId };
-                _context.ShoppingCart.Add(cart);
-                await _context.SaveChangesAsync();
-            }
-
-            var fridge = await _context.Fridges
-                .FirstOrDefaultAsync(f => f.FridgeId == fridgeId && f.Status == "Available" && f.IsActive);
-
-            if (fridge == null)
-            {
-                return Json(new { success = false, message = "Fridge is no longer available" });
-            }
-
-            var existingItem = cart.Items.FirstOrDefault(i => i.FridgeId == fridgeId);
-            if (existingItem != null)
-            {
-                existingItem.Quantity += quantity;
-            }
-            else
-            {
-                cart.Items.Add(new CartItem
-                {
-                    FridgeId = fridgeId,
-                    Quantity = quantity,
-                    AddedAt = DateTime.Now
-                });
-            }
-
-            await _context.SaveChangesAsync();
-
-            var cartCount = cart.Items.Sum(i => i.Quantity);
-            return Json(new
-            {
-                success = true,
-                message = "Fridge added to cart successfully!",
-                cartCount = cartCount
-            });
-        }
-
-        private JsonResult AddToCookieCart(int fridgeId, int quantity)
-        {
-            var fridge = _context.Fridges
-                .FirstOrDefault(f => f.FridgeId == fridgeId && f.Status == "Available" && f.IsActive);
-
-            if (fridge == null)
-            {
-                return Json(new { success = false, message = "Fridge is no longer available" });
-            }
-
-            CartHelper.AddToCart(fridgeId, quantity, Request, Response);
-
-            var cartCount = CartHelper.GetCartSize(Request, Response);
-            return Json(new
-            {
-                success = true,
-                message = "Fridge added to cart successfully!",
-                cartCount = cartCount
-            });
-        }
-
         [HttpPost]
-        public async Task<IActionResult> UpdateQuantity(int fridgeId, int quantity)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateQuantityAsync(int fridgeId, int quantity)
         {
             try
             {
-                if (User.Identity.IsAuthenticated)
-                {
-                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    var cart = await _context.ShoppingCart
-                        .Include(c => c.Items)
-                        .FirstOrDefaultAsync(c => c.UserId == userId);
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var cart = await _context.ShoppingCart
+                    .Include(c => c.Items)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
 
-                    if (cart != null)
-                    {
-                        var item = cart.Items.FirstOrDefault(i => i.FridgeId == fridgeId);
-                        if (item != null)
-                        {
-                            if (quantity <= 0)
-                            {
-                                cart.Items.Remove(item);
-                            }
-                            else
-                            {
-                                item.Quantity = quantity;
-                            }
-                            await _context.SaveChangesAsync();
-                        }
-                    }
-                }
-                else
+                if (cart != null)
                 {
-                    if (quantity <= 0)
+                    var item = cart.Items.FirstOrDefault(i => i.FridgeId == fridgeId);
+                    if (item != null)
                     {
-                        CartHelper.RemoveFromCart(fridgeId, Request, Response);
-                    }
-                    else
-                    {
-                        CartHelper.UpdateCartQuantity(fridgeId, quantity, Request, Response);
+                        if (quantity <= 0)
+                        {
+                            cart.Items.Remove(item);
+                        }
+                        else
+                        {
+                            item.Quantity = quantity;
+                        }
+                        await _context.SaveChangesAsync();
                     }
                 }
 
@@ -618,30 +498,24 @@ namespace FridgeManagementSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> RemoveItem(int fridgeId)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveItemAsync(int fridgeId)
         {
             try
             {
-                if (User.Identity.IsAuthenticated)
-                {
-                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    var cart = await _context.ShoppingCart
-                        .Include(c => c.Items)
-                        .FirstOrDefaultAsync(c => c.UserId == userId);
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var cart = await _context.ShoppingCart
+                    .Include(c => c.Items)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
 
-                    if (cart != null)
-                    {
-                        var item = cart.Items.FirstOrDefault(i => i.FridgeId == fridgeId);
-                        if (item != null)
-                        {
-                            cart.Items.Remove(item);
-                            await _context.SaveChangesAsync();
-                        }
-                    }
-                }
-                else
+                if (cart != null)
                 {
-                    CartHelper.RemoveFromCart(fridgeId, Request, Response);
+                    var item = cart.Items.FirstOrDefault(i => i.FridgeId == fridgeId);
+                    if (item != null)
+                    {
+                        cart.Items.Remove(item);
+                        await _context.SaveChangesAsync();
+                    }
                 }
 
                 return RedirectToAction(nameof(Index));
@@ -655,9 +529,9 @@ namespace FridgeManagementSystem.Controllers
         }
 
         [HttpGet]
-        public JsonResult GetCartCount()
+        public async Task<JsonResult> GetCartCountAsync()
         {
-            if (User.Identity.IsAuthenticated)
+            try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
@@ -665,17 +539,17 @@ namespace FridgeManagementSystem.Controllers
                     return Json(new { count = 0 });
                 }
 
-                var cart = _context.ShoppingCart
+                var cart = await _context.ShoppingCart
                     .Include(c => c.Items)
-                    .FirstOrDefault(c => c.UserId == userId);
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
 
                 var count = cart?.Items.Sum(i => i.Quantity) ?? 0;
                 return Json(new { count });
             }
-            else
+            catch (Exception ex)
             {
-                var count = CartHelper.GetCartSize(Request, Response);
-                return Json(new { count });
+                _logger.LogError(ex, "Error getting cart count");
+                return Json(new { count = 0 });
             }
         }
     }
