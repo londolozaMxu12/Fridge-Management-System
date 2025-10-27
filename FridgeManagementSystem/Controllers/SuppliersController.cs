@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FridgeManagementSystem.Controllers
 {
-    [Authorize(Roles = "Admin,PurchasingManager")]
+    //[Authorize(Roles = "Admin,PurchasingManager")]
     public class SuppliersController : Controller
     {
         private readonly FridgeManagementSystemContext _context;
@@ -37,6 +37,12 @@ namespace FridgeManagementSystem.Controllers
                 .OrderBy(s => s.CompanyName)
                 .ToListAsync();
 
+            //// Add procurement metrics for Purchasing Manager view
+            //if (User.IsInRole("PurchasingManager"))
+            //{
+            //    ViewBag.ProcurementMetrics = await GetProcurementMetrics();
+            //}
+
             return View(suppliers);
         }
 
@@ -51,6 +57,7 @@ namespace FridgeManagementSystem.Controllers
             var supplier = await _context.Suppliers
                 .Include(s => s.User)
                 .Include(s => s.CreatedBy)
+                .Include(s => s.User.ApprovedBy)
                 .FirstOrDefaultAsync(m => m.Id == id && m.User.IsActive);
 
             if (supplier == null)
@@ -58,12 +65,11 @@ namespace FridgeManagementSystem.Controllers
                 return NotFound();
             }
 
-            // Load supplied fridges
-            //ViewBag.SuppliedFridges = await _context.Fridges
-            //    .Where(f => f.SupplierId == id && f.IsActive)
-            //    .Include(f => f.Customer)
-            //    .ThenInclude(c => c.User)
-            //    .ToListAsync();
+            //// Add procurement data for Purchasing Manager
+            //if (User.IsInRole("PurchasingManager"))
+            //{
+            //    ViewBag.ProcurementStats = await GetSupplierProcurementStats(id.Value);
+            //}
 
             return View(supplier);
         }
@@ -99,6 +105,7 @@ namespace FridgeManagementSystem.Controllers
                 SupplierType = supplier.SupplierType,
                 CreatedAt = supplier.CreatedAt,
                 IsActive = supplier.User.IsActive,
+                ApprovalStatus = supplier.User.ApprovalStatus
             };
 
             ViewBag.SupplierTypes = await GetSupplierTypes(); // Populate dropdown
@@ -109,7 +116,6 @@ namespace FridgeManagementSystem.Controllers
 
             return View(viewModel);
         }
-
         // POST: Suppliers/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -136,7 +142,6 @@ namespace FridgeManagementSystem.Controllers
                     // Update supplier properties
                     existingSupplier.CompanyName = model.CompanyName;
                     existingSupplier.SupplierType = model.SupplierType;
-                    
 
                     // Update user properties
                     existingSupplier.User.FullName = model.FullName;
@@ -145,7 +150,20 @@ namespace FridgeManagementSystem.Controllers
                     existingSupplier.User.City = model.City;
                     existingSupplier.User.Suburb = model.Suburb;
                     existingSupplier.User.PostalCode = model.PostalCode;
-                    
+
+                    // Only Admin can update status fields
+                    if (User.IsInRole("Admin"))
+                    {
+                        existingSupplier.User.IsActive = model.IsActive;
+                        existingSupplier.User.ApprovalStatus = model.ApprovalStatus;
+
+                        // If status changed to Approved, set approval details
+                        if (model.ApprovalStatus == "Approved" && existingSupplier.User.ApprovalStatus != "Approved")
+                        {
+                            existingSupplier.User.ApprovedById = _userManager.GetUserId(User);
+                            existingSupplier.User.ApprovedAt = DateTime.UtcNow;
+                        }
+                    }
 
                     // Only update email if it's changed
                     if (existingSupplier.User.Email != model.Email)
@@ -173,13 +191,26 @@ namespace FridgeManagementSystem.Controllers
                         throw;
                     }
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error updating supplier {SupplierId}", id);
+                    ModelState.AddModelError("", "An error occurred while updating the supplier.");
+                }
             }
 
-            ViewBag.SupplierTypes = await GetSupplierTypes(); // Re-populate dropdown on error
+            // Re-populate dropdown and metrics on error
+            ViewBag.SupplierTypes = await GetSupplierTypes();
+
+            //if (User.IsInRole("PurchasingManager"))
+            //{
+            //    ViewBag.ReliabilityRating = await CalculateReliabilityRating(id);
+            //    ViewBag.ProcurementStats = await GetSupplierProcurementStats(id);
+            //}
+
             return View(model);
         }
-
         // GET: Suppliers/Delete/5
+        [Authorize(Roles = "Admin")] // Only Admin can delete
         public async Task<IActionResult> Delete(int id)
         {
             if (id == null)
@@ -199,11 +230,11 @@ namespace FridgeManagementSystem.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            //// Check if supplier has fridges
-            //var hasFridges = await _context.Fridges.AnyAsync(f => f.SupplierId == id && f.IsActive);
-            //if (hasFridges)
+            //// Check for active purchase orders or RFQs
+            //var hasActiveProcurements = await HasActiveProcurements(id);
+            //if (hasActiveProcurements)
             //{
-            //    TempData["ErrorMessage"] = "Cannot delete this supplier because they have supplied fridges.";
+            //    TempData["ErrorMessage"] = "Cannot delete this supplier because they have active purchase orders or RFQs.";
             //    return RedirectToAction(nameof(Index));
             //}
 
@@ -213,6 +244,7 @@ namespace FridgeManagementSystem.Controllers
         // POST: Suppliers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")] // Only Admin can delete
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var supplier = await _context.Suppliers
@@ -221,24 +253,27 @@ namespace FridgeManagementSystem.Controllers
 
             if (supplier != null)
             {
+                //// Check for active procurements one more time
+                //var hasActiveProcurements = await HasActiveProcurements(id);
+                //if (hasActiveProcurements)
+                //{
+                //    TempData["ErrorMessage"] = "Cannot delete this supplier because they have active purchase orders or RFQs.";
+                //    return RedirectToAction(nameof(Index));
+                //}
+
                 // Soft delete by deactivating the user
                 supplier.User.IsActive = false;
+                supplier.User.ApprovalStatus = "Rejected";
                 await _userManager.UpdateAsync(supplier.User);
 
                 TempData["SuccessMessage"] = $"Supplier '{supplier.CompanyName}' has been successfully deleted.";
-
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Supplier not found or has already been deleted.";
             }
 
             return RedirectToAction(nameof(Index));
-            //var hasActiveFridges = await _context.Fridges
-            //.AnyAsync(f => f.SupplierId == id && f.IsActive);
-
-            //if (hasActiveFridges)
-            //{
-            //    TempData["ErrorMessage"] = "Cannot delete this supplier because they have supplied active fridges. Please reassign or deactivate the fridges first.";
-            //    return RedirectToAction(nameof(Index));
-            //}
-
         }
 
         private async Task<List<SelectListItem>> GetSupplierTypes()

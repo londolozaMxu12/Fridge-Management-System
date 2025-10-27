@@ -35,6 +35,7 @@ namespace FridgeManagementSystem.ViewModels
         [Required]
         [Display(Name = "Company Name")]
         public string CompanyName { get; set; }
+        public string ApprovalStatus { get; set; }
 
         [Required]
         [Display(Name = "Supplier Type")]

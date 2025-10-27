@@ -1,6 +1,6 @@
 ﻿@model Fridge
 @{
-    if (User.Identity.IsAuthenticated)
+    @if (User.Identity.IsAuthenticated && User.IsInRole("Customer"))
     {
         Layout = "_CustomerLayout";
     }
@@ -157,33 +157,39 @@
             sessionStorage.setItem('currentDetailsPage', window.location.href);
 
             // Modal event listener
-            const loginModal = document.getElementById('loginRequiredModal');
-            if (loginModal) {
-                loginModal.addEventListener('show.bs.modal', function (event) {
-                    const button = event.relatedTarget;
-                    const fridgeId = button.getAttribute('data-fridge-id');
-                    const fridgeName = button.getAttribute('data-fridge-name');
+                    /
+        const loginModal = document.getElementById('loginRequiredModal');
+        if (loginModal) {
+            loginModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const fridgeId = button.getAttribute('data-fridge-id');
+                const fridgeName = button.getAttribute('data-fridge-name');
+                const fridgePrice = button.getAttribute('data-fridge-price'); 
 
-                    // Store in sessionStorage for immediate use
-                    sessionStorage.setItem('pendingFridgeId', fridgeId);
-                    sessionStorage.setItem('pendingFridgeName', fridgeName);
-                    sessionStorage.setItem('pendingFridgePrice', 'R @Model.Price.ToString("F2")');
+                // Update modal display immediately
+                document.getElementById('selectedFridgeName').textContent = fridgeName;
+                document.getElementById('selectedFridgePrice').textContent = 'Price: R ' + fridgePrice;
 
-                    console.log('Stored pending fridge from details:', fridgeId, fridgeName);
-                });
+                // Store in sessionStorage for immediate use
+                sessionStorage.setItem('pendingFridgeId', fridgeId);
+                sessionStorage.setItem('pendingFridgeName', fridgeName);
+                sessionStorage.setItem('pendingFridgePrice', 'R ' + fridgePrice);
 
-                // Clear pending fridge if modal is closed without authentication
-                loginModal.addEventListener('hide.bs.modal', function () {
-                    // Only clear if user is still not authenticated
-                    if (!@(User.Identity.IsAuthenticated ? "true" : "false")) {
-                        console.log('Modal closed without authentication - clearing pending fridge');
-                        sessionStorage.removeItem('pendingFridgeId');
-                        sessionStorage.removeItem('pendingFridgeName');
-                        sessionStorage.removeItem('pendingFridgePrice');
-                        // Don't remove from localStorage here - it should persist for actual auth
-                    }
-                });
-            }
+                console.log('Stored pending fridge from details:', fridgeId, fridgeName, fridgePrice);
+            });
+
+            // Clear pending fridge if modal is closed without authentication
+            loginModal.addEventListener('hide.bs.modal', function () {
+                // Only clear if user is still not authenticated
+                if (!@(User.Identity.IsAuthenticated ? "true" : "false")) {
+                    console.log('Modal closed without authentication - clearing pending fridge');
+                    sessionStorage.removeItem('pendingFridgeId');
+                    sessionStorage.removeItem('pendingFridgeName');
+                    sessionStorage.removeItem('pendingFridgePrice');
+                    
+                }
+            });
+        }
 
             // Check for pending fridge after authentication
             checkPendingFridgeAfterAuth();

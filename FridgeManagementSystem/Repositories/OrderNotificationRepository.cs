@@ -5,17 +5,28 @@ public class OrderNotificationRepository : IOrderNotificationRepository
     private readonly FridgeManagementSystemContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<OrderNotificationRepository> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public OrderNotificationRepository(
         FridgeManagementSystemContext context,
         UserManager<ApplicationUser> userManager,
-        ILogger<OrderNotificationRepository> logger)
+        ILogger<OrderNotificationRepository> logger, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _userManager = userManager;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
     }
+    // Helper method to generate absolute URLs
+    private string GenerateAbsoluteUrl(string relativePath)
+    {
+        var request = _httpContextAccessor.HttpContext?.Request;
+        if (request == null) return relativePath;
 
+        // Build absolute URL
+        var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
+        return $"{baseUrl}{relativePath}";
+    }
 
     public async Task NotifyCustomerAboutOrderUpdate(Order order, string previousStatus)
     {
@@ -78,8 +89,8 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                 Title = title,
                 Message = message,
                 IsRead = false,
-                CreatedAt = DateTime.UtcNow,
-                Link = $"/CustomerOrders/Details/{order.Id}"
+                CreatedAt = DateTime.Now,
+                Link = GenerateAbsoluteUrl($"/CustomerOrders/Details/{order.Id}")
             };
 
             _context.Notifications.Add(notification);
@@ -133,7 +144,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                          $"The installation team will contact you shortly.",
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
-                Link = $"/CustomerOrders/Details/{orderWithDetails.Id}"
+                Link = GenerateAbsoluteUrl($"/CustomerFridges/Details/{orderWithDetails.Id}")
             };
 
             _context.Notifications.Add(customerNotification);
@@ -151,7 +162,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                              $"Customer: {orderWithDetails.Customer?.FullName ?? "N/A"}",
                     IsRead = false,
                     CreatedAt = DateTime.UtcNow,
-                    Link = $"/Allocation/Details/{orderWithDetails.Id}"
+                    Link = GenerateAbsoluteUrl($"/Allocation/Details/{orderWithDetails.Id}")
                 };
 
                 _context.Notifications.Add(liaisonNotification);
@@ -185,13 +196,13 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                 var notification = new Notification
                 {
                     UserId = liaison.Id,
-                    Title = "⚠️ Stock Shortage Alert",
+                    Title = "Stock Shortage Alert",
                     Message = $"No available {fridge?.FridgeType?.Name ?? "fridge"} in stock for order #{orderId}. " +
                              $"Customer: {order?.Customer?.FullName ?? "N/A"}. " +
                              $"Please check inventory and restock.",
                     IsRead = false,
-                    CreatedAt = DateTime.UtcNow,
-                    Link = $"/LiaisonOrders/Details/{orderId}"
+                    CreatedAt = DateTime.Now,
+                    Link = GenerateAbsoluteUrl($"/LiaisonOrders/Details/{orderId}")
                 };
 
                 _context.Notifications.Add(notification);
@@ -244,8 +255,8 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                 Title = title,
                 Message = message,
                 IsRead = false,
-                CreatedAt = DateTime.UtcNow,
-                Link = $"/CustomerOrders/Details/{order.Id}"
+                CreatedAt = DateTime.Now,
+                Link = GenerateAbsoluteUrl($"/CustomerOrders/Details/{order.Id}")
             };
 
             _context.Notifications.Add(notification);
@@ -294,7 +305,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                              $"{totalItems} items ({itemsSummary}) waiting for approval.",
                     IsRead = false,
                     CreatedAt = DateTime.Now,
-                    Link = $"/LiaisonOrders/Details/{orderWithDetails.Id}"
+                    Link = GenerateAbsoluteUrl($"/LiaisonOrders/Details/{orderWithDetails.Id}")
                 };
 
                 _context.Notifications.Add(notification);
@@ -331,7 +342,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                          $"The fridge(s) you ordered ({fridgeSummary}) are now available for purchase again.",
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
-                Link = $"/CustomerOrders/Index/{order.Id}"
+                Link = GenerateAbsoluteUrl($"/CustomerOrders/Index/{order.Id}")
             };
 
             _context.Notifications.Add(customerNotification);
@@ -347,8 +358,8 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                     Message = $"Order #{order.Id} was cancelled. {freedFridgeIds.Count} fridges ({fridgeSummary}) " +
                              $"are now available in the store inventory.",
                     IsRead = false,
-                    CreatedAt = DateTime.UtcNow,
-                    Link = $"/LiaisonOrders/Details/{order.Id}"
+                    CreatedAt = DateTime.Now,
+                    Link = GenerateAbsoluteUrl($"/LiaisonOrders/Details/{order.Id}")
                 };
 
                 _context.Notifications.Add(liaisonNotification);
@@ -397,8 +408,8 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                     Message = $"Order #{orderWithDetails.Id} from {orderWithDetails.Customer?.FullName} " +
                              $"is ready for fridge allocation. {totalItems} {itemsSummary} waiting.",
                     IsRead = false,
-                    CreatedAt = DateTime.UtcNow,
-                    Link = $"/Allocation/Details/{orderWithDetails.Id}"
+                    CreatedAt = DateTime.Now,
+                    Link = GenerateAbsoluteUrl($"/Allocation/Details/{orderWithDetails.Id}")
                 };
 
                 _context.Notifications.Add(notification);

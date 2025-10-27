@@ -11,12 +11,14 @@ namespace FridgeManagementSystem.Repositories
     public class TechnicianReportRepository : ITechnicianReportRepository
     {
         private readonly FridgeManagementSystemContext _context;
+        
 
         public TechnicianReportRepository(FridgeManagementSystemContext context)
         {
             _context = context;
+            
         }
-
+        
         public async Task<List<Employee>> GetActiveTechniciansAsync()
         {
             return await _context.Employees

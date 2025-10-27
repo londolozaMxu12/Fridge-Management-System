@@ -1,15 +1,44 @@
-﻿
-@model IEnumerable<Supplier>
+﻿@model IEnumerable<Supplier>
 @{
-    Layout = "_AdminLayout";
-    ViewData["Title"] = "Suppliers Management";
+    
+    if (User.IsInRole("Admin"))
+    {
+        Layout = "_AdminLayout";
+        ViewData["Title"] = "Suppliers Management";
+    }
+    else if (User.IsInRole("PurchasingManager"))
+    {
+        Layout = "_PurchasingManagerLayout";
+        ViewData["Title"] = "Supplier Directory - Procurement";
+    }
+    else
+    {
+        Layout = "_Layout";
+        ViewData["Title"] = "Suppliers";
+    }
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1><i class="fas fa-truck"></i> @ViewData["Title"]</h1>
-    <a asp-area="Identity" asp-page="/Account/RegisterSupplier" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Register New Supplier
-    </a>
+
+    <!-- Role-specific actions -->
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-area="Identity" asp-page="/Account/RegisterSupplier" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Register New Supplier
+        </a>
+    }
+    else if (User.IsInRole("PurchasingManager"))
+    {
+        <div class="btn-group">
+            <a href="@Url.Action("Index", "PurchaseRequests")" class="btn btn-outline-primary">
+                <i class="fas fa-clipboard-list"></i> View Purchase Requests
+            </a>
+            <a href="@Url.Action("Create", "RFQ")" class="btn btn-success">
+                <i class="fas fa-file-alt"></i> Create RFQ
+            </a>
+        </div>
+    }
 </div>
 
 @if (TempData["SuccessMessage"] != null)
@@ -28,16 +57,102 @@
     </div>
 }
 
+<!-- Procurement Dashboard for Purchasing Manager -->
+@if (User.IsInRole("PurchasingManager"))
+{
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Pending RFQs</h6>
+                            <h3>12</h3>
+                        </div>
+                        <i class="fas fa-file-contract fa-2x"></i>
+                    </div>
+                    <small><a href="@Url.Action("Index", "RFQ")" class="text-white">View All</a></small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Quotations Received</h6>
+                            <h3>8</h3>
+                        </div>
+                        <i class="fas fa-receipt fa-2x"></i>
+                    </div>
+                    <small><a href="@Url.Action("Index", "Quotations")" class="text-white">Review</a></small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Pending Purchase Requests</h6>
+                            <h3>5</h3>
+                        </div>
+                        <i class="fas fa-shopping-cart fa-2x"></i>
+                    </div>
+                    <small><a href="@Url.Action("Index", "PurchaseRequests")" class="text-dark">Process</a></small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Active Suppliers</h6>
+                            <h3>@Model.Count()</h3>
+                        </div>
+                        <i class="fas fa-truck fa-2x"></i>
+                    </div>
+                    <small>Available for RFQs</small>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <div class="card">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="fas fa-list"></i>List Of Active Suppliers</h5>
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-list"></i>
+            @if (User.IsInRole("PurchasingManager"))
+            {
+                <span>Available Suppliers for Procurement</span>
+            }
+            else
+            {
+                <span>List Of Active Suppliers</span>
+            }
+        </h5>
+        @if (User.IsInRole("PurchasingManager"))
+        {
+            <span class="badge bg-light text-primary">
+                <i class="fas fa-sync-alt"></i> Updated: @DateTime.Now.ToString("MMM dd, yyyy")
+            </span>
+        }
     </div>
     <div class="card-body">
         @if (!Model.Any())
         {
             <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> No suppliers found.
-                <a asp-area="Identity" asp-page="/Account/RegisterSupplier" class="alert-link">Register the first supplier</a>.
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-area="Identity" asp-page="/Account/RegisterSupplier" class="alert-link">Register the new supplier</a>
+                }
+                else
+                {
+                    <span>Contact admin to register new supplier.</span>
+                }
             </div>
         }
         else
@@ -47,11 +162,11 @@
                     <thead class="table-primary">
                         <tr>
                             <th>Company Name</th>
-                            
                             <th>Email</th>
                             <th>Supplier Type</th>
                             <th>Contact Number</th>
                             <th>City</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -59,7 +174,16 @@
                         @foreach (var supplier in Model)
                         {
                             <tr>
-                                <td>@supplier.User.Suppliers.CompanyName</td>
+                                <td>
+                                    <strong>@supplier.CompanyName</strong>
+
+                                    @if (User.IsInRole("PurchasingManager") && supplier.User.IsActive)
+                                    {
+                                        <span class="badge bg-success ms-1" title="Active Supplier">
+                                            <i class="fas fa-check-circle"></i> Active
+                                        </span>
+                                    }
+                                </td>
                                 <td>@supplier.User.Email</td>
                                 <td>
                                     <span class="badge bg-info">@supplier.SupplierType</span>
@@ -67,16 +191,71 @@
                                 <td>@supplier.User.ContactNo</td>
                                 <td>@supplier.User.City</td>
                                 <td>
+                                    @if (supplier.User.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Inactive</span>
+                                    }
+
+                                    @switch (supplier.User.ApprovalStatus?.ToLower())
+                                    {
+                                        case "approved":
+                                            <span class="badge bg-success mt-1">Approved</span>
+                                            break;
+                                        case "pending":
+                                            <span class="badge bg-warning mt-1">Pending Approval</span>
+                                            break;
+                                        case "rejected":
+                                            <span class="badge bg-danger mt-1">Rejected</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-secondary mt-1">@supplier.User.ApprovalStatus</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
                                     <div class="btn-group" role="group">
-                                        <a asp-action="Details" asp-route-id="@supplier.Id" class="btn btn-info btn-sm" ">
-                                            <i class="fas fa-eye"></i>View Details
+                                        <!-- View Details -->
+                                        <a asp-action="Details" asp-route-id="@supplier.Id" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i> Details
                                         </a>
-                                        <a asp-action="Edit" asp-route-id="@supplier.Id" class="btn btn-warning btn-sm" ">
-                                            <i class="fas fa-edit"></i>Edit
+
+                                        <!-- Procurement Actions for Purchasing Manager -->
+                                        @if (User.IsInRole("PurchasingManager") && supplier.User.IsActive && supplier.User.ApprovalStatus == "Approved")
+                                        {
+                                            <button type="button" class="btn btn-success btn-sm"
+                                                    onclick="createRFQ(@supplier.Id, '@supplier.CompanyName')"
+                                                    title="Create Request for Quotation">
+                                                <i class="fas fa-file-alt"></i> RFQ
+                                            </button>
+
+                                            <a href="@Url.Action("SupplierQuotations", "Quotations", new { supplierId = supplier.Id })"
+                                               class="btn btn-warning btn-sm" title="View Quotations">
+                                                <i class="fas fa-receipt"></i> Quotes
+                                            </a>
+                                        }
+                                        else if (User.IsInRole("PurchasingManager") && (!supplier.User.IsActive || supplier.User.ApprovalStatus != "Approved"))
+                                        {
+                                            <button type="button" class="btn btn-secondary btn-sm" disabled title="Supplier not active or approved">
+                                                <i class="fas fa-file-alt"></i> RFQ
+                                            </button>
+                                        }
+
+                                        <!-- Edit -->
+                                        <a asp-action="Edit" asp-route-id="@supplier.Id" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-edit"></i> Edit
                                         </a>
-                                        <a asp-action="Delete" asp-route-id="@supplier.Id" class="btn btn-danger btn-sm" ">
-                                            <i class="fas fa-trash"> </i>Delete
-                                        </a>
+
+                                        <!-- Delete - Only for Admin -->
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <a asp-action="Delete" asp-route-id="@supplier.Id" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </a>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -87,3 +266,70 @@
         }
     </div>
 </div>
+
+<!-- Purchasing Manager Specific Tools -->
+@if (User.IsInRole("PurchasingManager"))
+{
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("Create", "RFQ")" class="btn btn-outline-success btn-lg">
+                            <i class="fas fa-file-contract me-2"></i>Create New RFQ
+                        </a>
+                        <a href="@Url.Action("Index", "PurchaseRequests")" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-clipboard-check me-2"></i>Process Purchase Requests
+                        </a>
+                        <a href="@Url.Action("Index", "Quotations")" class="btn btn-outline-warning btn-lg">
+                            <i class="fas fa-receipt me-2"></i>Review Quotations
+                        </a>
+                        <a href="@Url.Action("Index", "PurchaseOrders")" class="btn btn-outline-info btn-lg">
+                            <i class="fas fa-file-invoice me-2"></i>Manage Purchase Orders
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Procurement Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Pending RFQ Approvals</span>
+                            <span class="badge bg-warning rounded-pill">3</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Quotations to Review</span>
+                            <span class="badge bg-success rounded-pill">8</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Purchase Orders to Process</span>
+                            <span class="badge bg-primary rounded-pill">5</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Delivery Notes Pending</span>
+                            <span class="badge bg-secondary rounded-pill">2</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function createRFQ(supplierId, supplierName) {
+            if (confirm('Create Request for Quotation for ' + supplierName + '?')) {
+                window.location.href = '@Url.Action("Create", "RFQ")' + '?supplierId=' + supplierId;
+            }
+        }
+    </script>
+}

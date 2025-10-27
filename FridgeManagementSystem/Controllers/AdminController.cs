@@ -20,14 +20,17 @@ namespace FridgeManagementSystem.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly FridgeManagementSystemContext _context;
         private readonly ILogger<AdminController> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AdminController(RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context, ILogger<AdminController> logger)
+            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context, ILogger<AdminController> logger
+            , IHttpContextAccessor httpContextAccessor)
         {
             _roleManager = roleManager;
             _userManager = userManager;
             _context = context;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         private async Task<bool> CheckAndSetAccess()
@@ -40,6 +43,22 @@ namespace FridgeManagementSystem.Controllers
             ViewBag.UserRole = isAdmin ? "Admin" : (isCustomerLiaison ? "CustomerLiaison" : "Unauthorized");
 
             return isAdmin || isCustomerLiaison;
+        }
+
+        // Helper method to generate absolute URLs
+        private string GenerateAbsoluteUrl(string relativePath)
+        {
+            var request = _httpContextAccessor.HttpContext?.Request;
+            if (request == null) return relativePath;
+
+            // Build absolute URL
+            var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
+            return $"{baseUrl}{relativePath}";
+        }
+
+        public IActionResult Dashboard()
+        {
+            return View();
         }
 
         // GET: Admin/PendingApprovals
@@ -136,7 +155,7 @@ namespace FridgeManagementSystem.Controllers
 
             user.ApprovalStatus = "Approved";
             user.ApprovedById = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            user.ApprovedAt = DateTime.UtcNow;
+            user.ApprovedAt = DateTime.Now;
             user.IsActive = true;
 
             var result = await _userManager.UpdateAsync(user);
@@ -148,7 +167,7 @@ namespace FridgeManagementSystem.Controllers
                     UserId = user.Id,
                     Title = "Account Approved",
                     Message = "Your account has been approved. You can now access all the features.",
-                    Link = $"/Customers/Index/{user.Customers?.Id}"
+                    Link = GenerateAbsoluteUrl($"/Customers/Index/{user.Customers?.Id}")
                 };
 
                 _context.Notifications.Add(notification);
@@ -162,7 +181,7 @@ namespace FridgeManagementSystem.Controllers
                         UserId = liaison.Id,
                         Title = "New Customer Approved",
                         Message = $"Customer {user.FullName} ({user.Customers?.BusinessName}) has been approved and is now active in the system.",
-                        Link = $"/Customers/Details/{user.Customers?.Id}"
+                        Link = GenerateAbsoluteUrl($"/Customers/Details/{user.Customers?.Id}")
                     };
                     _context.Notifications.Add(liaisonNotification);
                 }
@@ -221,7 +240,7 @@ namespace FridgeManagementSystem.Controllers
                     UserId = user.Id,
                     Title = "Account Registration Rejected",
                     Message = $"Dear {user.FullName}, your registration has been reviewed. Unfortunately, we cannot approve your account. Reason: {reason}",
-                    Link = "/"
+                    Link = GenerateAbsoluteUrl("/")
                 };
 
                 _context.Notifications.Add(notification);
@@ -593,46 +612,5 @@ namespace FridgeManagementSystem.Controllers
             return RedirectToAction(nameof(EmployeeManagement));
         }
 
-
-    
-        //public async Task<IActionResult> ListUsers()
-        //{
-        //    var users = userManager.Users.ToList();
-        //    var userRoles = new List<object>();
-        //    foreach (var user in users)
-        //    {
-        //        var roles = await userManager.GetRolesAsync(user);
-        //        userRoles.Add(new
-        //        {
-        //            user.UserName,
-        //            user.Email,
-        //            Roles = roles
-        //        });
-        //    }
-
-        //    return Json(userRoles);
-
-        //}
-        //public async Task<IActionResult> DeleteUser(int id)
-        //{
-        //    var user = await userManager.FindByIdAsync(id);
-        //    if (user == null)
-        //    {
-        //        ViewBag.ErrorMessage = $"User with Id = {id} cannot be found";
-        //        return View("NotFound");
-        //    }
-        //    else
-        //    {
-        //        var result = await userManager.DeleteAsync(user);
-        //        if (result.Succeeded)
-        //        {
-        //            return RedirectToAction("Index", "Home");
-        //        }
-        //    }
-        //}
-        public IActionResult Index()
-        {
-            return View();
-        }
     }
 }
