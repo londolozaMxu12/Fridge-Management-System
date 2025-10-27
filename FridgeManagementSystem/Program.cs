@@ -1,15 +1,16 @@
 using FridgeManagementSystem.Areas.Identity.Data;
 using FridgeManagementSystem.Areas.Identity.Pages.Account.Manage;
+using FridgeManagementSystem.Authorization;
 using FridgeManagementSystem.Data;
+using Microsoft.AspNetCore.Authorization;
 //using FridgeManagementSystem.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using OfficeOpenXml;
 using QuestPDF.Infrastructure;
 using System.Globalization;
-using Microsoft.AspNetCore.Authorization;
-using FridgeManagementSystem.Authorization;
 //using FridgeManagementSystem.Managers.Validators;
 
 // Set QuestPDF license (Community version - free for non-commercial use)
@@ -63,6 +64,9 @@ builder.Services.AddAuthorization(options =>
         }));
 });
 
+builder.Services.Configure<ImageSettings>(
+builder.Configuration.GetSection("ImageSettings"));
+builder.Services.AddScoped<IImageRepository, ImageRepository>();
 builder.Services.AddScoped<IAuthorizationHandler, CustomerLiaisonAuthorizationHandler>();
 builder.Services.AddScoped<IOrderNotificationRepository, OrderNotificationRepository>();
 builder.Services.AddScoped<IFaultNotificationRepository, FaultNotificationRepository>();
@@ -139,6 +143,13 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot/Images")),
+    RequestPath = "/Images"
+});
 
 app.UseRouting();
 
