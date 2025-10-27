@@ -529,7 +529,7 @@ namespace FridgeManagementSystem.Controllers
         }
 
         [HttpGet]
-        public async Task<JsonResult> GetCartCountAsync()
+        public async Task<JsonResult> GetCartCount()
         {
             try
             {
@@ -544,7 +544,7 @@ namespace FridgeManagementSystem.Controllers
                     .FirstOrDefaultAsync(c => c.UserId == userId);
 
                 var count = cart?.Items.Sum(i => i.Quantity) ?? 0;
-                return Json(new { count });
+                return Json(new { count = count });
             }
             catch (Exception ex)
             {

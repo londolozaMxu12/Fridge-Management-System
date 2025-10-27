@@ -334,12 +334,10 @@
             // Get anti-forgery token
             const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
-            // Show loading state if button is visible
-            if (button.innerHTML) {
-                const originalText = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Added';
-                button.disabled = true;
-            }
+            // Show loading state
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-arrow-repeat bi-spin me-1"></i> Added';
+            button.disabled = true;
 
             fetch('@Url.Action("AddToCart", "Cart")', {
                 method: 'POST',
@@ -358,12 +356,22 @@
             .then(data => {
                 console.log('Add to cart response:', data);
                 if (data.success) {
-                    updateCartCount();
+                    // Use the global updateCartCount function
+                    if (typeof updateCartCount === 'function') {
+                        updateCartCount();
+                    } else {
+                        // Fallback if global function doesn't exist
+                        fetch('@Url.Action("GetCartCount", "Cart")')
+                            .then(response => response.json())
+                            .then(cartData => {
+                                const cartBadge = document.getElementById('cartCountBadge');
+                                if (cartBadge) {
+                                    cartBadge.textContent = cartData.count;
+                                    cartBadge.style.display = cartData.count > 0 ? 'inline' : 'none';
+                                }
+                            });
+                    }
                     showToast('Success', data.message, 'success');
-
-                    // If this was a pending fridge, clean up
-                    localStorage.removeItem('pendingFridgeAfterAuth');
-                    sessionStorage.removeItem('pendingFridgeId');
                 } else {
                     showToast('Error', data.message, 'error');
                 }
@@ -373,11 +381,9 @@
                 showToast('Error', 'An error occurred while adding to cart', 'error');
             })
             .finally(() => {
-                // Reset button if it was visible
-                if (button.innerHTML) {
-                    button.innerHTML = originalText;
-                    button.disabled = false;
-                }
+                // Reset button
+                button.innerHTML = originalText;
+                button.disabled = false;
             });
         }
 

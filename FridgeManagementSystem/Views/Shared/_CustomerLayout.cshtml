@@ -236,6 +236,38 @@
 
     <!-- Customer-specific JavaScript -->
     <script>
+            // Global function to update cart count
+        function updateCartCount() {
+            fetch('@Url.Action("GetCartCount", "Cart")')
+                .then(response => response.json())
+                .then(data => {
+                    // Update cart count in navbar
+                    const cartCountElements = document.querySelectorAll('.cart-count, [data-cart-count]');
+                    cartCountElements.forEach(element => {
+                        element.textContent = data.count;
+                        element.style.display = data.count > 0 ? 'inline' : 'none';
+                    });
+
+                    // Also update any elements with specific IDs
+                    const cartBadge = document.getElementById('cartCountBadge');
+                    if (cartBadge) {
+                        cartBadge.textContent = data.count;
+                        cartBadge.style.display = data.count > 0 ? 'inline' : 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating cart count:', error);
+                });
+        }
+
+        // Update cart count when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartCount();
+        });
+
+        // Update cart count periodically (every 30 seconds)
+        setInterval(updateCartCount, 30000);
+
 
         document.addEventListener('DOMContentLoaded', function() {
             // Load notifications when modal is shown
