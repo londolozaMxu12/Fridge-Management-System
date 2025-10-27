@@ -85,7 +85,7 @@ namespace FridgeManagementSystem.Controllers
                     fridge.AllocationDate = DateTime.UtcNow;
 
                     var customer = await _context.Customers
-                        .FirstOrDefaultAsync(c => c.UserId == userId);
+                        .FirstOrDefaultAsync(c => c.Id == userId);
                     if (customer != null)
                     {
                         fridge.CustomerId = customer.Id;

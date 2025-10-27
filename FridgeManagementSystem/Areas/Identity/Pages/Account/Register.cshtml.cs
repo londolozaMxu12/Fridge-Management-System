@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading;
@@ -206,11 +207,11 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
 
                     await _userManager.AddToRoleAsync(user, "Customer");
                     //await _userManager.AddToRoleAsync(user, Input.Role);
-
+                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // string from Identity
                     // Create customer record
                     var customer = new Customer
                     {
-                        UserId = user.Id,
+                        Id = user.Id,
                         BusinessName = Input.BusinessName,
                         CustomerType = Input.CustomerType,
                         CreatedByFullName = user.FullName,
@@ -222,6 +223,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
 
                     // Create notifications for administrators and customer liaisons
                     await CreateApprovalNotifications(user);
+                    customer.Id = User.FindFirstValue(ClaimTypes.NameIdentifier);
                     await _context.SaveChangesAsync();
 
                     // Redirect to custom confirmation page with login details

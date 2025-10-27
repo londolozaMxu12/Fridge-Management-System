@@ -38,7 +38,7 @@ namespace FridgeManagementSystem.Controllers
                     .Include(f => f.FridgeType)
                     .Include(f => f.Customer)
                         .ThenInclude(c => c.User)
-                    .Where(f => f.Customer.UserId == userId && f.Status == "Allocated")
+                    .Where(f => f.Customer.Id == userId && f.Status == "Allocated")
                     .OrderByDescending(f => f.AllocationDate)
                     .Take(4)
                     .ToListAsync();
@@ -48,7 +48,7 @@ namespace FridgeManagementSystem.Controllers
                     .Include(a => a.Fridge)
                         .ThenInclude(f => f.FridgeType)
                     .Include(a => a.Order)
-                    .Where(a => a.Customer.UserId == userId)
+                    .Where(a => a.Customer.Id == userId)
                     .OrderByDescending(a => a.AllocationDate)
                     .Take(6)
                     .ToListAsync();
@@ -79,7 +79,7 @@ namespace FridgeManagementSystem.Controllers
                         .ThenInclude(a => a.Order)
                     .Include(f => f.MaintenanceRecords)
                     .Include(f => f.ReportedFaults)
-                    .FirstOrDefaultAsync(f => f.FridgeId == id && f.Customer.UserId == userId);
+                    .FirstOrDefaultAsync(f => f.FridgeId == id && f.Customer.Id == userId);
 
                 if (fridge == null)
                 {

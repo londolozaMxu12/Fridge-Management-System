@@ -17,7 +17,7 @@ namespace FridgeManagementSystem.Models
         public int FridgeRequestId { get; set; }
 
         [Required]
-        public int CustomerId { get; set; }
+        public string CustomerId { get; set; }
         public Customer Customer { get; set; }
 
         [Required, StringLength(200)]

@@ -11,13 +11,15 @@ namespace FridgeManagementSystem.Models
         [Key]
         public int scheduleMaintenanceId { get; set; }
         [Required]
+        public string CustomerId { get; set; }
+        [ForeignKey("CustomerId")]
+        public Customer Customer { get; set; }
         public string Description { get; set; }
         [Required]
         [Display(Name = "ScheduledDate")]
         [DataType(DataType.DateTime)]
         public DateTime ScheduledDate { get; set; }
-        public int CustomerId { get; set; }
-        public Customer Customer { get; set; }
+        
         [Required]
         [Display(Name = "Maintenance Technician")]
         public int MaintenanceTechnicianId { get; set; }

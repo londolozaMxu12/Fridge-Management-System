@@ -10,10 +10,10 @@ namespace FridgeManagementSystem.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
+            migrationBuilder.AddColumn<string>(
                 name: "CustomerId",
                 table: "ScheduleMaintenances",
-                type: "int",
+                type: "string",
                 nullable: false,
                 defaultValue: 0);
 

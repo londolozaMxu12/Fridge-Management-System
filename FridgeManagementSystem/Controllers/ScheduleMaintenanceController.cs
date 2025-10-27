@@ -2,6 +2,7 @@
 using FridgeManagementSystem.Data;
 using FridgeManagementSystem.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -14,13 +15,13 @@ namespace FridgeManagementSystem.Controllers
     {
         private readonly FridgeManagementSystemContext _context;
         private static readonly List<ScheduleMaintenance> schedules = new List<ScheduleMaintenance>();
-        //private readonly RoleManager<IdentityRole> _roleManager;
-        //private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ScheduleMaintenanceController( FridgeManagementSystemContext context)
+        public ScheduleMaintenanceController(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context)
         {
-           // _roleManager = roleManager;
-           // _userManager = userManager;
+            _roleManager = roleManager;
+            _userManager = userManager;
             _context = context;
         }
         [HttpGet]
@@ -33,29 +34,60 @@ namespace FridgeManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(ScheduleMaintenance schedule)
         {
+            //var usersInCustomerRole = from user in _context.Users
+            //                          join userRole in _context.UserRoles on user.Id equals userRole.UserId
+            //                          join role in _context.Roles on userRole.RoleId equals role.Id
+            //                          where role.Name == "Customer"
+            //                          select user;
+
+            //foreach (var user in usersInCustomerRole)
+            //{
+            //    var customer = _context.Customers.FirstOrDefault(c => c.UserId == user.Id.ToString());
+            //    if (customer != null && string.IsNullOrEmpty(customer.UserId))
+            //    {
+            //        customer.UserId = user.Id; // assign Identity user ID
+            //    }
+            //}
+
             // 1️⃣ Get the logged-in user's ID
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUser = _userManager.GetUserId(User);
+            // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             // 3️⃣ Get the technician linked to this user
-            var technician = _context.Employees.FirstOrDefault(e => e.UserId == userId);
+            var technician = _context.Employees.FirstOrDefault(e => e.UserId == currentUser);
             if (technician == null)
             {
                 ModelState.AddModelError("", "No technician record linked to your account. Please contact support.");
                 return View(schedule);
             }
 
-            // 2️⃣ Get the customer linked to this user
-            //var customer = _context.Customers.FirstOrDefault(c => c.UserId == userId);
+            // Get the corresponding Customer record
+
+
+
+            //var customer = _userManager.GetUsersInRoleAsync("Customer");
+
+            //  // Optional: fetch their corresponding Customer records
+            //var customer = _context.Customers
+            //  .Where(c => customersInRole.Select(u => u.Id).Contains(c.UserId))
+            //   .ToList();
+            //  // 2️⃣ Get the customer linked to this user
+            //var customer = User.IsInRole("Customer");
+
+            //var customerdf = _context.Users
+            //   .Where(u => u.Customers.UserId.Any(r => r.RoleId == context.Roles.FirstOrDefault(role => role.Name == "Customer").Id))
+            //   .ToList();
+            // var customer = _context.Customers.FirstOrDefault(c => c.UserId == userId);
             //if (customer == null)
             //{
             //    ModelState.AddModelError("", "No customer record linked to your account. Please contact support.");
             //    return View(schedule);
-            //}                      
+            //}
 
             if (!ModelState.IsValid)
             {
 
                 // 4️⃣ Assign CustomerId and TechnicianId to the schedule
-                //schedule.CustomerId = customer.Id;
+            //    schedule.CustomerId = customer.Id;
                 schedule.MaintenanceTechnicianId = technician.Id;
 
                 // 5️⃣ Save to database

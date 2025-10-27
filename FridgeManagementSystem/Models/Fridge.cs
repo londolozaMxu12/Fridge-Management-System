@@ -51,7 +51,7 @@ namespace FridgeManagementSystem.Models
         public DateTime? NextServiceDate { get; set; }
 
         [Display(Name = "Customer")]
-        public int? CustomerId { get; set; }
+        public string CustomerId { get; set; }
         public Customer? Customer { get; set; }
 
         [Required]

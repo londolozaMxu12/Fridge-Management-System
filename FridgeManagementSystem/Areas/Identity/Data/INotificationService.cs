@@ -57,7 +57,7 @@ namespace FridgeManagementSystem.Areas.Identity.Data
             // Notification for Customer
             var customerNotification = new Notification
             {
-                UserId = customer.UserId,
+                UserId = customer.Id,
                 Title = "Fridge Allocation Confirmed",
                 Message = $"Your fridge ({fridge.FridgeType.Brand} {fridge.FridgeType.Name}) with serial number {fridge.SerialNumber} has been allocated to your business. It will be delivered soon.",
                 Link = $"/Customer/MyFridges",

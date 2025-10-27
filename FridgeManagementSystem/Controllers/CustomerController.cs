@@ -77,7 +77,7 @@ namespace FridgeManagementSystem.Controllers
             var fridges = await _context.Fridges
                 //.Include(f => f.Location)
                 .Include(f => f.Supplier)
-                .Where(f => f.Customer.UserId == userId && f.IsActive && f.Status == "Assigned")
+                .Where(f => f.Customer.Id == userId && f.IsActive && f.Status == "Assigned")
                 .ToListAsync();
 
             return View(fridges);
@@ -92,7 +92,7 @@ namespace FridgeManagementSystem.Controllers
             var customer = await _context.Customers
                 .Include(c => c.User)
                 //.Include(c => c.Location)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+                .FirstOrDefaultAsync(c => c.Id == userId);
 
             if (customer == null)
             {
@@ -244,7 +244,7 @@ namespace FridgeManagementSystem.Controllers
                 // Convert to ViewModels
                 var customerViewModels = customers.Select(c => new CustomerViewModel
                 {
-                    Id = c.Id,
+                    Id = c.userId,
                     UserId = c.UserId,
                     FullName = c.User.FullName,
                     Email = c.User.Email,

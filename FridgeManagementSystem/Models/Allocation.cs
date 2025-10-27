@@ -10,7 +10,7 @@ namespace FridgeManagementSystem.Models
 
         [Required]
         [Display(Name = "Customer")]
-        public int CustomerId { get; set; }
+        public string CustomerId { get; set; }
         public Customer Customer { get; set; } = null!;
 
         [Required]

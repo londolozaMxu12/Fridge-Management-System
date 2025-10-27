@@ -12,7 +12,7 @@ namespace FridgeManagementSystem.Models
         public string Details { get; set; }
 
         // Foreign Key
-        public int CustomerId { get; set; }
+        public string CustomerId { get; set; }
         public Customer Customer { get; set; }
     }
 }

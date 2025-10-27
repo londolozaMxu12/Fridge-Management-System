@@ -132,7 +132,7 @@ namespace FridgeManagementSystem.Controllers
                 order.FridgeId = fridgeId;
 
                 var customerEntity = await _context.Customers
-                     .FirstOrDefaultAsync(c => c.UserId == order.CustomerId);
+                     .FirstOrDefaultAsync(c => c.Id == order.CustomerId);
 
                 if (customerEntity == null)
                 {
