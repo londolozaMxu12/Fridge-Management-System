@@ -49,7 +49,9 @@
 
 <h3 class="text-center mb-4">Order Details</h3>
 
-<a class="btn btn-link" asp-controller="LiaisonOrders" asp-action="Index">Orders</a>
+<a class="btn btn-outline-secondary rounded-pill px-4 mb-3" asp-controller="LiaisonOrders" asp-action="Index">
+    <i class="bi bi-arrow-left me-2"></i>Back to Orders
+</a>
 
 <div class="row text-black mb-4">
     <div class="col-lg-6">
@@ -75,8 +77,9 @@
                 <div class="col">Payment Status</div>
                 <div class="col">
                     <span class="badge rounded-pill @paymentBadgeColor">@Model.PaymentStatus</span>
-                    <a href="#" class="mx-2" data-bs-toggle="modal" data-bs-target="#paymentStatusModal">
-                        Edit
+                    
+                    <a href="#" class="btn btn-outline-success btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#paymentStatusModal">
+                        <i class="bi bi-cash-coin me-2"></i>Update Payment
                     </a>
                     @* <a href="#" data-bs-toggle="modal" data-bs-target="#paymentDetailsModal">
                         Details
@@ -94,7 +97,7 @@
                                         (Model.OrderStatus?.ToLower() != "shipped" && Model.OrderStatus?.ToLower() != "delivered") &&
                                         Model.OrderStatus?.ToLower() != "cancelled" && Model.OrderStatus?.ToLower() != "returned")
                     {
-                        <small class="d-block text-warning mt-1">
+                        <small class="d-block text-info mt-1">
                             <i class="bi bi-info-circle"></i> Accept payment first to accept order
                         </small>
                     }
@@ -112,8 +115,8 @@
                         </small>
                     }
 
-                    <a href="#" class="ms-2" data-bs-toggle="modal" data-bs-target="#orderStatusModal">
-                        Edit
+                    <a href="#" class="btn btn-outline-success btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#orderStatusModal">
+                        <i class="bi bi-clipboard-check me-1"></i>Update Status
                     </a>
                 </div>
             </div>
