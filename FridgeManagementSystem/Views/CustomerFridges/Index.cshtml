@@ -22,7 +22,7 @@
             </div>
             <h4 class="text-light mb-3">No Fridges Allocated</h4>
             <p class="text-light mb-4">You don't have any allocated fridges at the moment.</p>
-            <a asp-controller="#" asp-action="#" class="btn btn-primary btn-lg">
+            <a asp-controller="Store" asp-action="Index" class="btn btn-primary btn-lg">
                 <i class="bi bi-cart-plus me-2"></i>Browse Store
             </a>
         </div>
@@ -36,8 +36,8 @@
                     <div class="card h-100 shadow-sm">
                         <div class="card-header bg-light">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="card-title mb-0 text-dark">@fridge.FridgeType.Name</h5>
-                                
+                                <h5 class="card-title mb-0 text-dark">@fridge.FridgeType?.Name</h5>
+
                             </div>
                         </div>
 
@@ -46,17 +46,18 @@
                             <div class="text-center mb-3">
                                 @if (!string.IsNullOrEmpty(fridge.ImageFileName))
                                 {
-                                    <img src="/Images/Fridges/@fridge.ImageFileName"
+                                    <img src="@Url.Content($"~/Images/Fridges/{fridge.ImageFileName}")"
                                          class="img-fluid rounded"
-                                         alt="@fridge.FridgeType.Name"
-                                         style="max-height: 200px; object-fit: cover;">
+                                         alt="@fridge.FridgeType?.Name"
+                                         style="max-height: 200px; object-fit: cover;"
+                                         onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'">
                                 }
                                 else
                                 {
-                                    <div class="bg-light rounded d-flex align-items-center justify-content-center"
-                                         style="height: 200px;">
-                                        <i class="bi bi-refrigerator text-muted" style="font-size: 3rem;"></i>
-                                    </div>
+                                    <img src="@Url.Content("~/Images/default-fridge.jpg")"
+                                         class="img-fluid rounded"
+                                         alt="Default Fridge Image"
+                                         style="max-height: 200px; object-fit: cover;">
                                 }
                             </div>
 
@@ -65,11 +66,11 @@
                                 <div class="row small">
                                     <div class="col-6">
                                         <strong>Brand:</strong><br>
-                                        @fridge.FridgeType.Brand
+                                        @fridge.FridgeType?.Brand
                                     </div>
                                     <div class="col-6">
                                         <strong>Model:</strong><br>
-                                        @fridge.FridgeType.Model
+                                        @fridge.FridgeType?.Model
                                     </div>
                                 </div>
                             </div>
@@ -94,7 +95,7 @@
                                     <small>
                                         <i class="bi bi-check-circle me-1"></i>
                                         <strong>Ready for Use</strong><br>
-                                        
+
                                     </small>
                                 </div>
                             }

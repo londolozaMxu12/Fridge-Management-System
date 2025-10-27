@@ -77,7 +77,7 @@
                 <div class="col">Payment Status</div>
                 <div class="col">
                     <span class="badge rounded-pill @paymentBadgeColor">@Model.PaymentStatus</span>
-                    
+
                     <a href="#" class="btn btn-outline-success btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#paymentStatusModal">
                         <i class="bi bi-cash-coin me-2"></i>Update Payment
                     </a>
@@ -201,11 +201,16 @@
                 <td>
                     @if (!string.IsNullOrEmpty(item.Fridge?.ImageFileName))
                     {
-                        <img src="/Images/Fridges/@item.Fridge.ImageFileName" width="100" alt="@item.Fridge.FridgeType?.Name" />
+                        <img src="@Url.Content($"~/Images/Fridges/{item.Fridge.ImageFileName}")"
+                             width="100"
+                             alt="@item.Fridge.FridgeType?.Name"
+                             onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'" />
                     }
                     else
                     {
-                        <img src="/Images/Fridges/default-fridge.jpg" width="100" alt="Default Fridge" />
+                        <img src="@Url.Content("~/Images/default-fridge.jpg")"
+                             width="100"
+                             alt="Default Fridge" />
                     }
                 </td>
                 <td>
@@ -214,10 +219,10 @@
                     </h3>
                     @(item.Fridge?.FridgeType?.Brand ?? "N/A") - @(item.Fridge?.FridgeType?.Model ?? "N/A")<br>
                     @(item.Fridge?.SerialNumber ?? "N/A")<br>
-                    R @(item.UnitPrice)
+                    R @(item.UnitPrice.ToString("F2"))
                 </td>
                 <td>@item.Quantity</td>
-                <td>R @(item.UnitPrice* item.Quantity)</td>
+                <td>R @((item.UnitPrice * item.Quantity).ToString("F2"))</td>
             </tr>
         }
     </tbody>
@@ -269,8 +274,16 @@
             <div class="col-md-6">
                 @if (!string.IsNullOrEmpty(Model.Fridge?.ImageFileName))
                 {
-                    <img src="/Images/Fridges/@Model.Fridge.ImageFileName"
+                    <img src="@Url.Content($"~/Images/Fridges/{Model.Fridge.ImageFileName}")"
                          alt="@Model.Fridge.FridgeType?.Name"
+                         class="img-fluid rounded"
+                         style="max-height: 200px;"
+                         onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'">
+                }
+                else
+                {
+                    <img src="@Url.Content("~/Images/default-fridge.jpg")"
+                         alt="Default Fridge Image"
                          class="img-fluid rounded"
                          style="max-height: 200px;">
                 }

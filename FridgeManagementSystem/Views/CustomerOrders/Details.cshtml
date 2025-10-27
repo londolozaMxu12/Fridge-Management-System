@@ -99,12 +99,12 @@
 
 
 <div class="card mt-4">
-    
+
     <div class="col bg-light">
         <div class="border rounded py-3 px-4 h-100">
             <h3 class="mb-4">Order</h3>
 
-            
+
         </div>
     </div>
 </div>
@@ -127,20 +127,23 @@
 
                 <tr>
                     <td>
-                        <img src="/Images/Fridges/@item.Fridge.ImageFileName" width="100" alt="..." />
+                        <img src="@Url.Content($"~/Images/Fridges/{item.Fridge.ImageFileName}")"
+                             width="100"
+                             alt="@item.Fridge.FridgeType?.Name"
+                             onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'" />
                     </td>
                     <td>
                         <h4>
                             <a style="text-decoration: none; color: inherit;" asp-controller="Store"
                                asp-action="Details" asp-route-id="@item.Fridge.FridgeId">
-                                @item.Fridge.FridgeType.Name
+                                @item.Fridge.FridgeType?.Name
                             </a>
                         </h4>
-                        @item.Fridge.FridgeType.Brand - @item.Fridge.FridgeType.Model<br>
-                        R @(item.UnitPrice)
+                        @item.Fridge.FridgeType?.Brand - @item.Fridge.FridgeType?.Model<br>
+                        R @(item.UnitPrice.ToString("F2"))
                     </td>
                     <td>@item.Quantity</td>
-                    <td>R @(item.UnitPrice* item.Quantity)</td>
+                    <td>R @((item.UnitPrice * item.Quantity).ToString("F2"))</td>
                 </tr>
             }
         }
@@ -150,14 +153,14 @@
 <div class="ms-auto mb-3" style="width: 250px">
     <div class="row">
         <div class="col fw-bold">Subtotal:</div>
-        <div class="col text-end">R @(subtotal)</div>
+        <div class="col text-end">R @(subtotal.ToString("F2"))</div>
     </div>
     <div class="row">
         <div class="col fw-bold">Shipping Fee:</div>
-        <div class="col text-end">R @(Model.ShippingFee)</div>
+        <div class="col text-end">R @(Model.ShippingFee.ToString("F2"))</div>
     </div>
     <div class="row">
         <div class="col fw-bold">Total:</div>
-        <div class="col text-end">R @(subtotal + Model.ShippingFee)</div>
+        <div class="col text-end">R @((subtotal + Model.ShippingFee).ToString("F2"))</div>
     </div>
 </div>
