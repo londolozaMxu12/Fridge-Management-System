@@ -35,5 +35,6 @@ namespace FridgeManagementSystem.Models
         public ICollection<Quotation> Quotations { get; set; } = new List<Quotation>();
         public ICollection<Allocation> Allocations { get; set; } = new List<Allocation>();
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+        public ICollection<ScheduleMaintenance> ScheduleMaintenances { get; set; }
     }
 }

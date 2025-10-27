@@ -33,23 +33,59 @@ namespace FridgeManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(ScheduleMaintenance schedule)
         {
+            // 1️⃣ Get the logged-in user's ID
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            //string userId = User.Identity.GetUserId(); // current logged-in ASP.NET Identity user
-            var employee = _context.Employees.FirstOrDefault(e => e.UserId == userId);
-            if (!ModelState.IsValid)
+            // 3️⃣ Get the technician linked to this user
+            var technician = _context.Employees.FirstOrDefault(e => e.UserId == userId);
+            if (technician == null)
             {
-                if (employee != null)
-                {
-                    schedule.MaintenanceTechnicianId = employee.Id;
-                    _context.ScheduleMaintenances.Add(schedule);
-                    _context.SaveChanges();
-                    return RedirectToAction("Index");
-                }
-
-                ModelState.AddModelError("", "Could not find the logged-in technician."); // Go back to list page
+                ModelState.AddModelError("", "No technician record linked to your account. Please contact support.");
+                return View(schedule);
             }
 
+            // 2️⃣ Get the customer linked to this user
+            //var customer = _context.Customers.FirstOrDefault(c => c.UserId == userId);
+            //if (customer == null)
+            //{
+            //    ModelState.AddModelError("", "No customer record linked to your account. Please contact support.");
+            //    return View(schedule);
+            //}                      
+
+            if (!ModelState.IsValid)
+            {
+
+                // 4️⃣ Assign CustomerId and TechnicianId to the schedule
+                //schedule.CustomerId = customer.Id;
+                schedule.MaintenanceTechnicianId = technician.Id;
+
+                // 5️⃣ Save to database
+                _context.ScheduleMaintenances.Add(schedule);
+                _context.SaveChanges();
+
+                return RedirectToAction("Index");
+            }
             return View(schedule);
+            //  var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            //  var username = User.FindFirstValue(ClaimTypes.Name);
+            //  //string userId = User.Identity.GetUserId(); // current logged-in ASP.NET Identity user
+            //  var employee = _context.Employees.FirstOrDefault(e => e.UserId == userId);
+            //  var customer = _context.Customers.FirstOrDefault(c => c.UserId == userId);
+
+            //  if (!ModelState.IsValid)
+            //  {
+            //      if (employee != null)
+            //      {
+            //          schedule.MaintenanceTechnicianId = employee.Id;
+            //          schedule.CustomerId = customer.Id;
+            //          _context.ScheduleMaintenances.Add(schedule);
+            //          _context.SaveChanges();
+            //          return RedirectToAction("Index");
+            //      }
+
+            //      ModelState.AddModelError("", "Could not find the logged-in technician."); // Go back to list page
+            //  }
+            ////  ViewBag.CustomerId = new SelectList(new[] { customer }, "Id", "Name", customer.Id);
+            // return View(schedule);
         }
         public IActionResult Index()
         {
@@ -58,17 +94,20 @@ namespace FridgeManagementSystem.Controllers
         }
         public ActionResult Details(int id)
         {
-            var schedule = schedules.FirstOrDefault(s => s.scheduleMaintenanceId == id);
-            if (schedule == null)
-                return HttpNotFound();
+            var schedule = _context.ScheduleMaintenances
+              .Include(s => s.Customer)
+              .Include(s => s.MaintenanceTechnician)
+              .FirstOrDefault(s => s.MaintenanceTechnicianId == id);
 
+            if (schedule == null)
+            {
+                ViewBag.Message = "Schedule not found.";
+                return View("Error");
+            }
             return View(schedule);
         }
 
-        private ActionResult HttpNotFound()
-        {
-            throw new NotImplementedException();
-        }
+       
         protected override void Dispose(bool disposing)
         {
             if (disposing)

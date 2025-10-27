@@ -261,6 +261,11 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.MaintenanceTechnicianId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
+        builder.Entity<ScheduleMaintenance>()
+              .HasOne(s => s.Customer)
+              .WithMany(c => c.ScheduleMaintenances)
+              .HasForeignKey(s => s.CustomerId)
+              .OnDelete(DeleteBehavior.Cascade);
 
     }
 
