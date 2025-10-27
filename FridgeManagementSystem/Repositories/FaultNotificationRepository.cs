@@ -6,11 +6,25 @@ namespace FridgeManagementSystem.Repositories
     {
         private readonly FridgeManagementSystemContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public FaultNotificationRepository(FridgeManagementSystemContext context, UserManager<ApplicationUser> userManager)
+        public FaultNotificationRepository(FridgeManagementSystemContext context, UserManager<ApplicationUser> userManager,
+            IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _userManager = userManager;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        // Helper method to generate absolute URLs
+        private string GenerateAbsoluteUrl(string relativePath)
+        {
+            var request = _httpContextAccessor.HttpContext?.Request;
+            if (request == null) return relativePath;
+
+            // Build absolute URL
+            var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
+            return $"{baseUrl}{relativePath}";
         }
 
         public async Task NotifyFaultAttendedAsync(Fault fault, Employee attendingTechnician)
@@ -32,7 +46,7 @@ namespace FridgeManagementSystem.Repositories
                     UserId = technician.UserId,
                     Title = "Fault Already Attended",
                     Message = $"Fault '{fault.Title}' has been attended by {attendingTechnician.User.FullName}. Look for new unattended faults",
-                    Link = $"/FaultTechnician/Index",
+                    Link = GenerateAbsoluteUrl($"/FaultTechnician/Index"),
                     CreatedAt = DateTime.Now
                 };
                 _context.Notifications.Add(notification);
@@ -44,7 +58,7 @@ namespace FridgeManagementSystem.Repositories
                 UserId = fault.ReportedBy.UserId,
                 Title = "Fault Being Attended",
                 Message = $"Your fault '{fault.Title}' is being attended by technician {attendingTechnician.User.FullName}",
-                Link = $"/CustomerFault/Details/{fault.FaultId}",
+                Link = GenerateAbsoluteUrl($"/CustomerFault/Details/{fault.FaultId}"),
                 CreatedAt = DateTime.Now
             };
 
@@ -75,7 +89,7 @@ namespace FridgeManagementSystem.Repositories
                     UserId = user.Id,
                     Title = "New Fault Reported",
                     Message = $"Customer {fault.ReportedBy.User.FullName} reported a fault: {fault.Title}. Priority: {fault.Priority}",
-                    Link = $"/FaultTechnician/Details/{fault.FaultId}",
+                    Link = GenerateAbsoluteUrl($"/FaultTechnician/Details/{fault.FaultId}"),
                     CreatedAt = DateTime.Now
                 };
                 _context.Notifications.Add(notification);
@@ -91,7 +105,7 @@ namespace FridgeManagementSystem.Repositories
                 UserId = fault.ReportedBy.UserId,
                 Title = "Fault Status Updated",
                 Message = $"Your fault '{fault.Title}' status changed from {oldStatus} to {fault.Status}",
-                Link = $"/CustomerFault/Details/{fault.FaultId}",
+                Link = GenerateAbsoluteUrl($"/CustomerFault/Details/{fault.FaultId}"),
                 CreatedAt = DateTime.Now
             };
 
@@ -108,7 +122,7 @@ namespace FridgeManagementSystem.Repositories
                 Message = $"Repair for your fault '{schedule.Fault.Title}' has been scheduled for {schedule.ScheduledDate:yyyy-MM-dd HH:mm}, make sure you available at this date and time. " +
                 $"" +
                 $"Thank you, have a good day! ",
-                Link = $"/CustomerFault/Details/{schedule.FaultId}",
+                Link = GenerateAbsoluteUrl($"/CustomerFault/Details/{schedule.FaultId}"),
                 CreatedAt = DateTime.Now
             };
 

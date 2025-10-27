@@ -1,8 +1,22 @@
 ﻿@model FridgeManagementSystem.ViewModels.SupplierEditViewModel
 @{
-    Layout = "_AdminLayout";
-    ViewData["Title"] = "Edit Supplier";
+    if (User.IsInRole("Admin"))
+    {
+        Layout = "_AdminLayout";
+        ViewData["Title"] = "Edit Supplier";
+    }
+    else if (ViewBag.IsPurchasingManager == true)
+    {
+        Layout = "_PurchasingManagerLayout";
+        ViewData["Title"] = "Edit Supplier Profile";
+    }
+    else
+    {
+        Layout = "_Layout";
+        ViewData["Title"] = "Edit Supplier";
+    }
 }
+
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -10,144 +24,304 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-edit"></i> @ViewData["Title"]</h1>
+    <a class="btn btn-outline-secondary" asp-controller="Suppliers" asp-action="Index" role="button">
+        <i class="fas fa-arrow-left me-2"></i>Back to List
+    </a>
+</div>
+
 <div class="row">
-    <h2 class="text-center mb-3">Edit Supplier</h2>
+    <div class="col-lg-10 mx-auto">
+        <!-- Status Alert -->
+        @if (!Model.IsActive || Model.ApprovalStatus != "Approved")
+        {
+            <div class="alert alert-warning mb-4">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Note:</strong> This supplier is currently
+                @if (!Model.IsActive)
+                {
+                    <span class="badge bg-danger">Inactive</span>
+                }
+                @if (!Model.IsActive && Model.ApprovalStatus != "Approved")
+                {
+                    <span> and </span>
+                }
+                @if (Model.ApprovalStatus != "Approved")
+                {
+                    <span class="badge bg-warning">@Model.ApprovalStatus</span>
+                }
+                . Some procurement features may be limited.
+            </div>
+        }
 
-    <div class="col-lg-8 mx-auto rounded border p-4">
-        <h2 class="text-center mb-3">Account Details:</h2>
-        <hr />
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user-edit"></i> Edit Supplier Information</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit" method="post">
+                    <input type="hidden" asp-for="Id" />
 
-        <form asp-action="Edit" method="post">
-            <input type="hidden" asp-for="IsActive" />
-            <input type="hidden" asp-for="Id" />
-            
-            <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">Id</label>
-                <div class="col-sm-8">
-                    <input class="form-control-plaintext" readonly value="@ViewData["SupplierId"]">
+                    <!-- System Information (Read-only) -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2"><i class="fas fa-info-circle me-2"></i>System Information</h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Supplier ID</label>
+                            <input class="form-control-plaintext bg-light rounded p-2" readonly value="@Model.Id">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Registration Date</label>
+                            <input class="form-control-plaintext bg-light rounded p-2" readonly value="@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Account Status</label>
+                            <div>
+                                <span class="badge @(Model.IsActive ? "bg-success" : "bg-danger") me-2">
+                                    @(Model.IsActive ? "Active" : "Inactive")
+                                </span>
+                                <span class="badge @(Model.ApprovalStatus == "Approved" ? "bg-primary" : Model.ApprovalStatus == "Pending" ? "bg-warning" : "bg-danger")">
+                                    @Model.ApprovalStatus
+                                </span>
+                            </div>
+                            <small class="form-text text-muted">
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <span>You can modify status below.</span>
+                                }
+                                else
+                                {
+                                    <span>Status changes require administrator approval.</span>
+                                }
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Account Details -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2"><i class="fas fa-user me-2"></i>Account Details</h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="FullName" class="form-label">Full Name *</label>
+                            <input class="form-control" asp-for="FullName" placeholder="Enter full name">
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Email" class="form-label">Email Address *</label>
+                            <input type="email" class="form-control" asp-for="Email" placeholder="Enter email address">
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Contact Details -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2"><i class="fas fa-address-book me-2"></i>Contact Details</h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ContactNo" class="form-label">Contact Number</label>
+                            <input type="tel" class="form-control" asp-for="ContactNo" placeholder="Enter contact number">
+                            <span asp-validation-for="ContactNo" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Address" class="form-label">Street Address</label>
+                            <input class="form-control" asp-for="Address" placeholder="Enter street address">
+                            <span asp-validation-for="Address" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="City" class="form-label">City</label>
+                            <input class="form-control" asp-for="City" placeholder="Enter city">
+                            <span asp-validation-for="City" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Suburb" class="form-label">Suburb</label>
+                            <input class="form-control" asp-for="Suburb" placeholder="Enter suburb">
+                            <span asp-validation-for="Suburb" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="PostalCode" class="form-label">Postal Code</label>
+                            <input class="form-control" asp-for="PostalCode" placeholder="Enter postal code">
+                            <span asp-validation-for="PostalCode" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Supplier Business Details -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2"><i class="fas fa-building me-2"></i>Business Details</h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CompanyName" class="form-label">Company Name *</label>
+                            <input class="form-control" asp-for="CompanyName" placeholder="Enter company name">
+                            <span asp-validation-for="CompanyName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="SupplierType" class="form-label">Supplier Type *</label>
+                            <select asp-for="SupplierType" class="form-control">
+                                <option value="">-- Select Supplier Type --</option>
+                                @foreach (var type in ViewBag.SupplierTypes)
+                                {
+                                    <option value="@type.Value">@type.Text</option>
+                                }
+                            </select>
+                            <span asp-validation-for="SupplierType" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Admin-Only Fields -->
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 text-warning"><i class="fas fa-shield-alt me-2"></i>Administrator Controls</h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="IsActive" class="form-label">Account Status</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" asp-for="IsActive" id="isActiveSwitch">
+                                    <label class="form-check-label" for="isActiveSwitch">
+                                        @(Model.IsActive ? "Active" : "Inactive")
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">Toggle to activate/deactivate this supplier account.</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ApprovalStatus" class="form-label">Approval Status</label>
+                                <select asp-for="ApprovalStatus" class="form-control">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Approved">Approved</option>
+                                    <option value="Rejected">Rejected</option>
+                                </select>
+                                <small class="form-text text-muted">Update the supplier's approval status.</small>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Hidden fields for non-admin users -->
+                        <input type="hidden" asp-for="IsActive" />
+                        <input type="hidden" asp-for="ApprovalStatus" />
+                    }
+
+                    <!-- Form Actions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">
+                                        <i class="fas fa-eye me-2"></i>View Details
+                                    </a>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a class="btn btn-outline-danger" asp-controller="Suppliers" asp-action="Index" role="button">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Procurement Information for Purchasing Manager -->
+        @* @if (ViewBag.IsPurchasingManager == true)
+        {
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Procurement Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note for Purchasing Managers:</strong> You can update contact and business information,
+                        but account status changes require administrator approval. Ensure supplier details are accurate
+                        for procurement communications.
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 bg-light">
+                                <h5 class="text-primary mb-1">@(ViewBag.ProcurementStats?.RFQsSent ?? 12)</h5>
+                                <small class="text-muted">RFQs Sent</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 bg-light">
+                                <h5 class="text-success mb-1">@(ViewBag.ProcurementStats?.QuotesReceived ?? 8)</h5>
+                                <small class="text-muted">Quotes Received</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 bg-light">
+                                <h5 class="text-warning mb-1">@(ViewBag.ProcurementStats?.ActiveOrders ?? 5)</h5>
+                                <small class="text-muted">Active Orders</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 bg-light">
+                                <h5 class="text-info mb-1">@(ViewBag.ReliabilityRating ?? 4)/5</h5>
+                                <small class="text-muted">Reliability Score</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">Full Name</label>
-                <div class="col-sm-8">
-                    <input class="form-control" asp-for="FullName">
-                    <span asp-validation-for="FullName" class="text-danger"></span>
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">Email</label>
-                <div class="col-sm-8">
-                    <input class="form-control" asp-for="Email">
-                    <span asp-validation-for="Email" class="text-danger"></span>
-                </div>
-            </div>
-
-            <h2 class="text-center mb-3">Contact Details:</h2>
-            <hr />
-
-            <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">Contact No</label>
-                <div class="col-sm-8">
-
-                    <input type="tel" class="form-control" asp-for="ContactNo">
-                    <span asp-validation-for="ContactNo" class="text-danger"></span>
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">Address</label>
-                <div class="col-sm-8">
-                    <input class="form-control" asp-for="Address">
-                    <span asp-validation-for="Address" class="text-danger"></span>
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">City</label>
-                <div class="col-sm-8">
-                    <input class="form-control" asp-for="City">
-                    <span asp-validation-for="City" class="text-danger"></span>
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">Suburb</label>
-                <div class="col-sm-8">
-                    <input class="form-control" asp-for="Suburb">
-                    <span asp-validation-for="Suburb" class="text-danger"></span>
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">Postal Code</label>
-                <div class="col-sm-8">
-                    <input class="form-control" asp-for="PostalCode">
-                    <span asp-validation-for="PostalCode" class="text-danger"></span>
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">Registered On</label>
-                <div class="col-sm-8">
-                    <input class="form-control-plaintext" readonly value="@ViewData["CreatedAt"]">
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">Status</label>
-                <div class="col-sm-8">
-                    <span class="badge @(Model.IsActive ? "bg-success" : "bg-danger") form-control-plaintext">
-                        @(Model.IsActive ? "Active" : "Inactive")
-                    </span>
-                    <small class="form-text text-muted">Status cannot be changed here.</small>
-                </div>
-            </div>
-
-            <h2 class="text-center mb-3">Supplier Details:</h2>
-            <hr />
-
-            <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">Company Name*</label>
-                <div class="col-sm-8">
-                    <input class="form-control" asp-for="CompanyName">
-                    <span asp-validation-for="CompanyName" class="text-danger small"></span>
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label asp-for="SupplierType" class="col-sm-4 col-form-label">Supplier Type</label>
-                <div class="col-sm-8">
-                    <select asp-for="SupplierType" class="form-control">
-                        <option value="">-- Select Supplier Type --</option>
-                        @foreach (var type in ViewBag.SupplierTypes)
-                        {
-                            <option value="@type.Value">@type.Text</option>
-                        }
-                    </select>
-                    <span asp-validation-for="SupplierType" class="text-danger small"></span>
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <div class="offset-sm-4 col-sm-4 d-grid">
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-
-                </div>
-                <div class="col-sm-4 d-grid">
-                    <a class="btn btn-outline-secondary" asp-controller="Suppliers" asp-action="Index" role="button">
-                        <i class="fas fa-arrow-left me-2"></i>Back to List
-                    </a>
-                </div>
-            </div>
-        </form>
-    </div>
+        }
+    </div> *@
 </div>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        // Enhance form functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add confirmation for status changes (Admin only)
+            const statusSwitch = document.getElementById('isActiveSwitch');
+            if (statusSwitch) {
+                statusSwitch.addEventListener('change', function() {
+                    const newStatus = this.checked ? 'Active' : 'Inactive';
+                    if (!confirm(`Are you sure you want to set this supplier to '${newStatus}' status?`)) {
+                        this.checked = !this.checked; // Revert the change
+                    }
+                });
+            }
+
+            // Real-time validation feedback
+            const form = document.querySelector('form');
+            const inputs = form.querySelectorAll('input, select');
+
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    if (this.value.trim() !== '') {
+                        this.classList.add('is-valid');
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            });
+
+            // Auto-select the current supplier type in dropdown
+            const currentSupplierType = '@Model.SupplierType';
+            if (currentSupplierType) {
+                const supplierTypeSelect = document.querySelector('select[name="SupplierType"]');
+                if (supplierTypeSelect) {
+                    for (let i = 0; i < supplierTypeSelect.options.length; i++) {
+                        if (supplierTypeSelect.options[i].value === currentSupplierType) {
+                            supplierTypeSelect.options[i].selected = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 }
-
-

@@ -79,6 +79,7 @@ builder.Services.AddScoped<IAdminSeedService, AdminSeedService>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IEmailSender, DummyEmailSender>();
 builder.Services.AddRazorPages();
+builder.Services.AddHttpContextAccessor();
 //builder.Services.AddTransient<IHomeRepository, HomeRepository>();
 //builder.Services.AddTransient<ICartRepository, CartRepository>();
 
@@ -93,7 +94,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var employeeNumberService = scope.ServiceProvider.GetRequiredService<IEmployeeNumberService>();
-    //await employeeNumberService.InitializeSequenceAsync();
+    
 }
 
 // Ensure 'Admin' role exists at application startup
@@ -156,21 +157,12 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-//app.MapControllerRoute(
-//    name: "areas",
-//    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
 
-// Seed the admin user and role
-//using (var scope = app.Services.CreateScope())
-//{
-//    var seedService = scope.ServiceProvider.GetRequiredService<IAdminSeedService>();
-//    await seedService.SeedAdminUserAsync();
-//}
 
 using (var scope = app.Services.CreateScope())
 {
@@ -180,12 +172,11 @@ using (var scope = app.Services.CreateScope())
         var adminSeedService = services.GetRequiredService<IAdminSeedService>();
         await adminSeedService.SeedAdminUserAsync();
 
-        //Console.WriteLine("Admin user seeding completed successfully.");
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        //Console.WriteLine("An error occurred while seeding admin user.", ex);
+        
     }
 }
 app.Run();

@@ -36,6 +36,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly FridgeManagementSystemContext _context;
         public RegisterModel(
@@ -45,7 +46,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             ILogger<RegisterModel> logger,
             RoleManager<IdentityRole> roleManager,
             IEmailSender emailSender,
-
+            IHttpContextAccessor httpContextAccessor,
             FridgeManagementSystemContext context)
 
         {
@@ -56,9 +57,19 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             _roleManager = roleManager;
             _logger = logger;
             _emailSender = emailSender;
+            _httpContextAccessor = httpContextAccessor;
             _context = context;
         }
+        // Helper method to generate absolute URLs
+        private string GenerateAbsoluteUrl(string relativePath)
+        {
+            var request = _httpContextAccessor.HttpContext?.Request;
+            if (request == null) return relativePath;
 
+            // Build absolute URL
+            var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
+            return $"{baseUrl}{relativePath}";
+        }
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
@@ -298,7 +309,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                     UserId = notifyUser.Id,
                     Title = "New Customer Registration Requires Approval",
                     Message = $"Customer {user.FullName} ({user.Email}) from {user.City + ", " + user.Suburb} has been registered and requires approval.",
-                    Link = $"/Admin/ApproveCustomer/{user.Id}"
+                    Link = GenerateAbsoluteUrl($"/Admin/ApproveCustomer/{user.Id}")
                 };
 
                 _context.Notifications.Add(notification);

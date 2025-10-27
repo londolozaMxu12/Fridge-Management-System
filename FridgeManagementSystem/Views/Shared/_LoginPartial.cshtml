@@ -68,6 +68,44 @@
             </ul>
            
         }
+        else if (User.IsInRole("Supplier"))
+        {
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link active active dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+
+                        <i class="bi bi-person-circle me-2 fs-5"></i>@(appUser!.FullName + " (Supplier)")
+
+                    </a>
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" asp-controller="#" asp-action="#">
+                                <i class="bi bi-person me-2"></i>My Profile
+                            </a>
+                        </li>
+                        @* <li>
+                            <a class="dropdown-item" asp-area="Customer" asp-controller="Profile" asp-action="Edit">
+                                <i class="bi bi-pencil-square me-2"></i>Update Profile
+                            </a>
+                        </li> *@
+
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="nav-item">
+
+                            <form id="logoutForm" class="dropdown-item text-danger" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                                <button id="logout" type="submit" class="nav-link btn btn-link text-dark  border-0">
+                                    <i class="bi bi-box-arrow-right text-danger me-2"></i>Logout
+                                </button>
+                            </form>
+
+                        </li>
+
+                    </ul>
+                </li>
+            </ul>
+
+        }
         else if (User.IsInRole("Customer"))
         {
             <ul class="navbar-nav">
@@ -222,7 +260,7 @@
         {
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                    <a class="nav-link active dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
 
                         <i class="bi bi-person-circle me-2 fs-5"></i>@(appUser!.FullName + " (Purchasing Manager)")
 

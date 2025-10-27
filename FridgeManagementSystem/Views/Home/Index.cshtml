@@ -1,6 +1,6 @@
 ﻿@model List<Fridge>
 @{
-    if (User.Identity.IsAuthenticated)
+    @if (User.Identity.IsAuthenticated && User.IsInRole("Customer"))
     {
         Layout = "_CustomerLayout";
     }

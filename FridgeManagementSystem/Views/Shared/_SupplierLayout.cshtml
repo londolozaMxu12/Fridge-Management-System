@@ -1,0 +1,608 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Fridge Management System | Supplier Portal</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/supplier.css" asp-append-version="true" />
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        main {
+            flex: 1 0 auto;
+            padding-bottom: 60px;
+        }
+
+        .fixed-footer {
+            flex-shrink: 0;
+            background-color: #212529;
+            color: white;
+            padding: 1rem 0;
+            margin-top: auto;
+            position: relative;
+            width: 100%;
+        }
+    </style>
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- Header -->
+    <header class="navbar navbar-expand-lg navbar-dark bg-success sticky-top">
+        <div class="container-fluid">
+            <!-- Brand -->
+            <a class="navbar-brand d-flex align-items-center" asp-area="Supplier" asp-controller="Dashboard" asp-action="Index">
+                <div class="d-flex flex-column align-items-center">
+                    <img src="~/Images/WhatsApp Image 2025-05-27 at 18.37.15_1c44df4a.jpg" height="50" width="100" />
+                    <span class="fw-bold mt-1" style="color: #001f3f; font-size: 0.9rem;">NM DESIGN HUB</span>
+                </div>
+            </a>
+
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#supplierNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navigation -->
+            <div class="collapse navbar-collapse" id="supplierNavbar">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="Supplier" asp-controller="Dashboard" asp-action="Index">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
+                    </li>
+
+                    <!-- RFQs -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-file-text me-1"></i>RFQs
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="RFQs" asp-action="Index">
+                                    <i class="bi bi-inbox me-2"></i>Received RFQs
+                                    <span class="badge bg-primary ms-2" id="receivedRFQsCount">0</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="RFQs" asp-action="Active">
+                                    <i class="bi bi-clock me-2"></i>Active RFQs
+                                    <span class="badge bg-warning ms-2" id="activeRFQsCount">0</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="RFQs" asp-action="Expired">
+                                    <i class="bi bi-clock-history me-2"></i>Expired RFQs
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Quotations -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-file-earmark-text me-1"></i>Quotations
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Quotations" asp-action="Index">
+                                    <i class="bi bi-list-ul me-2"></i>All Quotations
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Quotations" asp-action="Create">
+                                    <i class="bi bi-plus-circle me-2"></i>Submit Quotation
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Quotations" asp-action="Pending">
+                                    <i class="bi bi-clock me-2"></i>Pending Review
+                                    <span class="badge bg-warning ms-2" id="pendingQuotationsCount">0</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Quotations" asp-action="Approved">
+                                    <i class="bi bi-check-circle me-2"></i>Approved Quotes
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Quotations" asp-action="Rejected">
+                                    <i class="bi bi-x-circle me-2"></i>Rejected Quotes
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Purchase Orders -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-file-earmark-check me-1"></i>Purchase Orders
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="PurchaseOrders" asp-action="Index">
+                                    <i class="bi bi-list-ul me-2"></i>All Orders
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="PurchaseOrders" asp-action="Pending">
+                                    <i class="bi bi-clock me-2"></i>Pending Orders
+                                    <span class="badge bg-warning ms-2" id="pendingOrdersCount">0</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="PurchaseOrders" asp-action="Confirmed">
+                                    <i class="bi bi-check-circle me-2"></i>Confirmed Orders
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="PurchaseOrders" asp-action="InProgress">
+                                    <i class="bi bi-gear me-2"></i>Orders in Progress
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="PurchaseOrders" asp-action="ReadyForDelivery">
+                                    <i class="bi bi-check-square me-2"></i>Ready for Delivery
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Delivery Management -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-truck me-1"></i>Delivery
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Deliveries" asp-action="Index">
+                                    <i class="bi bi-list-ul me-2"></i>All Deliveries
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Deliveries" asp-action="Create">
+                                    <i class="bi bi-plus-circle me-2"></i>Create Delivery Note
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Deliveries" asp-action="Scheduled">
+                                    <i class="bi bi-calendar me-2"></i>Scheduled Deliveries
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Deliveries" asp-action="InTransit">
+                                    <i class="bi bi-truck me-2"></i>In Transit
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Deliveries" asp-action="Delivered">
+                                    <i class="bi bi-check-circle me-2"></i>Delivered
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Company Profile -->
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="Supplier" asp-controller="Profile" asp-action="Index">
+                            <i class="bi bi-building me-1"></i>Company Profile
+                        </a>
+                    </li>
+
+                    <!-- Reports -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-graph-up me-1"></i>Reports
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Reports" asp-action="Performance">
+                                    <i class="bi bi-bar-chart me-2"></i>Performance
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Reports" asp-action="OrderHistory">
+                                    <i class="bi bi-clock-history me-2"></i>Order History
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Reports" asp-action="Revenue">
+                                    <i class="bi bi-currency-dollar me-2"></i>Revenue Report
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <!-- Quick Actions -->
+                <div class="navbar-nav me-3">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-lightning-fill me-1"></i>Quick Actions
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Quotations" asp-action="Create">
+                                    <i class="bi bi-file-earmark-text me-2"></i>Submit Quote
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Deliveries" asp-action="Create">
+                                    <i class="bi bi-truck me-2"></i>Create Delivery
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="RFQs" asp-action="Active">
+                                    <i class="bi bi-file-text me-2"></i>View Active RFQs
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="PurchaseOrders" asp-action="Pending">
+                                    <i class="bi bi-file-earmark-check me-2"></i>Pending Orders
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- User Menu -->
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-building me-2 fs-5"></i>
+                            <span id="companyName">Supplier</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li class="dropdown-header">
+                                <i class="bi bi-buildings me-2"></i>
+                                <span id="supplierName">Loading...</span>
+                            </li>
+                            <li class="dropdown-header">
+                                <small class="text-muted" id="supplierCode">Supplier Code: Loading...</small>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Profile" asp-action="Index">
+                                    <i class="bi bi-building me-2"></i>Company Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="Supplier" asp-controller="Profile" asp-action="Products">
+                                    <i class="bi bi-box-seam me-2"></i>Product Catalog
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="themeToggle">
+                                    <i class="bi bi-palette me-2"></i>Toggle Theme
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="notificationsToggle">
+                                    <i class="bi bi-bell me-2"></i>
+                                    Notifications
+                                    <span class="badge bg-danger ms-2" id="notificationCount">0</span>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" asp-area="Identity" asp-page="/Account/Logout">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container-fluid px-0">
+        <!-- Alert Container -->
+        <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1050; margin-top: 80px;">
+            <!-- Alerts will be inserted here dynamically -->
+        </div>
+
+        <!-- Notifications Panel -->
+        <div id="notificationsPanel" class="position-fixed end-0 top-0 mt-5 me-3" style="z-index: 1045; display: none; width: 400px;">
+            <div class="card shadow-lg">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-bell-fill me-2"></i>Supplier Notifications</h6>
+                    <button type="button" class="btn-close btn-close-white" id="closeNotifications"></button>
+                </div>
+                <div class="card-body p-0">
+                    <div id="notificationList" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Notifications will be loaded here -->
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="#" class="btn btn-sm btn-outline-success">View All Notifications</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Header -->
+        <div class="bg-light border-bottom py-3 mb-4">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h1 class="h3 mb-0">
+                            <i class="bi @ViewData["PageIcon"] me-2 text-success"></i>@ViewData["Title"]
+                        </h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a asp-area="Supplier" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                                @if (ViewData["Breadcrumb"] != null)
+                                {
+                                    @Html.Raw(ViewData["Breadcrumb"])
+                                }
+                                <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="col-auto">
+                        @RenderSection("HeaderActions", required: false)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Bar -->
+        <div class="container-fluid mb-4">
+            <div class="row g-3" id="quickStats">
+                <!-- Quick stats will be loaded dynamically -->
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="container-fluid">
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light mt-5">
+        <div class="container-fluid py-3">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h6 class="fw-bold mb-0">
+                        <i class="bi bi-truck me-2"></i>Supplier Portal - Fridge Management System
+                    </h6>
+                    <p class="mb-0 small text-muted">Efficient order processing and delivery management</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <p class="mb-0 small">
+                        <i class="bi bi-circle-fill text-success me-1"></i> System Online |
+                        <span id="activeOrders">0</span> Active Orders
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/supplier.js" asp-append-version="true"></script>
+
+    <!-- Supplier JavaScript -->
+    <script>
+        // Theme Toggle
+        document.getElementById('themeToggle')?.addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('supplierTheme', newTheme);
+        });
+
+        // Notifications Toggle
+        document.getElementById('notificationsToggle')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            const panel = document.getElementById('notificationsPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        });
+
+        document.getElementById('closeNotifications')?.addEventListener('click', function() {
+            document.getElementById('notificationsPanel').style.display = 'none';
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('supplierTheme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+
+            loadUserData();
+            loadQuickStats();
+            loadNotifications();
+            loadCounts();
+            startRealTimeUpdates();
+        });
+
+        async function loadUserData() {
+            try {
+                const supplier = {
+                    name: 'Supplier Company',
+                    companyName: '@User.Identity?.Name' || 'Supplier',
+                    supplierCode: 'SUP-' + Math.floor(1000 + Math.random() * 9000)
+                };
+
+                document.getElementById('companyName').textContent = supplier.name;
+                document.getElementById('supplierName').textContent = supplier.companyName;
+                document.getElementById('supplierCode').textContent = 'Supplier Code: ' + supplier.supplierCode;
+            } catch (error) {
+                console.error('Failed to load user data:', error);
+            }
+        }
+
+        async function loadQuickStats() {
+            try {
+                const response = await fetch('/Supplier/Dashboard/GetQuickStats');
+                if (response.ok) {
+                    const stats = await response.json();
+                    updateQuickStats(stats);
+                }
+            } catch (error) {
+                console.error('Failed to load quick stats:', error);
+            }
+        }
+
+        function updateQuickStats(stats) {
+            const quickStatsHTML = `
+                <div class="col-xl-3 col-md-6">
+                    <div class="card quick-stat-card bg-primary text-white">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h4 class="mb-0">${stats.activeRFQs || 0}</h4>
+                                    <small>Active RFQs</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-file-text fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card quick-stat-card bg-warning text-dark">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h4 class="mb-0">${stats.pendingQuotations || 0}</h4>
+                                    <small>Pending Quotes</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-file-earmark-text fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card quick-stat-card bg-info text-white">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h4 class="mb-0">${stats.pendingOrders || 0}</h4>
+                                    <small>Pending Orders</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-file-earmark-check fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card quick-stat-card bg-success text-white">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h4 class="mb-0">${stats.completedDeliveries || 0}</h4>
+                                    <small>Completed Deliveries</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-truck fs-2 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('quickStats').innerHTML = quickStatsHTML;
+        }
+
+        async function loadCounts() {
+            try {
+                const response = await fetch('/Supplier/Dashboard/GetCounts');
+                if (response.ok) {
+                    const counts = await response.json();
+                    updateCounts(counts);
+                }
+            } catch (error) {
+                console.error('Failed to load counts:', error);
+            }
+        }
+
+        function updateCounts(counts) {
+            document.getElementById('receivedRFQsCount').textContent = counts.receivedRFQs || 0;
+            document.getElementById('activeRFQsCount').textContent = counts.activeRFQs || 0;
+            document.getElementById('pendingQuotationsCount').textContent = counts.pendingQuotations || 0;
+            document.getElementById('pendingOrdersCount').textContent = counts.pendingOrders || 0;
+            document.getElementById('activeOrders').textContent = counts.activeOrders || 0;
+        }
+
+        function startRealTimeUpdates() {
+            setInterval(() => {
+                loadCounts();
+                loadNotifications();
+            }, 30000);
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert-' + Date.now();
+
+            const alertHTML = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-${getAlertIcon(type)} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        function getAlertIcon(type) {
+            const icons = {
+                'success': 'check-circle-fill',
+                'danger': 'exclamation-triangle-fill',
+                'warning': 'exclamation-triangle-fill',
+                'info': 'info-circle-fill'
+            };
+            return icons[type] || 'info-circle-fill';
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

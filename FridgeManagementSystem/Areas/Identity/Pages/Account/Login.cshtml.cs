@@ -160,24 +160,18 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                         }
 
                         var role = await _userManager.GetRolesAsync(user);
-                        //var primaryRole = role.FirstOrDefault();
-
-                        // Redirect based on primary role
-                        //return primaryRole?.ToLower() switch
-                        //{
-                        //    "admin" => LocalRedirect("~/Admin"),
-                        //    //"employee" => LocalRedirect("~/Employee/Dashboard"),
-                        //    //"supplier" => LocalRedirect("~/Supplier/Dashboard"),
-                        //    //"customer" => LocalRedirect("~/Customer/Dashboard"),
-                        //    _ => LocalRedirect(returnUrl)
-                        //};
+                        
 
                         if (role.Contains("Admin"))
                         {
-                            //return RedirectToAction("Index", "Admin");
-                            return LocalRedirect("~/Admin");
+                            return RedirectToAction("Dashboard", "Admin");
+                            //return LocalRedirect("~/Admin");
                         }
-                        if (role.Contains("Customer"))
+                        else if (role.Contains("Customer"))
+                        {
+                            return RedirectToAction("Index", "Home");
+                        }
+                        else if (role.Contains("Supplier"))
                         {
                             return RedirectToAction("Index", "Home");
                         }
@@ -207,22 +201,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                                 return RedirectToAction("Index", "Employee");
                             }
                         }
-                        //else if (role.Contains("Customer Management"))
-                        //{
-                        //    return RedirectToAction("Index", "CustomerManagement");
-                        //}
-                        //else if (role.Contains("Fault Technician"))
-                        //{
-                        //    return RedirectToAction("Index", "FaultManagement");
-                        //}
-                        //else if (role.Contains("Maintenance Technician"))
-                        //{
-                        //    return RedirectToAction("Index", "MaintenanceManagement");
-                        //}
-                        //else if (role.Contains("Purchasing Management"))
-                        //{
-                        //    return RedirectToAction("Index", "PurchasingManagement");
-                        //}
+                        
                     }
 
                     return LocalRedirect(returnUrl);
@@ -236,11 +215,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                     _logger.LogWarning("User account locked out.");
                     return RedirectToPage("./Lockout");
                 }
-                //if (result == Microsoft.AspNetCore.Identity.SignInResult.NotAllowed)
-                //{
-                //    ModelState.AddModelError(string.Empty, "This account has been deactivated. Please contact administrator.");
-                //    return Page();
-                //}
+                
                 else
                 {
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
