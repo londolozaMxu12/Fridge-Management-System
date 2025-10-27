@@ -14,6 +14,22 @@
                 </h5>
             </div>
             <div class="card-body">
+                <!-- Display success/error messages from TempData -->
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle"></i> @TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
                 <form asp-action="Create" enctype="multipart/form-data" id="createForm">
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
@@ -45,7 +61,7 @@
                                 <label asp-for="Price" class="form-label fw-bold"></label>
                                 <div class="input-group">
                                     <span class="input-group-text">R</span>
-                                    <input asp-for="Price" class="form-control" type="number" step="0.01" min="0.01" />
+                                    <input asp-for="Price" class="form-control" type="number" step="0.01" min="0.01" required />
                                 </div>
                                 <span asp-validation-for="Price" class="text-danger small"></span>
                             </div>
@@ -55,12 +71,13 @@
                                 <label asp-for="SerialNumber" class="form-label fw-bold"></label>
                                 <input asp-for="SerialNumber" class="form-control" placeholder="Leave blank to auto-generate" />
                                 <span asp-validation-for="SerialNumber" class="text-danger small"></span>
+                                <small class="form-text text-muted">Auto-generated if left blank</small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group mb-3">
                                 <label asp-for="Status" class="form-label fw-bold"></label>
-                                <select asp-for="Status" class="form-select" asp-items="ViewBag.StatusList"></select>
+                                <select asp-for="Status" class="form-select" asp-items="ViewBag.StatusList" required></select>
                                 <span asp-validation-for="Status" class="text-danger small"></span>
                             </div>
                         </div>
@@ -70,14 +87,16 @@
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label asp-for="Category" class="form-label fw-bold"></label>
-                                <select asp-for="Category" class="form-select" asp-items="ViewBag.Categories"></select>
+                                <select asp-for="Category" class="form-select" asp-items="ViewBag.Categories" required>
+                                    <option value="">-- Select Category --</option>
+                                </select>
                                 <span asp-validation-for="Category" class="text-danger small"></span>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label asp-for="AcquisitionDate" class="form-label fw-bold"></label>
-                                <input asp-for="AcquisitionDate" class="form-control" type="date" />
+                                <input asp-for="AcquisitionDate" class="form-control" type="date" required />
                                 <span asp-validation-for="AcquisitionDate" class="text-danger small"></span>
                             </div>
                         </div>
@@ -99,24 +118,48 @@
                                 <div class="form-text">Optional: Next scheduled maintenance date</div>
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label fw-bold">Image Preview</label>
+                                <div id="imagePreview" class="border rounded p-2 text-center bg-light" style="min-height: 120px; display: none;">
+                                    <img id="previewImage" src="#" alt="Preview" class="img-fluid" style="max-height: 100px;" />
+                                    <div id="imageInfo" class="small text-muted mt-1"></div>
+                                </div>
+                                <div id="noImagePreview" class="border rounded p-3 text-center bg-light">
+                                    <i class="fas fa-image fa-2x text-muted mb-2"></i>
+                                    <div class="small text-muted">No image selected</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group mb-4">
                         <label asp-for="ImageFile" class="form-label fw-bold"></label>
-                        <input asp-for="ImageFile" class="form-control" type="file" accept="image/*" id="imageInput" />
+                        <input asp-for="ImageFile" class="form-control" type="file" accept=".jpg,.jpeg,.png" id="imageInput" />
                         <span asp-validation-for="ImageFile" class="text-danger small"></span>
-                        <div class="form-text">Upload a clear image of the fridge (JPEG, PNG - Max 5MB)</div>
-                        <div id="imagePreview" class="mt-2 text-center" style="display: none;">
-                            <img id="previewImage" src="#" alt="Preview" class="img-thumbnail" style="max-height: 200px;" />
+                        <div class="form-text">
+                            Supported formats: JPG, JPEG, PNG | Maximum size: 5MB
+                            <span id="fileSizeWarning" class="text-warning" style="display: none;"></span>
                         </div>
                     </div>
 
+                    <!-- Loading indicator -->
+                    <div id="loadingIndicator" class="alert alert-info text-center" style="display: none;">
+                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span id="loadingText">Creating fridge...</span>
+                    </div>
+
+                    <!-- Form submission feedback -->
+                    <div id="formFeedback" class="alert" style="display: none;"></div>
+
                     <div class="form-group">
-                        <button type="submit" class="btn btn-primary me-2">
-                            <i class="fas fa-save m-1"></i> Create Fridge
+                        <button type="submit" class="btn btn-primary me-2" id="submitButton">
+                            <i class="fas fa-save me-1"></i> Create Fridge
                         </button>
                         <a asp-action="Index" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left m-1"></i> Back to List
+                            <i class="fas fa-arrow-left me-1"></i> Back to List
                         </a>
                     </div>
                 </form>
@@ -139,21 +182,141 @@
                 acquisitionDate.val(today);
             }
 
-            // Image preview functionality
+            // Enhanced image preview functionality
             $('#imageInput').change(function() {
                 const file = this.files[0];
+                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                const fileSizeWarning = $('#fileSizeWarning');
+
                 if (file) {
+                    // Check file size
+                    if (file.size > maxSize) {
+                        fileSizeWarning.text(' File size exceeds 5MB limit!').show();
+                        this.value = ''; // Clear the file input
+                        $('#imagePreview').hide();
+                        $('#noImagePreview').show();
+                        return;
+                    } else {
+                        fileSizeWarning.hide();
+                    }
+
+                    // Check file type
+                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                    if (!validTypes.includes(file.type)) {
+                        fileSizeWarning.text(' Only JPG, JPEG, and PNG files are allowed!').show();
+                        this.value = ''; // Clear the file input
+                        $('#imagePreview').hide();
+                        $('#noImagePreview').show();
+                        return;
+                    }
+
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         $('#previewImage').attr('src', e.target.result);
+                        $('#imageInfo').html(`<strong>${file.name}</strong> (${formatFileSize(file.size)})`);
                         $('#imagePreview').show();
+                        $('#noImagePreview').hide();
+                    }
+                    reader.onerror = function() {
+                        fileSizeWarning.text(' Error reading file!').show();
+                        $('#imagePreview').hide();
+                        $('#noImagePreview').show();
                     }
                     reader.readAsDataURL(file);
                 } else {
                     $('#imagePreview').hide();
+                    $('#noImagePreview').show();
+                    fileSizeWarning.hide();
                 }
             });
 
+            // Form submission handling
+            $('#createForm').on('submit', function() {
+                const submitButton = $('#submitButton');
+                const loadingIndicator = $('#loadingIndicator');
+                const loadingText = $('#loadingText');
+
+                // Disable submit button and show loading
+                submitButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Creating...');
+                loadingIndicator.show();
+                loadingText.text('Creating fridge and processing image...');
+            });
+
+            // Handle form validation errors
+            $('input, select, textarea').on('input change', function() {
+                const field = $(this);
+                const errorSpan = field.siblings('.text-danger');
+
+                if (field.hasClass('input-validation-error')) {
+                    field.addClass('is-invalid');
+                } else {
+                    field.removeClass('is-invalid');
+                    errorSpan.text('');
+                }
+            });
+
+            // Auto-generate serial number hint
+            $('#SerialNumber').on('focus', function() {
+                if (!$(this).val()) {
+                    $(this).attr('placeholder', 'e.g., SN' + new Date().toISOString().slice(0,10).replace(/-/g, '') + '001');
+                }
+            });
+
+            // Price validation
+            $('#Price').on('blur', function() {
+                const price = parseFloat($(this).val());
+                if (price <= 0) {
+                    $(this).addClass('is-invalid');
+                    $(this).siblings('.text-danger').text('Price must be greater than 0');
+                }
+            });
+
+            // Helper function to format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Clear validation errors when modal is closed (if using modal)
+            $('.btn-secondary').on('click', function() {
+                $('.is-invalid').removeClass('is-invalid');
+                $('.text-danger').text('');
+            });
         });
     </script>
+
+    <style>
+        .is-invalid {
+            border-color: #dc3545;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6.4.4.4-.4'/%3e%3cpath d='M6 7v1'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+
+        .form-text {
+            font-size: 0.875rem;
+        }
+
+        #imagePreview {
+            transition: all 0.3s ease;
+        }
+
+        #previewImage {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+    </style>
 }

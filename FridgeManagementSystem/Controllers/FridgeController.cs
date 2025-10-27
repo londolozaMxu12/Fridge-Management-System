@@ -196,13 +196,22 @@ namespace FridgeManagementSystem.Controllers
         // GET: Fridge/Create
         public async Task<IActionResult> Create()
         {
-            await LoadViewData();
-            var model = new CreateFridgeViewModel
+            try
             {
-                AcquisitionDate = DateTime.Now,
-                Status = "Available"
-            };
-            return View(model);
+                await LoadViewData();
+                var model = new CreateFridgeViewModel
+                {
+                    AcquisitionDate = DateTime.Now,
+                    Status = "Available"
+                };
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading Create view");
+                TempData["Error"] = "An error occurred while loading the create form. Please try again.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         // POST: Fridge/Create
@@ -210,106 +219,172 @@ namespace FridgeManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateFridgeViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                try
+                await LoadViewData();
+                return View(model);
+            }
+
+            try
+            {
+                // Get selected fridge type details
+                var selectedFridgeType = await _context.FridgeType
+                    .FirstOrDefaultAsync(ft => ft.FridgeTypeId == model.FridgeTypeId && ft.IsActive);
+
+                if (selectedFridgeType == null)
                 {
-                    // Get selected fridge type details
-                    var selectedFridgeType = await _context.FridgeType
-                        .FirstOrDefaultAsync(ft => ft.FridgeTypeId == model.FridgeTypeId && ft.IsActive);
+                    ModelState.AddModelError("FridgeTypeId", "Selected fridge type is invalid or inactive");
+                    await LoadViewData();
+                    return View(model);
+                }
 
-                    if (selectedFridgeType == null)
+                // Check if supplier exists and is active
+                var supplier = await _context.Suppliers
+                    .Include(s => s.User)
+                    .FirstOrDefaultAsync(s => s.Id == model.SupplierId && s.User.IsActive);
+
+                if (supplier == null)
+                {
+                    ModelState.AddModelError("SupplierId", "Selected supplier is invalid or inactive");
+                    await LoadViewData();
+                    return View(model);
+                }
+
+                var fridge = new Fridge
+                {
+                    Price = model.Price,
+                    Description = model.Description,
+                    SerialNumber = model.SerialNumber?.Trim(),
+                    AcquisitionDate = model.AcquisitionDate,
+                    Status = model.Status,
+                    IsActive = true,
+                    FridgeTypeId = model.FridgeTypeId,
+                    SupplierId = model.SupplierId,
+                    CreatedById = User.FindFirstValue(ClaimTypes.NameIdentifier),
+                    NextServiceDate = model.NextServiceDate,
+                    Category = model.Category ?? "Refrigerator",
+                    CreatedAt = DateTime.Now
+                };
+
+                // Handle image upload with enhanced error handling
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
+                {
+                    _logger.LogInformation("Processing image upload for new fridge");
+
+                    // Validate image file
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                    var fileExtension = Path.GetExtension(model.ImageFile.FileName).ToLower();
+
+                    if (!allowedExtensions.Contains(fileExtension))
                     {
-                        ModelState.AddModelError("FridgeTypeId", "Selected fridge type is invalid or inactive");
+                        ModelState.AddModelError("ImageFile", "Only image files (JPG, JPEG, PNG) are allowed.");
                         await LoadViewData();
                         return View(model);
                     }
 
-                    // Check if supplier exists and is active
-                    var supplier = await _context.Suppliers
-                        .Include(s => s.User)
-                        .FirstOrDefaultAsync(s => s.Id == model.SupplierId && s.User.IsActive);
-
-                    if (supplier == null)
+                    // Check file size (5MB limit)
+                    if (model.ImageFile.Length > 5 * 1024 * 1024)
                     {
-                        ModelState.AddModelError("SupplierId", "Selected supplier is invalid or inactive");
+                        ModelState.AddModelError("ImageFile", "Image file size must be less than 5MB.");
                         await LoadViewData();
                         return View(model);
                     }
 
-                    var fridge = new Fridge
+                    try
                     {
-                        Price = model.Price,
-                        Description = model.Description,
-                        SerialNumber = model.SerialNumber?.Trim(),
-                        AcquisitionDate = model.AcquisitionDate,
-                        Status = model.Status,
-                        IsActive = true,
-                        FridgeTypeId = model.FridgeTypeId,
-                        SupplierId = model.SupplierId,
-                        CreatedById = User.FindFirstValue(ClaimTypes.NameIdentifier),
-                        NextServiceDate = model.NextServiceDate,
-                        Category = model.Category ?? "Refrigerator",
-                        CreatedAt = DateTime.Now
-                    };
+                        var savedImagePath = await SaveImage(model.ImageFile);
+                        fridge.ImageFileName = savedImagePath;
 
-                    // Handle image upload
-                    if (model.ImageFile != null && model.ImageFile.Length > 0)
-                    {
-                        // Validate image file
-                        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png"};
-                        var fileExtension = Path.GetExtension(model.ImageFile.FileName).ToLower();
-
-                        if (!allowedExtensions.Contains(fileExtension))
+                        // Verify the image was saved successfully
+                        if (!ImageExists(savedImagePath) && savedImagePath != "default-fridge.jpg")
                         {
-                            ModelState.AddModelError("ImageFile", "Only image files (JPG, JPEG, PNG) are allowed.");
-                            await LoadViewData();
-                            return View(model);
+                            _logger.LogWarning("Image was not saved properly for new fridge, using default image");
+                            fridge.ImageFileName = "default-fridge.jpg";
+                            ModelState.AddModelError("", "Warning: Image was uploaded but could not be saved properly. Using default image.");
                         }
-
-                        // Check file size (e.g., 5MB limit)
-                        if (model.ImageFile.Length > 5 * 1024 * 1024)
+                        else
                         {
-                            ModelState.AddModelError("ImageFile", "Image file size must be less than 5MB.");
-                            await LoadViewData();
-                            return View(model);
+                            _logger.LogInformation("Image saved successfully for new fridge: {ImageFileName}", savedImagePath);
                         }
-
-                        fridge.ImageFileName = await SaveImage(model.ImageFile);
                     }
-                    else
+                    catch (UnauthorizedAccessException ex)
                     {
+                        _logger.LogError(ex, "Permission denied while saving image for new fridge");
+                        ModelState.AddModelError("ImageFile", "Permission denied while saving image. Please contact administrator.");
+                        await LoadViewData();
+                        return View(model);
+                    }
+                    catch (IOException ex)
+                    {
+                        _logger.LogError(ex, "IO error while saving image for new fridge");
+                        ModelState.AddModelError("ImageFile", "Error saving image file. Please try again.");
+                        await LoadViewData();
+                        return View(model);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Unexpected error while saving image for new fridge");
+                        ModelState.AddModelError("ImageFile", "An unexpected error occurred while saving the image. Using default image.");
                         fridge.ImageFileName = "default-fridge.jpg";
                     }
-
-                    // Generate serial number if not provided
-                    if (string.IsNullOrEmpty(fridge.SerialNumber))
-                    {
-                        fridge.SerialNumber = await GenerateSerialNumber();
-                    }
-
-                    // Check if serial number already exists
-                    var existingSerial = await _context.Fridges
-                        .AnyAsync(f => f.SerialNumber == fridge.SerialNumber && f.IsActive);
-
-                    if (existingSerial)
-                    {
-                        ModelState.AddModelError("SerialNumber", "Serial number already exists");
-                        await LoadViewData();
-                        return View(model);
-                    }
-
-                    _context.Fridges.Add(fridge);
-                    await _context.SaveChangesAsync();
-
-                    TempData["Success"] = $"Fridge created successfully! Type: {selectedFridgeType.Name}, {selectedFridgeType.Brand}, {selectedFridgeType.Model}";
-                    return RedirectToAction(nameof(Index));
                 }
-                catch (Exception ex)
+                else
                 {
-                    _logger.LogError(ex, "Error creating fridge");
-                    ModelState.AddModelError("", "An error occurred while creating the fridge: " + ex.Message);
+                    fridge.ImageFileName = "default-fridge.jpg";
+                    _logger.LogInformation("No image provided for new fridge, using default image");
                 }
+
+                // Generate serial number if not provided
+                if (string.IsNullOrEmpty(fridge.SerialNumber))
+                {
+                    fridge.SerialNumber = await GenerateSerialNumber();
+                    _logger.LogInformation("Generated serial number: {SerialNumber}", fridge.SerialNumber);
+                }
+
+                // Check if serial number already exists
+                var existingSerial = await _context.Fridges
+                    .AnyAsync(f => f.SerialNumber == fridge.SerialNumber && f.IsActive);
+
+                if (existingSerial)
+                {
+                    ModelState.AddModelError("SerialNumber", "Serial number already exists");
+                    await LoadViewData();
+                    return View(model);
+                }
+
+                // Save the fridge to database
+                _context.Fridges.Add(fridge);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Fridge created successfully. ID: {FridgeId}, Type: {FridgeType}",
+                    fridge.FridgeId, selectedFridgeType.Name);
+
+                TempData["Success"] = $"Fridge created successfully! Type: {selectedFridgeType.Name}, {selectedFridgeType.Brand}, {selectedFridgeType.Model}";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, "Database error while creating fridge");
+                ModelState.AddModelError("", "A database error occurred while creating the fridge. Please try again.");
+
+                // Clean up any uploaded image if database save failed
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
+                {
+                    try
+                    {
+                        // This would need the filename, but we don't have it yet since save failed
+                        _logger.LogWarning("Database save failed, but image may have been uploaded. Manual cleanup may be required.");
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        _logger.LogError(cleanupEx, "Error during cleanup after database failure");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error creating fridge");
+                ModelState.AddModelError("", "An unexpected error occurred while creating the fridge: " + ex.Message);
             }
 
             await LoadViewData();
@@ -363,6 +438,17 @@ namespace FridgeManagementSystem.Controllers
                         $" {fridge.FridgeType.Name} - {fridge.FridgeType.Brand} - {fridge.FridgeType.Model}" : "Not Set"
                 };
 
+                // Verify existing image
+                if (!string.IsNullOrEmpty(model.ExistingImagePath) && model.ExistingImagePath != "default-fridge.jpg")
+                {
+                    if (!ImageExists(model.ExistingImagePath))
+                    {
+                        _logger.LogWarning("Existing image not found for fridge {FridgeId}: {ImageFileName}",
+                            fridge.FridgeId, model.ExistingImagePath);
+                        model.ExistingImagePath = "default-fridge.jpg";
+                    }
+                }
+
                 await LoadViewData();
                 return View(model);
             }
@@ -381,97 +467,179 @@ namespace FridgeManagementSystem.Controllers
         {
             if (id != model.FridgeId)
             {
-                return NotFound();
+                TempData["Error"] = "Fridge ID mismatch";
+                return RedirectToAction(nameof(Index));
             }
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                try
+                await LoadViewData();
+                return View(model);
+            }
+
+            Fridge fridge = null;
+            string oldImageFileName = null;
+
+            try
+            {
+                fridge = await _context.Fridges.FindAsync(id);
+                if (fridge == null)
                 {
-                    var fridge = await _context.Fridges.FindAsync(id);
-                    if (fridge == null)
-                    {
-                        return NotFound();
-                    }
-
-                    // Check if serial number already exists (excluding current fridge)
-                    if (!string.IsNullOrEmpty(model.SerialNumber))
-                    {
-                        var existingSerial = await _context.Fridges
-                            .AnyAsync(f => f.SerialNumber == model.SerialNumber.Trim() &&
-                                         f.FridgeId != id &&
-                                         f.IsActive);
-
-                        if (existingSerial)
-                        {
-                            ModelState.AddModelError("SerialNumber", "Serial number already exists");
-                            await LoadViewData();
-                            return View(model);
-                        }
-                    }
-
-                    // Update properties
-                    fridge.Price = model.Price;
-                    fridge.Description = model.Description;
-                    fridge.SerialNumber = model.SerialNumber?.Trim();
-                    fridge.AcquisitionDate = model.AcquisitionDate;
-                    fridge.Status = model.Status;
-                    fridge.FridgeTypeId = model.FridgeTypeId;
-                    fridge.SupplierId = model.SupplierId;
-                    fridge.NextServiceDate = model.NextServiceDate;
-                    fridge.Category = model.Category ?? "Refrigerator";
-
-                    // Handle image upload
-                    if (model.ImageFile != null && model.ImageFile.Length > 0)
-                    {
-                        // Validate image file
-                        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-                        var fileExtension = Path.GetExtension(model.ImageFile.FileName).ToLower();
-
-                        if (!allowedExtensions.Contains(fileExtension))
-                        {
-                            ModelState.AddModelError("ImageFile", "Only image files (JPG, JPEG, PNG) are allowed.");
-                            await LoadViewData();
-                            return View(model);
-                        }
-
-                        if (model.ImageFile.Length > 5 * 1024 * 1024)
-                        {
-                            ModelState.AddModelError("ImageFile", "Image file size must be less than 5MB.");
-                            await LoadViewData();
-                            return View(model);
-                        }
-
-                        // Delete old image if exists and not default
-                        if (!string.IsNullOrEmpty(fridge.ImageFileName) && fridge.ImageFileName != "default-fridge.jpg")
-                        {
-                            DeleteImage(fridge.ImageFileName);
-                        }
-                        fridge.ImageFileName = await SaveImage(model.ImageFile);
-                    }
-
-                    _context.Fridges.Update(fridge);
-                    await _context.SaveChangesAsync();
-
-                    TempData["Success"] = "Fridge updated successfully!";
+                    TempData["Error"] = "Fridge not found";
                     return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
+
+                // Store old image filename for potential cleanup
+                oldImageFileName = fridge.ImageFileName;
+
+                // Check if serial number already exists (excluding current fridge)
+                if (!string.IsNullOrEmpty(model.SerialNumber))
                 {
-                    if (!FridgeExists(model.FridgeId))
+                    var existingSerial = await _context.Fridges
+                        .AnyAsync(f => f.SerialNumber == model.SerialNumber.Trim() &&
+                                     f.FridgeId != id &&
+                                     f.IsActive);
+
+                    if (existingSerial)
                     {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
+                        ModelState.AddModelError("SerialNumber", "Serial number already exists");
+                        await LoadViewData();
+                        return View(model);
                     }
                 }
-                catch (Exception ex)
+
+                // Update properties
+                fridge.Price = model.Price;
+                fridge.Description = model.Description;
+                fridge.SerialNumber = model.SerialNumber?.Trim();
+                fridge.AcquisitionDate = model.AcquisitionDate;
+                fridge.Status = model.Status;
+                fridge.FridgeTypeId = model.FridgeTypeId;
+                fridge.SupplierId = model.SupplierId;
+                fridge.NextServiceDate = model.NextServiceDate;
+                fridge.Category = model.Category ?? "Refrigerator";
+
+                // Handle image upload with enhanced error handling
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
-                    _logger.LogError(ex, "Error updating fridge. FridgeId: {FridgeId}", id);
-                    ModelState.AddModelError("", "An error occurred while updating the fridge: " + ex.Message);
+                    _logger.LogInformation("Processing image upload for fridge edit. FridgeId: {FridgeId}", id);
+
+                    // Validate image file
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                    var fileExtension = Path.GetExtension(model.ImageFile.FileName).ToLower();
+
+                    if (!allowedExtensions.Contains(fileExtension))
+                    {
+                        ModelState.AddModelError("ImageFile", "Only image files (JPG, JPEG, PNG) are allowed.");
+                        await LoadViewData();
+                        return View(model);
+                    }
+
+                    if (model.ImageFile.Length > 5 * 1024 * 1024)
+                    {
+                        ModelState.AddModelError("ImageFile", "Image file size must be less than 5MB.");
+                        await LoadViewData();
+                        return View(model);
+                    }
+
+                    try
+                    {
+                        // Save new image first
+                        var savedImagePath = await SaveImage(model.ImageFile);
+
+                        // Verify new image was saved successfully
+                        if (!ImageExists(savedImagePath))
+                        {
+                            _logger.LogWarning("New image was not saved properly for fridge {FridgeId}, keeping old image", id);
+                            ModelState.AddModelError("ImageFile", "New image could not be saved properly. Keeping existing image.");
+                        }
+                        else
+                        {
+                            // New image saved successfully, delete old image
+                            if (!string.IsNullOrEmpty(oldImageFileName) && oldImageFileName != "default-fridge.jpg")
+                            {
+                                try
+                                {
+                                    DeleteImage(oldImageFileName);
+                                    _logger.LogInformation("Old image deleted successfully: {OldImageFileName}", oldImageFileName);
+                                }
+                                catch (Exception deleteEx)
+                                {
+                                    _logger.LogWarning(deleteEx, "Failed to delete old image: {OldImageFileName}", oldImageFileName);
+                                    // Continue with update even if old image deletion fails
+                                }
+                            }
+
+                            fridge.ImageFileName = savedImagePath;
+                            _logger.LogInformation("New image saved successfully for fridge {FridgeId}: {ImageFileName}", id, savedImagePath);
+                        }
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        _logger.LogError(ex, "Permission denied while saving new image for fridge {FridgeId}", id);
+                        ModelState.AddModelError("ImageFile", "Permission denied while saving image. Please contact administrator.");
+                        await LoadViewData();
+                        return View(model);
+                    }
+                    catch (IOException ex)
+                    {
+                        _logger.LogError(ex, "IO error while saving new image for fridge {FridgeId}", id);
+                        ModelState.AddModelError("ImageFile", "Error saving image file. Please try again.");
+                        await LoadViewData();
+                        return View(model);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Unexpected error while saving new image for fridge {FridgeId}", id);
+                        ModelState.AddModelError("ImageFile", "An unexpected error occurred while saving the image. Keeping existing image.");
+                        // Keep the existing image filename
+                    }
                 }
+
+                // Update the fridge in database
+                _context.Fridges.Update(fridge);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Fridge updated successfully. ID: {FridgeId}", id);
+                TempData["Success"] = "Fridge updated successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!FridgeExists(model.FridgeId))
+                {
+                    TempData["Error"] = "Fridge not found";
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    _logger.LogError("Concurrency error updating fridge {FridgeId}", id);
+                    ModelState.AddModelError("", "The fridge was modified by another user. Please refresh and try again.");
+                }
+            }
+            catch (DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, "Database error while updating fridge {FridgeId}", id);
+                ModelState.AddModelError("", "A database error occurred while updating the fridge. Please try again.");
+
+                // If we saved a new image but database update failed, try to clean up the new image
+                if (model.ImageFile != null && model.ImageFile.Length > 0 && fridge?.ImageFileName != oldImageFileName)
+                {
+                    try
+                    {
+                        DeleteImage(fridge?.ImageFileName);
+                        _logger.LogInformation("Cleaned up new image after database failure");
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        _logger.LogError(cleanupEx, "Error cleaning up new image after database failure");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error updating fridge {FridgeId}", id);
+                ModelState.AddModelError("", "An unexpected error occurred while updating the fridge: " + ex.Message);
             }
 
             await LoadViewData();
@@ -624,32 +792,217 @@ namespace FridgeManagementSystem.Controllers
 
         private async Task<string> SaveImage(IFormFile imageFile)
         {
-            var uploadsFolder = Path.Combine(_environment.WebRootPath, "Images/Fridges");
-            if (!Directory.Exists(uploadsFolder))
+            if (imageFile == null || imageFile.Length == 0)
             {
-                Directory.CreateDirectory(uploadsFolder);
+                _logger.LogWarning("SaveImage called with null or empty file");
+                return "default-fridge.jpg";
             }
 
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(imageFile.FileName);
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            try
             {
-                await imageFile.CopyToAsync(fileStream);
-            }
+                // Validate WebRootPath
+                if (string.IsNullOrEmpty(_environment.WebRootPath))
+                {
+                    _logger.LogError("WebRootPath is null or empty. Environment: {Environment}", _environment.EnvironmentName);
+                    throw new InvalidOperationException("WebRootPath is not configured properly");
+                }
 
-            return uniqueFileName;
+                _logger.LogInformation("WebRootPath: {WebRootPath}", _environment.WebRootPath);
+                _logger.LogInformation("Environment: {Environment}", _environment.EnvironmentName);
+                _logger.LogInformation("Original filename: {FileName}", imageFile.FileName);
+                _logger.LogInformation("File size: {FileSize} bytes", imageFile.Length);
+
+                // Define uploads folder path
+                var uploadsFolder = Path.Combine(_environment.WebRootPath, "Images", "Fridges");
+                _logger.LogInformation("Target upload folder: {UploadsFolder}", uploadsFolder);
+
+                // Ensure directory exists with proper permissions
+                try
+                {
+                    if (!Directory.Exists(uploadsFolder))
+                    {
+                        _logger.LogInformation("Creating directory: {UploadsFolder}", uploadsFolder);
+                        Directory.CreateDirectory(uploadsFolder);
+
+                        // Verify directory was created
+                        if (!Directory.Exists(uploadsFolder))
+                        {
+                            throw new InvalidOperationException($"Failed to create directory: {uploadsFolder}");
+                        }
+                        _logger.LogInformation("Directory created successfully");
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Directory already exists");
+                    }
+
+                    // Check write permissions - FIXED: Use System.IO.File explicitly
+                    var testFile = Path.Combine(uploadsFolder, "test_permission.txt");
+                    await System.IO.File.WriteAllTextAsync(testFile, "test"); // FIXED
+                    System.IO.File.Delete(testFile); // FIXED
+                    _logger.LogInformation("Write permissions verified");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    _logger.LogError(ex, "No write permission to directory: {UploadsFolder}", uploadsFolder);
+                    throw new UnauthorizedAccessException($"No write permission to directory: {uploadsFolder}", ex);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating or accessing directory: {UploadsFolder}", uploadsFolder);
+                    throw new InvalidOperationException($"Cannot access directory: {uploadsFolder}", ex);
+                }
+
+                // Generate safe filename
+                var originalFileName = Path.GetFileName(imageFile.FileName);
+                var safeFileName = Path.GetInvalidFileNameChars()
+                    .Aggregate(originalFileName, (current, c) => current.Replace(c, '_'));
+
+                var uniqueFileName = $"{Guid.NewGuid()}_{safeFileName}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                _logger.LogInformation("Generated unique filename: {UniqueFileName}", uniqueFileName);
+                _logger.LogInformation("Full file path: {FilePath}", filePath);
+
+                // Validate file doesn't already exist (unlikely with GUID, but safe) - FIXED
+                if (System.IO.File.Exists(filePath)) // FIXED
+                {
+                    _logger.LogWarning("File already exists, generating new name: {FilePath}", filePath);
+                    uniqueFileName = $"{Guid.NewGuid()}_{safeFileName}";
+                    filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                }
+
+                // Save the file with retry logic
+                const int maxRetries = 3;
+                for (int attempt = 1; attempt <= maxRetries; attempt++)
+                {
+                    try
+                    {
+                        _logger.LogInformation("Saving file (attempt {Attempt}/{MaxRetries})", attempt, maxRetries);
+
+                        using (var fileStream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                        {
+                            await imageFile.CopyToAsync(fileStream);
+                            await fileStream.FlushAsync();
+                        }
+
+                        _logger.LogInformation("File saved successfully: {FilePath}", filePath);
+
+                        // Verify file was written - FIXED
+                        if (!System.IO.File.Exists(filePath)) // FIXED
+                        {
+                            throw new IOException("File was not created after write operation");
+                        }
+
+                        var fileInfo = new FileInfo(filePath);
+                        _logger.LogInformation("File verification - Size: {FileSize} bytes, Exists: {Exists}",
+                            fileInfo.Length, System.IO.File.Exists(filePath)); // FIXED
+
+                        break; // Success, exit retry loop
+                    }
+                    catch (IOException ex) when (attempt < maxRetries)
+                    {
+                        _logger.LogWarning(ex, "Attempt {Attempt} failed for file: {FilePath}", attempt, filePath);
+
+                        // Wait before retry (exponential backoff)
+                        await Task.Delay(100 * attempt);
+
+                        // Generate new filename for retry
+                        uniqueFileName = $"{Guid.NewGuid()}_{safeFileName}";
+                        filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                        _logger.LogInformation("Retrying with new filename: {UniqueFileName}", uniqueFileName);
+                    }
+                }
+
+                return uniqueFileName;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Critical error saving image file. WebRootPath: {WebRootPath}", _environment.WebRootPath);
+
+                // Return default image instead of throwing to prevent complete failure
+                return "default-fridge.jpg";
+            }
         }
 
         private void DeleteImage(string imageFileName)
         {
-            if (!string.IsNullOrEmpty(imageFileName) && imageFileName != "default-fridge.jpg")
+            if (string.IsNullOrEmpty(imageFileName) || imageFileName == "default-fridge.jpg")
             {
-                var fullPath = Path.Combine(_environment.WebRootPath, "Images/Fridges", imageFileName);
+                return;
+            }
+
+            try
+            {
+                if (string.IsNullOrEmpty(_environment.WebRootPath))
+                {
+                    _logger.LogWarning("WebRootPath is null during image deletion");
+                    return;
+                }
+
+                var fullPath = Path.Combine(_environment.WebRootPath, "Images", "Fridges", imageFileName);
+
+                _logger.LogInformation("Attempting to delete image: {FullPath}", fullPath);
+
                 if (System.IO.File.Exists(fullPath))
                 {
                     System.IO.File.Delete(fullPath);
+                    _logger.LogInformation("Image deleted successfully: {ImageFileName}", imageFileName);
+
+                    // Verify deletion
+                    if (System.IO.File.Exists(fullPath))
+                    {
+                        _logger.LogWarning("File still exists after deletion: {FullPath}", fullPath);
+                    }
                 }
+                else
+                {
+                    _logger.LogWarning("Image file not found for deletion: {FullPath}", fullPath);
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogError(ex, "No permission to delete image: {ImageFileName}", imageFileName);
+            }
+            catch (IOException ex)
+            {
+                _logger.LogError(ex, "IO error deleting image: {ImageFileName}", imageFileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error deleting image: {ImageFileName}", imageFileName);
+            }
+        }
+
+        private bool ImageExists(string imageFileName)
+        {
+            if (string.IsNullOrEmpty(imageFileName) || imageFileName == "default-fridge.jpg")
+            {
+                return true; // Default image is assumed to exist
+            }
+
+            try
+            {
+                if (string.IsNullOrEmpty(_environment.WebRootPath))
+                {
+                    _logger.LogWarning("WebRootPath is null during image existence check");
+                    return false;
+                }
+
+                var fullPath = Path.Combine(_environment.WebRootPath, "Images", "Fridges", imageFileName);
+                var exists = System.IO.File.Exists(fullPath);
+
+                if (!exists)
+                {
+                    _logger.LogWarning("Image file not found: {FullPath}", fullPath);
+                }
+
+                return exists;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking image existence: {ImageFileName}", imageFileName);
+                return false;
             }
         }
 
