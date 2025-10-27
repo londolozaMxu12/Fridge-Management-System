@@ -294,7 +294,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                              $"{totalItems} items ({itemsSummary}) waiting for approval.",
                     IsRead = false,
                     CreatedAt = DateTime.Now,
-                    Link = $"/LiaisonOrder/Details/{orderWithDetails.Id}"
+                    Link = $"/LiaisonOrders/Details/{orderWithDetails.Id}"
                 };
 
                 _context.Notifications.Add(notification);

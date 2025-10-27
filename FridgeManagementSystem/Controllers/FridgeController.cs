@@ -784,7 +784,7 @@ namespace FridgeManagementSystem.Controllers
             {
                 "Refrigerator",
                 "Freezer",
-                "Wine Cooler",
+                "Cooler",
                 "Commercial Fridge"
                 
             });
