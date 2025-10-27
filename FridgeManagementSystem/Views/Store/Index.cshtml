@@ -54,14 +54,17 @@
     {
         <div class="col-lg-3 col-md-6">
             <div class="rounded border shadow p-3 text-center text-black h-100">
-                <img src="/Images/Fridges/@fridge.ImageFileName" class="img-fluid" alt="..."
-                     style="height: 180px; object-fit: contain" />
+                <img src="@Url.Content($"~/Images/Fridges/{fridge.ImageFileName}")"
+                     class="img-fluid"
+                     alt="@fridge.FridgeType?.Name"
+                     style="height: 180px; object-fit: contain"
+                     onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'" />
                 <hr />
-                <h5 class="py-2">@fridge.FridgeType.Name</h5>
+                <h5 class="py-2">@fridge.FridgeType?.Name</h5>
                 <p>
-                    Brand: @fridge.FridgeType.Brand, Model: @fridge.FridgeType.Model
+                    Brand: @fridge.FridgeType?.Brand, Model: @fridge.FridgeType?.Model
                 </p>
-                <h3 class="mb-3 text-success">R @(fridge.Price)</h3>
+                <h3 class="mb-3 text-success">R @(fridge.Price.ToString("F2"))</h3>
                 <a class="btn btn-primary btn-sm mb-2" asp-controller="Store"
                    asp-action="Details" asp-route-id="@fridge.FridgeId" role="button">Details</a>
 
@@ -78,7 +81,7 @@
                     <button type="button" class="btn btn-warning btn-sm mb-2"
                             data-bs-toggle="modal" data-bs-target="#loginRequiredModal"
                             data-fridge-id="@fridge.FridgeId"
-                            data-fridge-name="@fridge.FridgeType.Name">
+                            data-fridge-name="@fridge.FridgeType?.Name">
                         Add to Cart <i class="bi bi-cart4"></i>
                     </button>
                 }
@@ -382,7 +385,7 @@
             })
             .finally(() => {
                 // Reset button
-                button.innerHTML = originalText;
+                button.innerHTML = 'Add to Cart <i class="bi bi-cart4"></i>';
                 button.disabled = false;
             });
         }

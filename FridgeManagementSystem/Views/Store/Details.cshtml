@@ -14,11 +14,15 @@
 
 <div class="row text-black">
     <div class="col-md-4 text-center">
-        <img src="/Images/Fridges/@Model.ImageFileName" class="img-fluid mb-3" alt="..." width="250" />
+        <img src="@Url.Content($"~/Images/Fridges/{Model.ImageFileName}")"
+             class="img-fluid mb-3"
+             alt="@Model.FridgeType?.Name"
+             width="250"
+             onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'" />
     </div>
     <div class="col-md-8">
-        <h3 class="mb-3">@Model.FridgeType.Name</h3>
-        <h3 class="text-success mb-3">R @(Model.Price)</h3>
+        <h3 class="mb-3">@Model.FridgeType?.Name</h3>
+        <h3 class="text-success mb-3">R @(Model.Price.ToString("F2"))</h3>
 
         <div class="d-flex gap-2 mb-4">
             <!-- Back Button - Same size as Add to Cart -->
@@ -39,7 +43,7 @@
                 <button type="button" class="btn btn-warning"
                         data-bs-toggle="modal" data-bs-target="#loginRequiredModal"
                         data-fridge-id="@Model.FridgeId"
-                        data-fridge-name="@Model.FridgeType.Name">
+                        data-fridge-name="@Model.FridgeType?.Name">
                     Add to Cart <i class="bi bi-cart4"></i>
                 </button>
             }
@@ -52,7 +56,7 @@
                 Brand:
             </div>
             <div class="col-sm-9">
-                @Model.FridgeType.Brand
+                @Model.FridgeType?.Brand
             </div>
         </div>
 
@@ -61,7 +65,7 @@
                 Model:
             </div>
             <div class="col-sm-9">
-                @Model.FridgeType.Model
+                @Model.FridgeType?.Model
             </div>
         </div>
 
@@ -163,7 +167,7 @@
                     // Store in sessionStorage for immediate use
                     sessionStorage.setItem('pendingFridgeId', fridgeId);
                     sessionStorage.setItem('pendingFridgeName', fridgeName);
-                    sessionStorage.setItem('pendingFridgePrice', 'R @Model.Price');
+                    sessionStorage.setItem('pendingFridgePrice', 'R @Model.Price.ToString("F2")');
 
                     console.log('Stored pending fridge from details:', fridgeId, fridgeName);
                 });
@@ -368,7 +372,7 @@
 
             // Show loading state
             const originalText = button.innerHTML;
-            button.innerHTML = '<i class="bi bi-arrow-repeat bi-spin me-1"></i> Adding...';
+            button.innerHTML = '<i class="bi bi-arrow-repeat bi-spin me-1"></i> Added';
             button.disabled = true;
 
             fetch('@Url.Action("AddToCart", "Cart")', {

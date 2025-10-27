@@ -18,13 +18,20 @@
                     <div class="col-md-6 text-center">
                         @if (!string.IsNullOrEmpty(Model.ImageFileName))
                         {
-                            <img src="/Images/Fridges/@Model.ImageFileName" alt="Fridge Image" class="img-fluid rounded" style="max-height: 300px;" />
+                            <img src="@Url.Content($"~/Images/Fridges/{Model.ImageFileName}")"
+                                 alt="Fridge Image"
+                                 class="img-fluid rounded"
+                                 style="max-height: 300px;"
+                                 onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'" />
                         }
                         else
                         {
                             <div class="text-muted">
-                                <i class="fas fa-image fa-5x mb-3"></i>
-                                <p>No Image Available</p>
+                                <img src="@Url.Content("~/Images/default-fridge.jpg")"
+                                     alt="Default Fridge Image"
+                                     class="img-fluid rounded"
+                                     style="max-height: 300px;" />
+                                <p>Default Image</p>
                             </div>
                         }
                     </div>
@@ -68,9 +75,7 @@
                             </dd>
 
                             <dt class="col-sm-5">Category:</dt>
-
                             <dd class="col-sm-7">
-                                
                                 @if (Model.Category != null)
                                 {
                                     @Model.Category

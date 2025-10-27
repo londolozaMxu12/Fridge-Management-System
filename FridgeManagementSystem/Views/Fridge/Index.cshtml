@@ -240,13 +240,15 @@
                                 <td>
                                     @if (!string.IsNullOrEmpty(item.ImageFileName))
                                     {
-                                        <img src="/Images/Fridges/@item.ImageFileName" alt="Fridge Image"
+                                        <img src="@Url.Content($"~/Images/Fridges/{item.ImageFileName}")"
+                                             alt="Fridge Image"
                                              style="width: 60px; height: 60px; object-fit: cover;"
                                              class="rounded border"
                                              data-bs-toggle="tooltip"
                                              data-bs-title="View larger image"
-                                             onclick="showImageModal('/Images/Fridges/@item.ImageFileName', '@item.SerialNumber')"
-                                             style="cursor: pointer" />
+                                             onclick="showImageModal('@Url.Content($"~/Images/Fridges/{item.ImageFileName}")', '@item.SerialNumber')"
+                                             style="cursor: pointer"
+                                             onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'" />
                                     }
                                     else
                                     {
@@ -425,8 +427,13 @@
 
 @section Scripts {
     <script>
-        function showImageModal(imageSrc, serialNumber) {
-            document.getElementById('modalImage').src = imageSrc;
+                function showImageModal(imageSrc, serialNumber) {
+            // Ensure the path is properly resolved
+            var fullImageSrc = imageSrc.startsWith('~') ? imageSrc : '~' + imageSrc;
+            document.getElementById('modalImage').src = fullImageSrc;
+            document.getElementById('modalImage').onerror = function() {
+                this.src = '@Url.Content("~/Images/default-fridge.jpg")';
+            };
             document.getElementById('imageModalTitle').textContent = 'Fridge Image - ' + serialNumber;
             new bootstrap.Modal(document.getElementById('imageModal')).show();
         }
