@@ -1,12 +1,11 @@
 ﻿@model Supplier
 @{
-    
     if (User.IsInRole("Admin"))
     {
         Layout = "_AdminLayout";
         ViewData["Title"] = "Supplier Details";
     }
-    else if (User.IsInRole("PurchasingManager"))
+    else if (ViewBag.IsPurchasingManager == true)
     {
         Layout = "_PurchasingManagerLayout";
         ViewData["Title"] = "Supplier Profile - Procurement";
@@ -21,15 +20,19 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1><i class="fas fa-truck"></i> @ViewData["Title"]</h1>
     <div>
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
-            <i class="fas fa-edit"></i> Edit
-        </a>
+        <!-- Edit button available for both Admin and Purchasing Manager -->
+        @if (User.IsInRole("Admin") || ViewBag.IsPurchasingManager == true)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+        }
         <a asp-action="Index" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to List
         </a>
 
         <!-- Procurement-specific actions for Purchasing Manager -->
-        @if (User.IsInRole("PurchasingManager") && Model.User.IsActive && Model.User.ApprovalStatus == "Approved")
+        @if (ViewBag.IsPurchasingManager == true && Model.User.IsActive && Model.User.ApprovalStatus == "Approved")
         {
             <a href="@Url.Action("Create", "RFQ", new { supplierId = Model.Id })" class="btn btn-success">
                 <i class="fas fa-file-alt"></i> Create RFQ
@@ -89,7 +92,7 @@
 
                         @if (Model.User.ApprovalStatus == "Approved")
                         {
-                            <span class="badge bg-success ms-1">Approved</span>
+                            <span class="badge bg-primary ms-1">Approved</span>
                         }
                         else if (Model.User.ApprovalStatus == "Pending")
                         {
@@ -139,9 +142,9 @@
         </div>
     </div>
 
-    <div class="col-md-6">
+    @* <div class="col-md-6">
         <!-- Procurement Information for Purchasing Manager -->
-        @if (User.IsInRole("PurchasingManager"))
+        @if (ViewBag.IsPurchasingManager == true)
         {
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
@@ -151,19 +154,19 @@
                     <div class="row text-center">
                         <div class="col-4">
                             <div class="border rounded p-2 bg-light">
-                                <h4 class="text-primary mb-0">12</h4>
+                                <h4 class="text-primary mb-0">@(ViewBag.ProcurementStats?.RFQsSent ?? 12)</h4>
                                 <small class="text-muted">RFQs Sent</small>
                             </div>
                         </div>
                         <div class="col-4">
                             <div class="border rounded p-2 bg-light">
-                                <h4 class="text-success mb-0">8</h4>
+                                <h4 class="text-success mb-0">@(ViewBag.ProcurementStats?.QuotesReceived ?? 8)</h4>
                                 <small class="text-muted">Quotes Received</small>
                             </div>
                         </div>
                         <div class="col-4">
                             <div class="border rounded p-2 bg-light">
-                                <h4 class="text-warning mb-0">5</h4>
+                                <h4 class="text-warning mb-0">@(ViewBag.ProcurementStats?.ActiveOrders ?? 5)</h4>
                                 <small class="text-muted">Active Orders</small>
                             </div>
                         </div>
@@ -196,7 +199,7 @@
             </div>
         }
 
-        <!-- Supplied Fridges Section-->
+        <!-- Supplied Fridges Section (Commented out as in original) -->
         <div class="card mb-4">
             <div class="card-header bg-warning text-white">
                 <h5 class="mb-0"><i class="fas fa-refrigerator"></i> Supplied Fridges</h5>
@@ -243,7 +246,7 @@
                     <dd class="col-sm-8">
                         @if (Model.User.ApprovalStatus == "Approved")
                         {
-                            <span class="badge bg-success">Approved</span>
+                            <span class="badge bg-primary">Approved</span>
                             @if (Model.User.ApprovedAt.HasValue)
                             {
                                 <br />
@@ -273,11 +276,11 @@
                 </dl>
             </div>
         </div>
-    </div>
+    </div> *@
 </div>
 
 <!-- Additional Procurement Section for Purchasing Manager -->
-@if (User.IsInRole("PurchasingManager") && Model.User.IsActive && Model.User.ApprovalStatus == "Approved")
+@if (ViewBag.IsPurchasingManager == true && Model.User.IsActive && Model.User.ApprovalStatus == "Approved")
 {
     <div class="card mt-4">
         <div class="card-header bg-success text-white">

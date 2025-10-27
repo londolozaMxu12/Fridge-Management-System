@@ -1,12 +1,11 @@
 ﻿@model IEnumerable<Supplier>
 @{
-    
     if (User.IsInRole("Admin"))
     {
         Layout = "_AdminLayout";
         ViewData["Title"] = "Suppliers Management";
     }
-    else if (User.IsInRole("PurchasingManager"))
+    else if (ViewBag.IsPurchasingManager == true)
     {
         Layout = "_PurchasingManagerLayout";
         ViewData["Title"] = "Supplier Directory - Procurement";
@@ -28,7 +27,7 @@
             <i class="fas fa-plus"></i> Register New Supplier
         </a>
     }
-    else if (User.IsInRole("PurchasingManager"))
+    else if (ViewBag.IsPurchasingManager == true)
     {
         <div class="btn-group">
             <a href="@Url.Action("Index", "PurchaseRequests")" class="btn btn-outline-primary">
@@ -58,7 +57,7 @@
 }
 
 <!-- Procurement Dashboard for Purchasing Manager -->
-@if (User.IsInRole("PurchasingManager"))
+@* @if (ViewBag.IsPurchasingManager == true)
 {
     <div class="row mb-4">
         <div class="col-md-3">
@@ -67,7 +66,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h6 class="card-title">Pending RFQs</h6>
-                            <h3>12</h3>
+                            <h3>@(ViewBag.ProcurementMetrics?.PendingRFQs ?? 12)</h3>
                         </div>
                         <i class="fas fa-file-contract fa-2x"></i>
                     </div>
@@ -81,7 +80,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h6 class="card-title">Quotations Received</h6>
-                            <h3>8</h3>
+                            <h3>@(ViewBag.ProcurementMetrics?.QuotationsReceived ?? 8)</h3>
                         </div>
                         <i class="fas fa-receipt fa-2x"></i>
                     </div>
@@ -95,7 +94,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h6 class="card-title">Pending Purchase Requests</h6>
-                            <h3>5</h3>
+                            <h3>@(ViewBag.ProcurementMetrics?.PendingPurchaseRequests ?? 5)</h3>
                         </div>
                         <i class="fas fa-shopping-cart fa-2x"></i>
                     </div>
@@ -109,7 +108,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h6 class="card-title">Active Suppliers</h6>
-                            <h3>@Model.Count()</h3>
+                            <h3>@(ViewBag.ProcurementMetrics?.ActiveSuppliers ?? Model.Count())</h3>
                         </div>
                         <i class="fas fa-truck fa-2x"></i>
                     </div>
@@ -119,12 +118,12 @@
         </div>
     </div>
 }
-
+ *@
 <div class="card">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
             <i class="fas fa-list"></i>
-            @if (User.IsInRole("PurchasingManager"))
+            @if (ViewBag.IsPurchasingManager == true)
             {
                 <span>Available Suppliers for Procurement</span>
             }
@@ -133,7 +132,7 @@
                 <span>List Of Active Suppliers</span>
             }
         </h5>
-        @if (User.IsInRole("PurchasingManager"))
+        @if (ViewBag.IsPurchasingManager == true)
         {
             <span class="badge bg-light text-primary">
                 <i class="fas fa-sync-alt"></i> Updated: @DateTime.Now.ToString("MMM dd, yyyy")
@@ -177,7 +176,7 @@
                                 <td>
                                     <strong>@supplier.CompanyName</strong>
 
-                                    @if (User.IsInRole("PurchasingManager") && supplier.User.IsActive)
+                                    @if (ViewBag.IsPurchasingManager == true && supplier.User.IsActive)
                                     {
                                         <span class="badge bg-success ms-1" title="Active Supplier">
                                             <i class="fas fa-check-circle"></i> Active
@@ -203,7 +202,7 @@
                                     @switch (supplier.User.ApprovalStatus?.ToLower())
                                     {
                                         case "approved":
-                                            <span class="badge bg-success mt-1">Approved</span>
+                                            <span class="badge bg-primary mt-1">Approved</span>
                                             break;
                                         case "pending":
                                             <span class="badge bg-warning mt-1">Pending Approval</span>
@@ -224,7 +223,7 @@
                                         </a>
 
                                         <!-- Procurement Actions for Purchasing Manager -->
-                                        @if (User.IsInRole("PurchasingManager") && supplier.User.IsActive && supplier.User.ApprovalStatus == "Approved")
+                                        @if (ViewBag.IsPurchasingManager == true && supplier.User.IsActive && supplier.User.ApprovalStatus == "Approved")
                                         {
                                             <button type="button" class="btn btn-success btn-sm"
                                                     onclick="createRFQ(@supplier.Id, '@supplier.CompanyName')"
@@ -237,17 +236,20 @@
                                                 <i class="fas fa-receipt"></i> Quotes
                                             </a>
                                         }
-                                        else if (User.IsInRole("PurchasingManager") && (!supplier.User.IsActive || supplier.User.ApprovalStatus != "Approved"))
+                                        else if (ViewBag.IsPurchasingManager == true && (!supplier.User.IsActive || supplier.User.ApprovalStatus != "Approved"))
                                         {
                                             <button type="button" class="btn btn-secondary btn-sm" disabled title="Supplier not active or approved">
                                                 <i class="fas fa-file-alt"></i> RFQ
                                             </button>
                                         }
 
-                                        <!-- Edit -->
-                                        <a asp-action="Edit" asp-route-id="@supplier.Id" class="btn btn-outline-primary btn-sm">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </a>
+                                        <!-- Edit - Available for Admin and Purchasing Manager -->
+                                        @if (User.IsInRole("Admin") || ViewBag.IsPurchasingManager == true)
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@supplier.Id" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                        }
 
                                         <!-- Delete - Only for Admin -->
                                         @if (User.IsInRole("Admin"))
@@ -268,7 +270,7 @@
 </div>
 
 <!-- Purchasing Manager Specific Tools -->
-@if (User.IsInRole("PurchasingManager"))
+@if (ViewBag.IsPurchasingManager == true)
 {
     <div class="row mt-4">
         <div class="col-md-6">
