@@ -1,0 +1,74 @@
+﻿@using FridgeManagementSystem.ViewModels
+@model List<PurchaseRequestListViewModel>
+@{
+    ViewData["Title"] = "Purchase Requests";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Purchase Requests</h1>
+        <a href="@Url.Action("Create", "PurchaseRequests")" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-plus fa-sm text-white-50"></i> New Purchase Request
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">All Purchase Requests</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="purchaseRequestsTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>PR Number</th>
+                            <th>Requested By</th>
+                            <th>Department</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pr in Model)
+                        {
+                            <tr>
+                                <td>@pr.PRNumber</td>
+                                <td>@pr.RequestedBy</td>
+                                <td>@pr.Department</td>
+                                <td>@pr.TotalAmount.ToString("C")</td>
+                                <td>
+                                    <span class="badge badge-@pr.StatusBadge">@pr.Status</span>
+                                </td>
+                                <td>@pr.CreatedDate.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <a href="@Url.Action("Details", "PurchaseRequests", new { id = pr.Id })" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    @if (pr.CanApprove)
+                                    {
+                                        <a href="@Url.Action("Approve", "PurchaseRequests", new { id = pr.Id })" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#purchaseRequestsTable').DataTable({
+                "order": [[5, "desc"]]
+            });
+        });
+    </script>
+}
+}

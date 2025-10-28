@@ -61,6 +61,12 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     
     public DbSet<CartItem> CartItems { get; set; }
 
+    public DbSet<ActivityLog> ActivityLogs { get; set; }
+    public DbSet<RFQSupplier> RFQSuppliers { get; set; }
+    public DbSet<DeliveryNote> DeliveryNotes { get; set; }
+
+    public DbSet<RFQ> RFQs { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -90,6 +96,19 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(u => u.ApprovedById)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Configure ApplicationUser relationships
+        //builder.Entity<ApplicationUser>()
+        //    .HasMany(u => u.PurchaseRequests)
+        //    .WithOne(pr => pr.RequestedBy)
+        //    .HasForeignKey(pr => pr.RequestedById)
+        //    .OnDelete(DeleteBehavior.Restrict);
+
+        //builder.Entity<ApplicationUser>()
+        //    .HasMany(u => u.CreatedSuppliers)
+        //    .WithOne(s => s.CreatedBy)
+        //    .HasForeignKey(s => s.CreatedById)
+        //    .OnDelete(DeleteBehavior.Restrict);
+
         // 2. Configure Allocation relationships - ONLY ONCE
         builder.Entity<Allocation>(entity =>
         {
@@ -118,6 +137,8 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(a => a.AllocatedById)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
         });
 
         // 3. Configure Fridge relationships
@@ -266,6 +287,31 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
               .WithMany(c => c.ScheduleMaintenances)
               .HasForeignKey(s => s.CustomerId)
               .OnDelete(DeleteBehavior.Cascade);
+
+
+        // Configure RFQ relationships
+        builder.Entity<RFQ>()
+            .HasMany(r => r.Quotations)
+            .WithOne(q => q.RFQ)
+            .HasForeignKey(q => q.RFQId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<RFQ>()
+            .HasMany(r => r.RFQSuppliers)
+            .WithOne(rs => rs.RFQ)
+            .HasForeignKey(rs => rs.RFQId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure RFQSupplier (many-to-many)
+        builder.Entity<RFQSupplier>()
+            .HasKey(rs => rs.Id);
+
+        //builder.Entity<RFQSupplier>()
+        //    .HasOne(rs => rs.Supplier)
+        //    .WithMany(s => s.RFQSuppliers)
+        //    .HasForeignKey(rs => rs.SupplierId)
+        //    .OnDelete(DeleteBehavior.Restrict);
+
 
     }
 

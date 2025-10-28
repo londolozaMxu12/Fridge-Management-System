@@ -1,0 +1,148 @@
+﻿@model FridgeManagementSystem.ViewModels.PurchasingManagerViewModel
+@* @model List<PurchasingManagerViewModel> *@
+@{
+    ViewData["Title"] = "Purchase Manager Dashboard";
+    Layout = "_PurchasingManagerLayout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">Purchase Manager Dashboard</h1>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Pending PRs
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.PendingPurchaseRequests</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Open RFQs
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.OpenRFQs</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-contract fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Active POs
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.ActivePurchaseOrders</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending Approvals
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.PendingApprovals</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Purchase Requests</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>PR Number</th>
+                                    <th>Department</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var pr in Model.RecentPurchaseRequests)
+                                {
+                                    <tr>
+                                        <td><a href="@Url.Action("Details", "PurchaseRequests", new { id = pr.Id })">@pr.PRNumber</a></td>
+                                        <td>@pr.Department</td>
+                                        <td><span class="badge badge-@pr.StatusBadge">@pr.Status</span></td>
+                                        <td>@pr.CreatedDate.ToString("MMM dd, yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Pending Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        @foreach (var action in Model.PendingActions)
+                        {
+                            <a href="@action.Url" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@action.Title</h6>
+                                    <small>@action.DueIn</small>
+                                </div>
+                                <p class="mb-1">@action.Description</p>
+                                <small>Priority: <span class="text-@action.PriorityColor">@action.Priority</span></small>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

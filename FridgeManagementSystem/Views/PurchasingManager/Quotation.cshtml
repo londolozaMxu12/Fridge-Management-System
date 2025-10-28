@@ -1,0 +1,66 @@
+﻿@using FridgeManagementSystem.ViewModels
+@model List<QuotationListViewModel>
+@{
+    ViewData["Title"] = "Quotations";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Quotations</h1>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">All Quotations</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="quotationsTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Quote Number</th>
+                            <th>Supplier</th>
+                            <th>RFQ Number</th>
+                            <th>Total Amount</th>
+                            <th>Validity</th>
+                            <th>Status</th>
+                            <th>Submitted Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var quote in Model)
+                        {
+                            <tr>
+                                <td>@quote.QuoteNumber</td>
+                                <td>@quote.SupplierName</td>
+                                <td>@quote.RFQNumber</td>
+                                <td>@quote.TotalAmount.ToString("C")</td>
+                                <td>@quote.ValidityDate.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <span class="badge badge-@quote.StatusBadge">@quote.Status</span>
+                                </td>
+                                <td>@quote.SubmittedDate.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <a href="@Url.Action("Evaluate", "Quotations", new { id = quote.Id })" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-search"></i> Review
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#quotationsTable').DataTable({
+                "order": [[6, "desc"]]
+            });
+        });
+    </script>
+}

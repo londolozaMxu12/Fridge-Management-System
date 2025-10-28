@@ -2,7 +2,7 @@
 
 namespace FridgeManagementSystem.Models
 {
-    public enum RequestStatus { Pending, Approved, Rejected }
+    //public enum RequestStatus { Pending, Approved, Rejected }
     public class PurchaseRequest
     {
         [Key]
@@ -27,5 +27,34 @@ namespace FridgeManagementSystem.Models
         [Display(Name = "Purchasing Manager")]
         public int EmployeeId { get; set; }
         public Employee PurchasingManager { get; set; }
+
+        public virtual ICollection<RFQ> RFQs { get; set; } = new List<RFQ>();
+
+        public virtual ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
+
+       
+
+        public PriorityLevel Priority { get; set; } = PriorityLevel.Medium;
+
+
+    }
+
+
+    public enum RequestStatus
+    {
+        Pending,
+        Approved,
+        Rejected,
+        ConvertedToRFQ,
+        ConvertedToPO,
+        Cancelled
+    }
+
+    public enum PriorityLevel
+    {
+        Low,
+        Medium,
+        High,
+        Urgent
     }
 }

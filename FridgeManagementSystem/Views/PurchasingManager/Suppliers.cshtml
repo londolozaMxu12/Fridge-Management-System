@@ -1,0 +1,72 @@
+﻿@using FridgeManagementSystem.ViewModels
+@model List<SupplierListViewModel>
+@{
+    ViewData["Title"] = "Suppliers";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Suppliers</h1>
+        <a href="@Url.Action("Create", "Suppliers")" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-plus fa-sm text-white-50"></i> Add Supplier
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Supplier Directory</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="suppliersTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Supplier Code</th>
+                            <th>Name</th>
+                            <th>Contact Person</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var supplier in Model)
+                        {
+                            <tr>
+                                <td>@supplier.SupplierCode</td>
+                                <td>@supplier.Name</td>
+                                <td>@supplier.ContactPerson</td>
+                                <td>@supplier.Email</td>
+                                <td>@supplier.Phone</td>
+                                <td>@supplier.Category</td>
+                                <td>
+                                    <span class="badge badge-@(supplier.IsActive ? "success" : "secondary")">
+                                        @(supplier.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("Details", "Suppliers", new { id = supplier.Id })" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="@Url.Action("Edit", "Suppliers", new { id = supplier.Id })" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#suppliersTable').DataTable();
+        });
+    </script>
+}

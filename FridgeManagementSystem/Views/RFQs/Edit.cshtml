@@ -1,0 +1,40 @@
+﻿@* @model FridgeManagementSystem.Models.ViewModels.RFQViewModel
+
+@{
+    ViewData["Title"] = "Edit RFQ";
+}
+
+<div class="container mt-4">
+    <div class="card shadow p-4">
+        <h3 class="text-primary mb-3">Edit RFQ</h3>
+
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="RFQId" />
+
+            <div class="mb-3">
+                <label asp-for="RFQName" class="form-label"></label>
+                <input asp-for="RFQName" class="form-control" />
+                <span asp-validation-for="RFQName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="RFQStatus" class="form-label"></label>
+                <select asp-for="RFQStatus"
+                        asp-items="Html.GetEnumSelectList<FridgeManagementSystem.Models.RFQsStatus>()"
+                        class="form-select">
+                </select>
+                <span asp-validation-for="RFQStatus" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-success">Save Changes</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+ *@

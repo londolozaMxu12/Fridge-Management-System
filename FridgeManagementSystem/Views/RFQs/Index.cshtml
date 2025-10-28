@@ -1,0 +1,27 @@
+﻿@model IEnumerable<FridgeManagementSystem.Models.RFQ>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>RFQ Name</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var rfq in Model)
+        {
+            <tr>
+                <td>@rfq.RFQNumber</td>
+                <td>@rfq.ItemDescription</td>
+                <td>@rfq.Status</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@rfq.RFQId" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="SendToSupplier" asp-route-rfqId="@rfq.RFQId" asp-route-supplierId="1" class="btn btn-sm btn-primary">Send RFQ</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
