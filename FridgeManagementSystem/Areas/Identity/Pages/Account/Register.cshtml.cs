@@ -127,6 +127,7 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
             [Display(Name = "Postal Code")]
             public string PostalCode { get; set; }
 
+
             [Required]
             [EmailAddress]
             [Display(Name = "Email")]

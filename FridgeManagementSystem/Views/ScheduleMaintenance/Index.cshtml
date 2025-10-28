@@ -59,15 +59,17 @@
     </head>
     <body>
     <div class="btn">
-        <a onclick="location.href='@Url.Action("Index")'" style="float: left   " class="btn btn-primary">BACK</a>
+        <a onclick="location.href='@Url.Action("Index","MaintenanceManagement")'" style="float: left   " class="btn btn-primary">HOME</a>
 
     </div>
     <div></div>
     <h2>Maintenance Schedules</h2>
 
     <p>
-        @Html.ActionLink("Add New Schedule", "Create", null, new { @class = "btn btn-success" })
-    </p>
+        <button type="button" onclick="location.href='@Url.Action("CustomerList", "MaintenanceManagement")'">Add New Schedule</button>
+
+@*         @Html.ActionLink("Add New Schedule", "CustomerList", null, new { @class = "btn btn-success" })
+ *@    </p>
 
     <table class="table table-bordered table-striped">
         <thead>

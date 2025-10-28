@@ -16,6 +16,6 @@ namespace FridgeManagementSystem.Models
         public int CityId { get; set; }
         public City City { get; set; }
 
-        public ICollection<Customer> Customers { get; set; }
+        //public ICollection<Customer> Customers { get; set; }
     }
 }

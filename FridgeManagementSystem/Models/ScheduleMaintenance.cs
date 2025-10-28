@@ -15,6 +15,7 @@ namespace FridgeManagementSystem.Models
         [ForeignKey("CustomerId")]
         public Customer Customer { get; set; }
         public string Description { get; set; }
+
         [Required]
         [Display(Name = "ScheduledDate")]
         [DataType(DataType.DateTime)]
