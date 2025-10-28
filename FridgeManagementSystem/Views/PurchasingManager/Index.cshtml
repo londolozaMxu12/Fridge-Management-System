@@ -1,0 +1,366 @@
+﻿@using FridgeManagementSystem.ViewModels
+
+@{
+    ViewData["Title"] = "Purchase Manager Dashboard";
+    Layout = "_PurchasingManagerLayout";
+}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Purchase Manager Dashboard</h1>
+        <div>
+            <a href="@Url.Action("Create", "PurchaseRequests")" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm text-white-50"></i> New Purchase Request
+            </a>
+            <a href="@Url.Action("Create", "RFQs")" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm">
+                <i class="fas fa-file-contract fa-sm text-white-50"></i> Create RFQ
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Row -->
+    <div class="row">
+        <!-- Pending PRs Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Pending PRs
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.PendingPurchaseRequests</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-right">
+                        <a href="@Url.Action("PurchaseRequests", "PurchaseManager")" class="text-xs text-primary">View All <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Open RFQs Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Open RFQs
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.OpenRFQs</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-contract fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-right">
+                        <a href="@Url.Action("RFQs", "PurchaseManager")" class="text-xs text-success">View All <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active POs Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Active POs
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.ActivePurchaseOrders</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-right">
+                        <a href="@Url.Action("PurchaseOrders", "PurchaseManager")" class="text-xs text-info">View All <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Approvals Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending Approvals
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.PendingApprovals</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-right">
+                        <a href="@Url.Action("PendingApprovals", "PurchaseManager")" class="text-xs text-warning">Review <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Row -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="@Url.Action("Create", "PurchaseRequests")" class="btn btn-primary btn-circle btn-lg" title="New Purchase Request">
+                                <i class="fas fa-clipboard-list"></i>
+                            </a>
+                            <div class="mt-2 small">New PR</div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="@Url.Action("Create", "RFQs")" class="btn btn-success btn-circle btn-lg" title="Create RFQ">
+                                <i class="fas fa-file-contract"></i>
+                            </a>
+                            <div class="mt-2 small">Create RFQ</div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="@Url.Action("Create", "PurchaseOrders")" class="btn btn-info btn-circle btn-lg" title="New Purchase Order">
+                                <i class="fas fa-shopping-cart"></i>
+                            </a>
+                            <div class="mt-2 small">New PO</div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="@Url.Action("CreateDirectPO", "PurchaseOrders")" class="btn btn-warning btn-circle btn-lg" title="Direct PO">
+                                <i class="fas fa-bolt"></i>
+                            </a>
+                            <div class="mt-2 small">Direct PO</div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="@Url.Action("Suppliers", "PurchaseManager")" class="btn btn-secondary btn-circle btn-lg" title="Suppliers">
+                                <i class="fas fa-truck"></i>
+                            </a>
+                            <div class="mt-2 small">Suppliers</div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="@Url.Action("Quotations", "PurchaseManager")" class="btn btn-dark btn-circle btn-lg" title="Quotations">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                            </a>
+                            <div class="mt-2 small">Quotations</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Recent Purchase Requests -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Purchase Requests</h6>
+                    <a href="@Url.Action("PurchaseRequests", "PurchaseManager")" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>PR #</th>
+                                    <th>Department</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var pr in Model.RecentPurchaseRequests)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@pr.PRNumber</strong>
+                                            @if (pr.IsUrgent)
+                                            {
+                                                <span class="badge badge-danger ml-1">URGENT</span>
+                                            }
+                                        </td>
+                                        <td>@pr.Department</td>
+                                        <td>@pr.TotalAmount.ToString("C")</td>
+                                        <td>
+                                            <span class="badge badge-@pr.StatusBadge">@pr.Status</span>
+                                        </td>
+                                        <td>
+                                            <a href="@Url.Action("Details", "PurchaseRequests", new { id = pr.Id })" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.RecentPurchaseRequests.Any())
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">No recent purchase requests</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Actions -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Pending Actions</h6>
+                    <span class="badge badge-danger">@Model.PendingActions.Count</span>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        @foreach (var action in Model.PendingActions)
+                        {
+                            <a href="@action.Url" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">@action.Title</h6>
+                                        <p class="mb-1 small text-muted">@action.Description</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <small class="text-@action.PriorityColor">@action.Priority</small>
+                                        <br>
+                                        <small class="text-muted">@action.DueIn</small>
+                                    </div>
+                                </div>
+                            </a>
+                        }
+                        @if (!Model.PendingActions.Any())
+                        {
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <p>No pending actions</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Content Row -->
+    <div class="row">
+        <!-- Open RFQs -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Open RFQs</h6>
+                    <a href="@Url.Action("RFQs", "PurchaseManager")" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>RFQ #</th>
+                                    <th>Title</th>
+                                    <th>Due Date</th>
+                                    <th>Suppliers</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var rfq in Model.RecentRFQs)
+                                {
+                                    <tr>
+                                        <td><strong>@rfq.RFQNumber</strong></td>
+                                        <td>@rfq.Title</td>
+                                        <td>
+                                            @if (rfq.IsDueSoon)
+                                            {
+                                                <span class="text-warning"><strong>@rfq.DueDate.ToString("MMM dd")</strong></span>
+                                            }
+                                            else
+                                            {
+                                                @rfq.DueDate.ToString("MMM dd")
+                                            }
+                                        </td>
+                                        <td>@rfq.SupplierCount</td>
+                                        <td>
+                                            <a href="@Url.Action("Details", "RFQs", new { id = rfq.Id })" class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.RecentRFQs.Any())
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">No open RFQs</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Purchase Orders -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Purchase Orders</h6>
+                    <a href="@Url.Action("PurchaseOrders", "PurchaseManager")" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>PO #</th>
+                                    <th>Supplier</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var po in Model.RecentPurchaseOrders)
+                                {
+                                    <tr>
+                                        <td><strong>@po.PONumber</strong></td>
+                                        <td>@po.SupplierName</td>
+                                        <td>@po.TotalAmount.ToString("C")</td>
+                                        <td>
+                                            <span class="badge badge-@po.StatusBadge">@po.Status</span>
+                                        </td>
+                                        <td>
+                                            <a href="@Url.Action("Details", "PurchaseOrders", new { id = po.Id })" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.RecentPurchaseOrders.Any())
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">No recent purchase orders</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

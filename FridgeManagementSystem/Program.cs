@@ -2,6 +2,7 @@ using FridgeManagementSystem.Areas.Identity.Data;
 using FridgeManagementSystem.Areas.Identity.Pages.Account.Manage;
 using FridgeManagementSystem.Authorization;
 using FridgeManagementSystem.Data;
+using FridgeManagementSystem.Services;
 using Microsoft.AspNetCore.Authorization;
 //using FridgeManagementSystem.Services;
 using Microsoft.AspNetCore.Identity;
@@ -82,6 +83,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddHttpContextAccessor();
 //builder.Services.AddTransient<IHomeRepository, HomeRepository>();
 //builder.Services.AddTransient<ICartRepository, CartRepository>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

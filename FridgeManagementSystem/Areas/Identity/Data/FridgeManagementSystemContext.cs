@@ -56,6 +56,12 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     public DbSet<OrderItem> OrderItems { get; set; }
     public DbSet<CartItem> CartItems { get; set; }
 
+    public DbSet<ActivityLog> ActivityLogs { get; set; }
+    public DbSet<RFQSupplier> RFQSuppliers { get; set; }
+    public DbSet<DeliveryNote> DeliveryNotes { get; set; }
+
+    public DbSet<RFQ> RFQs { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -85,7 +91,20 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(u => u.ApprovedById)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // 2. Configure Allocation relationships
+        // Configure ApplicationUser relationships
+        //builder.Entity<ApplicationUser>()
+        //    .HasMany(u => u.PurchaseRequests)
+        //    .WithOne(pr => pr.RequestedBy)
+        //    .HasForeignKey(pr => pr.RequestedById)
+        //    .OnDelete(DeleteBehavior.Restrict);
+
+        //builder.Entity<ApplicationUser>()
+        //    .HasMany(u => u.CreatedSuppliers)
+        //    .WithOne(s => s.CreatedBy)
+        //    .HasForeignKey(s => s.CreatedById)
+        //    .OnDelete(DeleteBehavior.Restrict);
+
+        // 2. Configure Allocation relationships - ONLY ONCE
         builder.Entity<Allocation>(entity =>
         {
             entity.HasKey(a => a.AllocationId);
@@ -113,6 +132,8 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(a => a.AllocatedById)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
         });
 
         // 3. Configure Fridge relationships - UPDATED for string CustomerId
@@ -262,18 +283,13 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
                 .WithMany(e => e.ScheduledMaintenances)
                 .HasForeignKey(e => e.MaintenanceTechnicianId)
                 .OnDelete(DeleteBehavior.NoAction);
-
-            // UPDATED: Customer relationship with string CustomerId
-            entity.HasOne(e => e.Customer)
-                .WithMany(c => c.ScheduleMaintenances)
-                .HasForeignKey(e => e.CustomerId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
+        builder.Entity<ScheduleMaintenance>()
+              .HasOne(s => s.Customer)
+              .WithMany(c => c.ScheduleMaintenances)
+              .HasForeignKey(s => s.CustomerId)
+              .OnDelete(DeleteBehavior.Cascade);
 
-        // ADDITIONAL: Configure string primary key for Customer
-        builder.Entity<Customer>()
-            .Property(c => c.Id)
-            .HasMaxLength(450); 
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

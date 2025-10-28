@@ -1,0 +1,131 @@
+﻿@using FridgeManagementSystem.ViewModels
+@model PurchaseOrderDetailViewModel
+@{
+    ViewData["Title"] = "Purchase Order Details";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Purchase Order Details</h1>
+        <div>
+            <a href="@Url.Action("Index")" class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to List
+            </a>
+            <a href="javascript:window.print()" class="btn btn-primary btn-sm">
+                <i class="fas fa-print fa-sm text-white-50"></i> Print
+            </a>
+        </div>
+    </div>
+
+    <!-- PO Header -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">PO Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>PO Number:</strong> @Model.PONumber</p>
+                            <p><strong>Supplier:</strong> @Model.SupplierName</p>
+                            <p><strong>Status:</strong> <span class="badge badge-@Model.StatusBadge">@Model.Status</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Delivery Date:</strong> @Model.DeliveryDate.ToString("MMM dd, yyyy")</p>
+                            <p><strong>Payment Terms:</strong> @Model.PaymentTerms</p>
+                            <p><strong>Shipping Method:</strong> @Model.ShippingMethod</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Amount Summary</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Subtotal:</strong> @Model.Subtotal.ToString("C")</p>
+                    <p><strong>Tax:</strong> @Model.TaxAmount.ToString("C")</p>
+                    <p><strong>Shipping:</strong> @Model.ShippingCost.ToString("C")</p>
+                    <hr>
+                    <p><strong>Total Amount:</strong> <span class="h5 text-primary">@Model.TotalAmount.ToString("C")</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PO Items -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Order Items</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Item Code</th>
+                            <th>Description</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.ItemCode</td>
+                                <td>@item.Description</td>
+                                <td>@item.Quantity</td>
+                                <td>@item.UnitPrice.ToString("C")</td>
+                                <td>@item.TotalPrice.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    @if (Model.ShowActions)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group" role="group">
+                            @if (Model.CanApprove)
+                            {
+                                <a href="@Url.Action("Approve", new { id = Model.Id })" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Approve PO
+                                </a>
+                            }
+                            @if (Model.CanCancel)
+                            {
+                                <a href="@Url.Action("Cancel", new { id = Model.Id })" class="btn btn-danger">
+                                    <i class="fas fa-times"></i> Cancel PO
+                                </a>
+                            }
+                            @if (Model.CanEdit)
+                            {
+                                <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i> Edit PO
+                                </a>
+                            }
+                            <a href="@Url.Action("Track", new { id = Model.Id })" class="btn btn-warning">
+                                <i class="fas fa-shipping-fast"></i> Track Order
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

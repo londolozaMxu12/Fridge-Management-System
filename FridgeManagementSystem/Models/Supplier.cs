@@ -12,6 +12,8 @@ namespace FridgeManagementSystem.Models
         public string UserId { get; set; }
         public ApplicationUser User { get; set; }
 
+        public string Email { get; set; }   
+
         [Required]
         [Display(Name = "Company Name")]
         [StringLength(100)]
@@ -22,6 +24,7 @@ namespace FridgeManagementSystem.Models
         public string SupplierType { get; set; } // Fridge, Parts, Other
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsActive { get; set; } = true;
 
         public string CreatedById { get; set; }
         public ApplicationUser CreatedBy { get; set; }

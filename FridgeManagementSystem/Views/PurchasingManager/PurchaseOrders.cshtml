@@ -1,0 +1,99 @@
+﻿@using FridgeManagementSystem.ViewModels
+@model List<PurchaseOrderListViewModel>
+@{
+    ViewData["Title"] = "Purchase Orders";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Purchase Orders</h1>
+        <div>
+            <a href="@Url.Action("Create", "PurchaseOrders")" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm text-white-50"></i> New PO
+            </a>
+            <a href="@Url.Action("CreateDirectPO", "PurchaseOrders")" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm">
+                <i class="fas fa-bolt fa-sm text-white-50"></i> Direct PO
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <a href="?status=All" class="btn btn-outline-primary">All</a>
+                        <a href="?status=Draft" class="btn btn-outline-primary">Draft</a>
+                        <a href="?status=Issued" class="btn btn-outline-primary">Issued</a>
+                        <a href="?status=Confirmed" class="btn btn-outline-primary">Confirmed</a>
+                        <a href="?status=Delivered" class="btn btn-outline-primary">Delivered</a>
+                        <a href="?status=Cancelled" class="btn btn-outline-primary">Cancelled</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Purchase Order List</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="poTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>PO Number</th>
+                            <th>Supplier</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Delivery Date</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var po in Model)
+                        {
+                            <tr>
+                                <td>@po.PONumber</td>
+                                <td>@po.SupplierName</td>
+                                <td>@po.TotalAmount.ToString("C")</td>
+                                <td>
+                                    <span class="badge badge-@po.StatusBadge">@po.Status</span>
+                                </td>
+                                <td>@po.DeliveryDate.ToString("MMM dd, yyyy")</td>
+                                <td>@po.CreatedDate.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <a href="@Url.Action("Details", "PurchaseOrders", new { id = po.Id })" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="@Url.Action("Track", "PurchaseOrders", new { id = po.Id })" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-shipping-fast"></i>
+                                    </a>
+                                    @if (po.CanEdit)
+                                    {
+                                        <a href="@Url.Action("Edit", "PurchaseOrders", new { id = po.Id })" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#poTable').DataTable({
+                "order": [[5, "desc"]]
+            });
+        });
+    </script>
+}
+}

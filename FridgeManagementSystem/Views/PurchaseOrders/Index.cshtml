@@ -1,0 +1,107 @@
+﻿@using FridgeManagementSystem.ViewModels
+@model List<PurchaseOrderViewModel>
+@{
+    ViewData["Title"] = "Purchase Orders";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Purchase Orders</h1>
+        <div>
+            <a href="@Url.Action("Create", "PurchaseOrders")" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm text-white-50"></i> New PO
+            </a>
+            <a href="@Url.Action("CreateDirectPO", "PurchaseOrders")" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm">
+                <i class="fas fa-bolt fa-sm text-white-50"></i> Direct PO
+            </a>
+        </div>
+    </div>
+
+    <partial name="_PurchaseStats" />
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Purchase Orders</h6>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Filter by Status
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="?status=All">All</a>
+                    <a class="dropdown-item" href="?status=Draft">Draft</a>
+                    <a class="dropdown-item" href="?status=Issued">Issued</a>
+                    <a class="dropdown-item" href="?status=Confirmed">Confirmed</a>
+                    <a class="dropdown-item" href="?status=Delivered">Delivered</a>
+                    <a class="dropdown-item" href="?status=Cancelled">Cancelled</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>PO Number</th>
+                            <th>Supplier</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Delivery Date</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var po in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@po.PONumber</strong>
+                                    @if (po.IsUrgent)
+                                    {
+                                        <span class="badge badge-danger ml-1">URGENT</span>
+                                    }
+                                </td>
+                                <td>@po.SupplierName</td>
+                                <td>@po.TotalAmount.ToString("C")</td>
+                                <td>
+                                    <span class="badge badge-@po.StatusBadge">@po.Status</span>
+                                </td>
+                                <td>@po.DeliveryDate.ToString("MMM dd, yyyy")</td>
+                                <td>@po.CreatedDate.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="@Url.Action("Details", new { id = po.Id })" class="btn btn-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="@Url.Action("Track", new { id = po.Id })" class="btn btn-warning" title="Track Order">
+                                            <i class="fas fa-shipping-fast"></i>
+                                        </a>
+                                        @if (po.CanEdit)
+                                        {
+                                            <a href="@Url.Action("Edit", new { id = po.Id })" class="btn btn-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#dataTable').DataTable({
+                "order": [[5, "desc"]],
+                "language": {
+                    "emptyTable": "No purchase orders found"
+                }
+            });
+        });
+    </script>
+}
