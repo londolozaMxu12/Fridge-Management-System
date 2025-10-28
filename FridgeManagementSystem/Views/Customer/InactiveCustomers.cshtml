@@ -29,6 +29,11 @@
             _ => "bg-secondary"
         };
     }
+
+    string GetStatusDisplay(bool isActive)
+    {
+        return isActive ? "Active" : "Inactive";
+    }
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -81,7 +86,7 @@
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <button class="btn btn-outline-warning w-100" onclick="exportInactiveCustomers()">
+                        <button class="btn btn-outline-warning w-100" onclick="alert('Export feature coming soon!')">
                             <i class="fas fa-download me-2"></i>Export List
                         </button>
                     </div>
@@ -129,10 +134,21 @@
                 </select>
             </div>
 
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-warning me-2 w-100">
+            <div class="col-md-2">
+                <label for="SortBy" class="form-label">Sort By</label>
+                <select class="form-select" id="SortBy" name="sortBy">
+                    <option value="FullName" selected="@(Model.SortBy == "FullName")">Name</option>
+                    <option value="BusinessName" selected="@(Model.SortBy == "BusinessName")">Business Name</option>
+                    <option value="CustomerType" selected="@(Model.SortBy == "CustomerType")">Customer Type</option>
+                    <option value="CreatedAt" selected="@(Model.SortBy == "CreatedAt")">Registration Date</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-warning me-2">
                     <i class="fas fa-search"></i> Search
                 </button>
+                <a asp-action="InactiveCustomers" class="btn btn-outline-secondary">Clear Filters</a>
             </div>
         </form>
     </div>
@@ -178,7 +194,25 @@
                                     }
                                 </a>
                             </th>
-                            <th>Business Name</th>
+                            <th>
+                                <a asp-action="InactiveCustomers"
+                                   asp-route-sortBy="BusinessName"
+                                   asp-route-sortOrder="@(Model.SortBy == "BusinessName" && Model.SortOrder == "asc" ? "desc" : "asc")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-customerTypeFilter="@Model.CustomerTypeFilter"
+                                   asp-route-approvalFilter="@Model.ApprovalFilter"
+                                   class="text-decoration-none text-dark">
+                                    Business Name
+                                    @if (Model.SortBy == "BusinessName")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-sort"></i>
+                                    }
+                                </a>
+                            </th>
                             <th>Customer Type</th>
                             <th>Contact Info</th>
                             <th>Status</th>
@@ -233,13 +267,13 @@
                                 </td>
                                 <td>
                                     <div>
-                                        <i class="fas fa-phone text-muted me-1"></i> @customer.ContactNo
+                                        <i class="fas fa-phone text-muted me-1"></i> @(customer.ContactNo ?? "N/A")
                                     </div>
                                     <small class="text-muted">Registered: @customer.CreatedAt.ToString("MMM dd, yyyy")</small>
                                 </td>
                                 <td>
                                     <span class="badge bg-warning text-dark">
-                                        <i class="fas fa-user-slash me-1"></i> Inactive
+                                        <i class="fas fa-user-slash me-1"></i> @GetStatusDisplay(customer.IsActive)
                                     </span>
                                     <br />
                                     <small class="text-muted">
@@ -358,25 +392,29 @@
 
 @section Scripts {
     <script>
-        function exportInactiveCustomers() {
-            // Get current filter parameters
-            const params = new URLSearchParams({
-                searchString: '@Model.SearchString',
-                customerTypeFilter: '@Model.CustomerTypeFilter',
-                approvalFilter: '@Model.ApprovalFilter',
-                sortBy: '@Model.SortBy',
-                sortOrder: '@Model.SortOrder',
-                export: 'true'
-            });
-
-            window.location.href = '/Customer/ExportInactiveCustomers?' + params.toString();
-        }
-
         // Auto-focus search input
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('SearchString');
             if (searchInput) {
                 searchInput.focus();
+            }
+        });
+
+        // Enhanced filter form handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const sortBySelect = document.getElementById('SortBy');
+            const approvalFilterSelect = document.getElementById('ApprovalFilter');
+
+            if (sortBySelect && approvalFilterSelect) {
+                // Update form when selections change for better UX
+                sortBySelect.addEventListener('change', function() {
+                    // You can add additional logic here if needed
+                    console.log('Sort by changed to:', this.value);
+                });
+
+                approvalFilterSelect.addEventListener('change', function() {
+                    console.log('Approval filter changed to:', this.value);
+                });
             }
         });
     </script>
@@ -404,5 +442,9 @@
             .quick-stat-card:hover {
                 transform: translateY(-2px);
             }
+
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+        }
     </style>
 }

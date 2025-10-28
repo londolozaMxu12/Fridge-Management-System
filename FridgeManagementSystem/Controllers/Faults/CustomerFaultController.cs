@@ -30,7 +30,7 @@ namespace FridgeManagementSystem.Controllers.Faults
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers
                 .Include(c => c.User)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+                .FirstOrDefaultAsync(c => c.Id == userId);
 
             if (customer == null)
             {
@@ -57,7 +57,7 @@ namespace FridgeManagementSystem.Controllers.Faults
             var customer = await _context.Customers
                 .Include(c => c.Fridges)
                 .ThenInclude(f => f.FridgeType)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+                .FirstOrDefaultAsync(c => c.Id == userId);
 
             if (customer == null)
             {
@@ -90,7 +90,7 @@ namespace FridgeManagementSystem.Controllers.Faults
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers
                 .Include(c => c.User)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+                .FirstOrDefaultAsync(c => c.Id == userId);
 
             if (customer == null)
             {
@@ -165,7 +165,7 @@ namespace FridgeManagementSystem.Controllers.Faults
             var customerFridges = await _context.Customers
                 .Include(c => c.Fridges)
                 .ThenInclude(f => f.FridgeType)
-                .Where(c => c.UserId == userId)
+                .Where(c => c.Id == userId)
                 .SelectMany(c => c.Fridges)
                 .Where(f => f.IsActive && f.Status == "Allocated")
                 .ToListAsync();
@@ -187,7 +187,7 @@ namespace FridgeManagementSystem.Controllers.Faults
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+                .FirstOrDefaultAsync(c => c.Id == userId);
 
             if (customer == null)
             {

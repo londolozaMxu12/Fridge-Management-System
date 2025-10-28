@@ -49,7 +49,7 @@ namespace FridgeManagementSystem.Controllers
         }
 
         [Authorize]
-        public async Task<IActionResult> IndexAsync()
+        public async Task<IActionResult> Index()
         {
             try
             {

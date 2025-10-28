@@ -55,7 +55,7 @@ namespace FridgeManagementSystem.Repositories
             // Notify customer that their fault is being attended
             var customerNotification = new Notification
             {
-                UserId = fault.ReportedBy.UserId,
+                UserId = fault.ReportedBy.Id,
                 Title = "Fault Being Attended",
                 Message = $"Your fault '{fault.Title}' is being attended by technician {attendingTechnician.User.FullName}",
                 Link = GenerateAbsoluteUrl($"/CustomerFault/Details/{fault.FaultId}"),
@@ -102,7 +102,7 @@ namespace FridgeManagementSystem.Repositories
         {
             var customerNotification = new Notification
             {
-                UserId = fault.ReportedBy.UserId,
+                UserId = fault.ReportedBy.Id,
                 Title = "Fault Status Updated",
                 Message = $"Your fault '{fault.Title}' status changed from {oldStatus} to {fault.Status}",
                 Link = GenerateAbsoluteUrl($"/CustomerFault/Details/{fault.FaultId}"),
@@ -117,7 +117,7 @@ namespace FridgeManagementSystem.Repositories
         {
             var customerNotification = new Notification
             {
-                UserId = schedule.Fault.ReportedBy.UserId,
+                UserId = schedule.Fault.ReportedBy.Id,
                 Title = "Repair Scheduled",
                 Message = $"Repair for your fault '{schedule.Fault.Title}' has been scheduled for {schedule.ScheduledDate:yyyy-MM-dd HH:mm}, make sure you available at this date and time. " +
                 $"" +

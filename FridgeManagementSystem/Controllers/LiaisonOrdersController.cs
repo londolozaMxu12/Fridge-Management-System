@@ -21,6 +21,7 @@ namespace FridgeManagementSystem.Controllers
             _notification = notification;
             _logger = logger;
         }
+
         private async Task<bool> IsCustomerLiaisonAsync()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -77,6 +78,19 @@ namespace FridgeManagementSystem.Controllers
             return true;
         }
 
+        // Helper method to get customer details from order
+        private (string name, string email, string phone) GetCustomerDetails(Order order)
+        {
+            if (order?.Customer?.User == null)
+                return ("Unknown", "Unknown", "Unknown");
+
+            return (
+                order.Customer.User.FullName ?? "Unknown",
+                order.Customer.User.Email ?? "Unknown",
+                order.Customer.User.PhoneNumber ?? "Unknown"
+            );
+        }
+
         public async Task<IActionResult> Index(int pageIndex = 1)
         {
             if (!await IsCustomerLiaisonAsync())
@@ -84,28 +98,42 @@ namespace FridgeManagementSystem.Controllers
                 return Forbid();
             }
 
-            var query = _context.Orders
-                .Include(o => o.Customer)
-                .Include(o => o.Items)
-                .ThenInclude(i => i.Fridge)
-                .ThenInclude(f => f.FridgeType)
-                .OrderByDescending(o => o.CreatedAt);
+            try
+            {
+                var query = _context.Orders
+                    .Include(o => o.Customer)          // Include Customer
+                        .ThenInclude(c => c.User)      // Then include User from Customer
+                    .Include(o => o.Items)
+                        .ThenInclude(i => i.Fridge)
+                        .ThenInclude(f => f.FridgeType)
+                    .OrderByDescending(o => o.CreatedAt);
 
-            var totalCount = await query.CountAsync();
-            var pageSize = 5;
-            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+                var totalCount = await query.CountAsync();
+                var pageSize = 5;
+                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-            var orders = await query
-                .Skip((pageIndex - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+                // Ensure pageIndex is within valid range
+                pageIndex = Math.Max(1, Math.Min(pageIndex, totalPages > 0 ? totalPages : 1));
 
-            ViewBag.Orders = orders;
-            ViewBag.PageIndex = pageIndex;
-            ViewBag.TotalPages = totalPages;
+                var orders = await query
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
 
-            return View(orders);
+                ViewBag.PageIndex = pageIndex;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.TotalCount = totalCount;
+
+                return View(orders);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading orders for liaison");
+                TempData["ErrorMessage"] = "An error occurred while loading orders.";
+                return View(new List<Order>());
+            }
         }
+
         public async Task<IActionResult> Details(int id)
         {
             if (!await IsCustomerLiaisonAsync())
@@ -113,32 +141,52 @@ namespace FridgeManagementSystem.Controllers
                 return Forbid();
             }
 
-            var order = await _context.Orders
-                .Include(o => o.Customer)
-                .Include(o => o.Items) // Ensure this is included
-                .ThenInclude(i => i.Fridge)
-                .ThenInclude(f => f.FridgeType)
-                .Include(o => o.Fridge)
-                .FirstOrDefaultAsync(o => o.Id == id);
-
-            if (order == null)
+            try
             {
-                return NotFound();
-            }
+                var order = await _context.Orders
+                    .Include(o => o.Customer)          // Include Customer
+                        .ThenInclude(c => c.User)      // Then include User from Customer
+                    .Include(o => o.Items)
+                        .ThenInclude(i => i.Fridge)
+                        .ThenInclude(f => f.FridgeType)
+                    .Include(o => o.Fridge)
+                    .Include(o => o.Allocations)
+                    .FirstOrDefaultAsync(o => o.Id == id);
 
-            // Check if order has items (for debugging)
-            if (order.Items == null || !order.Items.Any())
+                if (order == null)
+                {
+                    TempData["ErrorMessage"] = "Order not found.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Check if order has items (for debugging)
+                if (order.Items == null || !order.Items.Any())
+                {
+                    _logger.LogWarning($"Order {id} has no items when viewing details");
+                }
+
+                // Get customer details
+                var customerDetails = GetCustomerDetails(order);
+
+                // Count orders for this customer
+                var numOrders = await _context.Orders
+                    .CountAsync(o => o.CustomerId == order.CustomerId);
+
+                ViewBag.NumOrders = numOrders;
+                ViewBag.CustomerName = customerDetails.name;
+                ViewBag.CustomerEmail = customerDetails.email;
+                ViewBag.CustomerPhone = customerDetails.phone;
+
+                return View(order);
+            }
+            catch (Exception ex)
             {
-                _logger.LogWarning($"Order {id} has no items when viewing details");
+                _logger.LogError(ex, $"Error loading order details for ID: {id}");
+                TempData["ErrorMessage"] = "An error occurred while loading order details.";
+                return RedirectToAction(nameof(Index));
             }
-
-            var numOrders = await _context.Orders
-                .CountAsync(o => o.CustomerId == order.CustomerId);
-
-            ViewBag.NumOrders = numOrders;
-
-            return View(order);
         }
+
         [HttpGet]
         public async Task<IActionResult> Edit(int id, string payment_status, string order_status)
         {
@@ -153,12 +201,18 @@ namespace FridgeManagementSystem.Controllers
                     .Include(o => o.Items)
                         .ThenInclude(i => i.Fridge)
                     .Include(o => o.Customer)
+                        .ThenInclude(c => c.User)
                     .FirstOrDefaultAsync(o => o.Id == id);
 
                 if (order == null)
                 {
-                    return NotFound();
+                    TempData["ErrorMessage"] = "Order not found.";
+                    return RedirectToAction(nameof(Index));
                 }
+
+                // Access user details for logging
+                var customerDetails = GetCustomerDetails(order);
+                _logger.LogInformation($"Editing order {id} for customer: {customerDetails.name}");
 
                 string previousOrderStatus = order.OrderStatus;
                 string previousPaymentStatus = order.PaymentStatus;
@@ -186,7 +240,6 @@ namespace FridgeManagementSystem.Controllers
                     // When order is accepted, it becomes visible in Allocation queue
                     if (order_status.ToLower() == "accepted" && previousOrderStatus?.ToLower() != "accepted")
                     {
-                        
                         order.OrderStatus = order_status;
                         await _notification.NotifyLiaisonsAboutOrderReadyForAllocation(order);
                     }
@@ -241,11 +294,8 @@ namespace FridgeManagementSystem.Controllers
                     if (fridge != null && fridge.Status == "Reserved")
                     {
                         fridge.Status = "Available";
-
                         fridge.CustomerId = null;
-
                         freedFridgeIds.Add(fridge.FridgeId);
-
                         _logger.LogInformation($"Freed fridge {fridge.FridgeId} from cancelled order {order.Id}");
                     }
                 }
@@ -268,68 +318,78 @@ namespace FridgeManagementSystem.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error freeing reserved fridges for order {order.Id}");
+                throw; // Re-throw to handle in calling method
             }
         }
-        //private async Task<bool> AllocateFridgeToOrder(Order order)
-        //{
-        //    try
-        //    {
-        //        // Check if order has items
-        //        if (order.Items == null || !order.Items.Any())
-        //        {
-        //            _logger.LogWarning($"Order {order.Id} has no items, cannot allocate fridge.");
-        //            return false;
-        //        }
 
-        //        var allocatedFridgeIds = new List<int>();
+        // Additional helper methods for customer data access
+        public async Task<IActionResult> GetCustomerInfo(string customerId)
+        {
+            try
+            {
+                var customer = await _context.Customers
+                    .Include(c => c.User)
+                    .FirstOrDefaultAsync(c => c.Id == customerId);
 
-        //        // Allocate all reserved fridges in this order
-        //        foreach (var item in order.Items)
-        //        {
-        //            var fridge = await _context.Fridges.FindAsync(item.FridgeId);
-        //            if (fridge != null && fridge.Status == "Reserved")
-        //            {
-        //                // Change from Reserved to Allocated
-        //                fridge.Status = "Allocated";
-        //                fridge.AllocationDate = DateTime.Now;
+                if (customer == null)
+                {
+                    return Json(new { success = false, message = "Customer not found" });
+                }
 
-        //                allocatedFridgeIds.Add(fridge.FridgeId);
+                return Json(new
+                {
+                    success = true,
+                    customerName = customer.User.FullName,
+                    customerEmail = customer.User.Email,
+                    customerPhone = customer.User.PhoneNumber,
+                    businessName = customer.BusinessName,
+                    customerType = customer.CustomerType
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting customer info for {customerId}");
+                return Json(new { success = false, message = "Error retrieving customer information" });
+            }
+        }
 
-        //                _logger.LogInformation($"Allocated fridge {fridge.FridgeId} to order {order.Id}");
-        //            }
-        //        }
+        // Method to get orders with customer details for export or reporting
+        public async Task<IActionResult> OrdersWithCustomerDetails()
+        {
+            if (!await IsCustomerLiaisonAsync())
+            {
+                return Forbid();
+            }
 
-        //        // Create allocation records
-        //        foreach (var fridgeId in allocatedFridgeIds)
-        //        {
-        //            var allocation = new Allocation
-        //            {
-        //                CustomerId = order.Customer.Id, // You might need to adjust this
-        //                AllocatedById = User.FindFirstValue(ClaimTypes.NameIdentifier),
-        //                FridgeId = fridgeId,
-        //                OrderId = order.Id,
-        //                AllocationDate = DateTime.UtcNow
-        //            };
+            try
+            {
+                var orders = await _context.Orders
+                    .Include(o => o.Customer)
+                        .ThenInclude(c => c.User)
+                    .Include(o => o.Items)
+                        .ThenInclude(i => i.Fridge)
+                    .OrderByDescending(o => o.CreatedAt)
+                    .Select(o => new
+                    {
+                        OrderId = o.Id,
+                        CustomerName = o.Customer.User.FullName,
+                        CustomerEmail = o.Customer.User.Email,
+                        BusinessName = o.Customer.BusinessName,
+                        OrderStatus = o.OrderStatus,
+                        PaymentStatus = o.PaymentStatus,
+                        TotalAmount = o.Items.Sum(i => i.UnitPrice * i.Quantity) + o.ShippingFee,
+                        CreatedAt = o.CreatedAt,
+                        ItemCount = o.Items.Count
+                    })
+                    .ToListAsync();
 
-        //            _context.Allocations.Add(allocation);
-        //        }
-
-        //        // Notify about successful allocation
-        //        if (allocatedFridgeIds.Any())
-        //        {
-        //            // You might need to adjust this notification call based on your Allocation model
-        //            await _notification.NotifyAboutFridgeAllocation(order, User.Identity.Name, order.CustomerId);
-        //        }
-
-        //        _logger.LogInformation($"Allocated {allocatedFridgeIds.Count} fridges to order {order.Id}");
-        //        return allocatedFridgeIds.Any();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, $"Error allocating fridges for order {order.Id}");
-        //        return false;
-        //    }
-        //}
-
+                return Json(orders);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading orders with customer details");
+                return Json(new { error = "An error occurred while loading orders" });
+            }
+        }
     }
 }

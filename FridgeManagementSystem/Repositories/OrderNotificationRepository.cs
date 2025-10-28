@@ -1,4 +1,7 @@
 ﻿using FridgeManagementSystem.Areas.Identity.Data;
+using FridgeManagementSystem.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 public class OrderNotificationRepository : IOrderNotificationRepository
 {
@@ -10,13 +13,15 @@ public class OrderNotificationRepository : IOrderNotificationRepository
     public OrderNotificationRepository(
         FridgeManagementSystemContext context,
         UserManager<ApplicationUser> userManager,
-        ILogger<OrderNotificationRepository> logger, IHttpContextAccessor httpContextAccessor)
+        ILogger<OrderNotificationRepository> logger,
+        IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _userManager = userManager;
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
     }
+
     // Helper method to generate absolute URLs
     private string GenerateAbsoluteUrl(string relativePath)
     {
@@ -62,6 +67,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                     break;
 
                 case "cancelled":
+                case "canceled":
                     message = $"Your order #{order.Id} has been cancelled. " +
                              $"Please reorder.";
                     title = "Order Cancelled";
@@ -103,12 +109,14 @@ public class OrderNotificationRepository : IOrderNotificationRepository
             _logger.LogError(ex, $"Error creating order update notification for order {order.Id}");
         }
     }
+
     public async Task NotifyAboutFridgeAllocation(Order order, string allocatedBy, string customerId)
     {
         try
         {
             var orderWithDetails = await _context.Orders
                 .Include(o => o.Customer)
+                    .ThenInclude(c => c.User) // Include User to get customer details
                 .Include(o => o.Items)
                     .ThenInclude(i => i.Fridge)
                     .ThenInclude(f => f.FridgeType)
@@ -135,6 +143,9 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                 ? string.Join(", ", fridgeNames)
                 : "fridge";
 
+            // Get customer name from User
+            var customerName = orderWithDetails.Customer?.User?.FullName ?? "N/A";
+
             // Notify the customer
             var customerNotification = new Notification
             {
@@ -159,7 +170,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                     Title = "Fridge Allocation Completed",
                     Message = $"{fridgeNames.Count} fridge(s) ({fridgeSummary}) " +
                              $"have been allocated to order {orderWithDetails.Id} by {allocatedBy}. " +
-                             $"Customer: {orderWithDetails.Customer?.FullName ?? "N/A"}",
+                             $"Customer: {customerName}",
                     IsRead = false,
                     CreatedAt = DateTime.UtcNow,
                     Link = GenerateAbsoluteUrl($"/Allocation/Details/{orderWithDetails.Id}")
@@ -177,6 +188,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
             _logger.LogError(ex, "Error creating fridge allocation notifications");
         }
     }
+
     public async Task NotifyAboutStockShortage(int fridgeId, int orderId)
     {
         try
@@ -187,7 +199,11 @@ public class OrderNotificationRepository : IOrderNotificationRepository
 
             var order = await _context.Orders
                 .Include(o => o.Customer)
+                    .ThenInclude(c => c.User) // Include User to get customer details
                 .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            // Get customer name from User
+            var customerName = order?.Customer?.User?.FullName ?? "N/A";
 
             // Notify all customer liaisons using EmployeeType
             var liaisons = await GetCustomerLiaisonsAsync();
@@ -198,7 +214,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                     UserId = liaison.Id,
                     Title = "Stock Shortage Alert",
                     Message = $"No available {fridge?.FridgeType?.Name ?? "fridge"} in stock for order #{orderId}. " +
-                             $"Customer: {order?.Customer?.FullName ?? "N/A"}. " +
+                             $"Customer: {customerName}. " +
                              $"Please check inventory and restock.",
                     IsRead = false,
                     CreatedAt = DateTime.Now,
@@ -239,6 +255,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                     break;
 
                 case "canceled":
+                case "cancelled":
                     message = $"Your payment for order #{order.Id} has been cancelled. " +
                              $"Please contact customer support if you need assistance.";
                     title = "Payment Cancelled";
@@ -269,12 +286,14 @@ public class OrderNotificationRepository : IOrderNotificationRepository
             _logger.LogError(ex, $"Error creating payment status notification for order {order.Id}");
         }
     }
+
     public async Task NotifyLiaisonsAboutNewOrder(Order order)
     {
         try
         {
             var orderWithDetails = await _context.Orders
                 .Include(o => o.Customer)
+                    .ThenInclude(c => c.User) // Include User to get customer details
                 .Include(o => o.Items)
                     .ThenInclude(i => i.Fridge)
                     .ThenInclude(f => f.FridgeType)
@@ -292,6 +311,9 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                 ? string.Join(", ", itemNames.Distinct())
                 : "items";
 
+            // Get customer name from User
+            var customerName = orderWithDetails.Customer?.User?.FullName ?? "N/A";
+
             // Get customer liaisons using EmployeeType
             var liaisons = await GetCustomerLiaisonsAsync();
 
@@ -301,7 +323,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                 {
                     UserId = liaison.Id,
                     Title = "New Order Received",
-                    Message = $"New order #{orderWithDetails.Id} received. " +
+                    Message = $"New order #{orderWithDetails.Id} from {customerName}. " +
                              $"{totalItems} items ({itemsSummary}) waiting for approval.",
                     IsRead = false,
                     CreatedAt = DateTime.Now,
@@ -320,6 +342,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
             _logger.LogError(ex, $"Error creating new order notifications for order {order.Id}");
         }
     }
+
     public async Task NotifyAboutFreedFridges(Order order, List<int> freedFridgeIds)
     {
         try
@@ -374,12 +397,14 @@ public class OrderNotificationRepository : IOrderNotificationRepository
             _logger.LogError(ex, $"Error creating freed fridge notifications for order {order.Id}");
         }
     }
+
     public async Task NotifyLiaisonsAboutOrderReadyForAllocation(Order order)
     {
         try
         {
             var orderWithDetails = await _context.Orders
                 .Include(o => o.Customer)
+                    .ThenInclude(c => c.User) // Include User to get customer details
                 .Include(o => o.Items)
                     .ThenInclude(i => i.Fridge)
                     .ThenInclude(f => f.FridgeType)
@@ -397,6 +422,9 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                 ? string.Join(", ", itemNames.Distinct())
                 : "items";
 
+            // Get customer name from User
+            var customerName = orderWithDetails.Customer?.User?.FullName ?? "N/A";
+
             // Notify all customer liaisons using EmployeeType
             var liaisons = await GetCustomerLiaisonsAsync();
             foreach (var liaison in liaisons)
@@ -405,7 +433,7 @@ public class OrderNotificationRepository : IOrderNotificationRepository
                 {
                     UserId = liaison.Id,
                     Title = "Order Ready for Allocation",
-                    Message = $"Order #{orderWithDetails.Id} from {orderWithDetails.Customer?.FullName} " +
+                    Message = $"Order #{orderWithDetails.Id} from {customerName} " +
                              $"is ready for fridge allocation. {totalItems} {itemsSummary} waiting.",
                     IsRead = false,
                     CreatedAt = DateTime.Now,

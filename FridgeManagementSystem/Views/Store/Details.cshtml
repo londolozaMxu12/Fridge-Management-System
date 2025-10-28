@@ -158,13 +158,14 @@
 
             // Modal event listener
                     /
+                // Modal event listener - UPDATED VERSION
         const loginModal = document.getElementById('loginRequiredModal');
         if (loginModal) {
             loginModal.addEventListener('show.bs.modal', function (event) {
                 const button = event.relatedTarget;
                 const fridgeId = button.getAttribute('data-fridge-id');
                 const fridgeName = button.getAttribute('data-fridge-name');
-                const fridgePrice = button.getAttribute('data-fridge-price'); 
+                const fridgePrice = button.getAttribute('data-fridge-price'); // Get price
 
                 // Update modal display immediately
                 document.getElementById('selectedFridgeName').textContent = fridgeName;
@@ -186,14 +187,10 @@
                     sessionStorage.removeItem('pendingFridgeId');
                     sessionStorage.removeItem('pendingFridgeName');
                     sessionStorage.removeItem('pendingFridgePrice');
-                    
+                    // Don't remove from localStorage here - it should persist for actual auth
                 }
             });
         }
-
-            // Check for pending fridge after authentication
-            checkPendingFridgeAfterAuth();
-        });
 
         // Enhanced back button functionality
         function goBack() {

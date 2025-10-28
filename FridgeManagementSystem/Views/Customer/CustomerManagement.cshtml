@@ -28,6 +28,11 @@
             _ => "bg-secondary"
         };
     }
+
+    string GetStatusDisplay(bool isActive)
+    {
+        return isActive ? "Active" : "Inactive";
+    }
 }
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1><i class="fas fa-users"></i> @ViewData["Title"]</h1>
@@ -40,10 +45,6 @@
         <span class="badge bg-primary fs-6">Administrator</span>
     }
 </div>
-
-@* <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="fas fa-users"></i> @ViewData["Title"]</h1>
-</div> *@
 
 @if (TempData["SuccessMessage"] != null)
 {
@@ -103,7 +104,7 @@
             </div>
             <div class="col-md-3 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary me-2">
-                    <i class="fas fa-search"></i> Search...
+                    <i class="fas fa-search"></i> Search
                 </button>
                 <a asp-action="CustomerManagement" class="btn btn-outline-secondary">Clear</a>
             </div>
@@ -138,6 +139,7 @@
                                    asp-route-searchString="@Model.SearchString"
                                    asp-route-customerTypeFilter="@Model.CustomerTypeFilter"
                                    asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-approvalFilter="@Model.ApprovalFilter"
                                    class="text-decoration-none text-dark">
                                     Full Name
                                     @if (Model.SortBy == "FullName")
@@ -157,6 +159,7 @@
                                    asp-route-searchString="@Model.SearchString"
                                    asp-route-customerTypeFilter="@Model.CustomerTypeFilter"
                                    asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-approvalFilter="@Model.ApprovalFilter"
                                    class="text-decoration-none text-dark">
                                     Business Name
                                     @if (Model.SortBy == "BusinessName")
@@ -176,6 +179,7 @@
                                    asp-route-searchString="@Model.SearchString"
                                    asp-route-customerTypeFilter="@Model.CustomerTypeFilter"
                                    asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-approvalFilter="@Model.ApprovalFilter"
                                    class="text-decoration-none text-dark">
                                     Customer Type
                                     @if (Model.SortBy == "CustomerType")
@@ -190,7 +194,6 @@
                             </th>
                             <th>Contact No</th>
                             <th>Status</th>
-                                
                             <th>Approval</th>
                             <th>Actions</th>
                         </tr>
@@ -228,8 +231,10 @@
                                             @if (!string.IsNullOrEmpty(customer.City))
                                             {
                                                 <br />
-                                                <small class="text-muted">@customer.City, @customer.Suburb, @customer.Email</small>
+                                                <small class="text-muted">@customer.City, @customer.Suburb</small>
                                             }
+                                            <br />
+                                            <small class="text-muted">@customer.Email</small>
                                         </div>
                                     </div>
                                 </td>
@@ -242,7 +247,7 @@
                                 <td>@customer.ContactNo</td>
                                 <td>
                                     <span class="badge @(customer.IsActive ? "bg-success" : "bg-danger")">
-                                        @customer.StatusDisplay
+                                        @GetStatusDisplay(customer.IsActive)
                                     </span>
                                 </td>
                                 <td>
@@ -250,7 +255,6 @@
                                         @customer.ApprovalStatus
                                     </span>
                                 </td>
-                                
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <a asp-action="CustomerDetails" asp-route-id="@customer.Id" class="btn btn-info" title="View Details">
@@ -264,7 +268,7 @@
                                             <form asp-action="DeactivateCustomer" asp-route-id="@customer.Id" method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit" class="btn btn-danger" title="Deactivate"
-                                                        onclick="return confirm('Are you sure you want to deactivate @customer.FullName ...?')">
+                                                        onclick="return confirm('Are you sure you want to deactivate @customer.FullName?')">
                                                     <i class="fas fa-user-slash"></i>
                                                 </button>
                                             </form>
@@ -274,14 +278,13 @@
                                             <form asp-action="ActivateCustomer" asp-route-id="@customer.Id" method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit" class="btn btn-success" title="Activate"
-                                                        onclick="return confirm('Are you sure you want to activate @customer.FullName ...?')">
-                                                    <i class="fas fa-undo m-1"></i>
+                                                        onclick="return confirm('Are you sure you want to activate @customer.FullName?')">
+                                                    <i class="fas fa-user-check"></i>
                                                 </button>
                                             </form>
                                         }
                                     </div>
                                 </td>
-                                
                             </tr>
                         }
                     </tbody>
@@ -302,7 +305,8 @@
                                asp-route-sortOrder="@Model.SortOrder"
                                asp-route-searchString="@Model.SearchString"
                                asp-route-customerTypeFilter="@Model.CustomerTypeFilter"
-                               asp-route-statusFilter="@Model.StatusFilter">
+                               asp-route-statusFilter="@Model.StatusFilter"
+                               asp-route-approvalFilter="@Model.ApprovalFilter">
                                 Previous
                             </a>
                         </li>
@@ -318,7 +322,8 @@
                                    asp-route-sortOrder="@Model.SortOrder"
                                    asp-route-searchString="@Model.SearchString"
                                    asp-route-customerTypeFilter="@Model.CustomerTypeFilter"
-                                   asp-route-statusFilter="@Model.StatusFilter">
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-approvalFilter="@Model.ApprovalFilter">
                                     @i
                                 </a>
                             </li>
@@ -333,7 +338,8 @@
                                asp-route-sortOrder="@Model.SortOrder"
                                asp-route-searchString="@Model.SearchString"
                                asp-route-customerTypeFilter="@Model.CustomerTypeFilter"
-                               asp-route-statusFilter="@Model.StatusFilter">
+                               asp-route-statusFilter="@Model.StatusFilter"
+                               asp-route-approvalFilter="@Model.ApprovalFilter">
                                 Next
                             </a>
                         </li>
@@ -361,7 +367,8 @@
                                asp-route-sortOrder="@Model.SortOrder"
                                asp-route-searchString="@Model.SearchString"
                                asp-route-customerTypeFilter="@Model.CustomerTypeFilter"
-                               asp-route-statusFilter="@Model.StatusFilter">
+                               asp-route-statusFilter="@Model.StatusFilter"
+                               asp-route-approvalFilter="@Model.ApprovalFilter">
                                 @size
                             </a>
                         }
@@ -372,10 +379,7 @@
     </div>
 </div>
 
-
 @section Scripts {
-    
-
     <style>
         .avatar-circle {
             font-weight: bold;

@@ -22,7 +22,7 @@ namespace FridgeManagementSystem.Models
         public string CustomerType { get; set; } 
 
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public string CreatedByFullName { get; set; } 
         public string? CreatedById { get; set; }

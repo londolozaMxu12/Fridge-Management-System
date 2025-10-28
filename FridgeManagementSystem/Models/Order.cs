@@ -11,9 +11,10 @@ namespace FridgeManagementSystem.Models
         public int Id { get; set; }
 
         [Required]
-        [ForeignKey("Customer")]
-        public string CustomerId { get; set; } = "";
-        public ApplicationUser Customer { get; set; } = null!;
+        public string CustomerId { get; set; } = string.Empty;
+
+        [ForeignKey("CustomerId")]
+        public Customer Customer { get; set; } = null!;
 
         public List<OrderItem> Items { get; set; } = new List<OrderItem>();
 

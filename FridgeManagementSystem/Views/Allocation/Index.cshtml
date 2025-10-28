@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Order>
+﻿@model IEnumerable<FridgeManagementSystem.Models.Order>
 @{
     ViewData["Title"] = "Orders Needing Allocation";
     Layout = "_CustomerLiaisonLayout";
@@ -20,6 +20,7 @@ else
                 <tr>
                     <th>Order ID</th>
                     <th>Customer</th>
+                    <th>Business</th>
                     <th>Items</th>
                     <th>Order Date</th>
                     <th>Delivery Address</th>
@@ -35,18 +36,44 @@ else
                     .Where(name => !string.IsNullOrEmpty(name))
                     .ToList() ?? new List<string>();
 
+                    // Get customer details safely
+                    var customerName = order.Customer?.User?.FullName ?? "N/A";
+                    var businessName = order.Customer?.BusinessName ?? "N/A";
+
                     <tr>
                         <td><strong>#@order.Id</strong></td>
-                        <td>@order.Customer?.FullName</td>
                         <td>
-                            @totalItems item(s)<br>
+                            @customerName
+                            @if (order.Customer?.User?.Email != null)
+                            {
+                                <br />
+                                <small class="text-muted">@order.Customer.User.Email</small>
+                            }
+                        </td>
+                        <td>
+                            @businessName
+                            @if (order.Customer?.CustomerType != null)
+                            {
+                                <br />
+                                <small class="text-muted">@order.Customer.CustomerType</small>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">@totalItems item(s)</span><br>
                             <small class="text-muted">@string.Join(", ", itemNames.Distinct())</small>
                         </td>
-                        <td>@order.CreatedAt.ToString("dd/MM/yyyy")</td>
-                        <td>@order.DeliveryAddress</td>
+                        <td>@order.CreatedAt.ToString("MM/dd/yyyy")</td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 200px;" title="@order.DeliveryAddress">
+                                @order.DeliveryAddress
+                            </div>
+                        </td>
                         <td>
                             <a class="btn btn-primary btn-sm" asp-action="Details" asp-route-orderId="@order.Id">
-                                <i class="bi bi-gear"></i> Allocate
+                                <i class="bi bi-gear me-1"></i> Allocate
+                            </a>
+                            <a class="btn btn-outline-secondary btn-sm mt-1" asp-controller="LiaisonOrders" asp-action="Details" asp-route-id="@order.Id">
+                                <i class="bi bi-eye me-1"></i> View
                             </a>
                         </td>
                     </tr>
@@ -57,7 +84,19 @@ else
 }
 
 <div class="mt-3">
-    <a asp-action="History" class="btn btn-outline-secondary">
-        <i class="bi bi-clock-history"></i> View Allocation History
+    <a asp-action="History" class="btn btn-outline-secondary me-2">
+        <i class="bi bi-clock-history me-1"></i> View Allocation History
+    </a>
+    <a asp-controller="LiaisonOrders" asp-action="Index" class="btn btn-outline-primary">
+        <i class="bi bi-list-ul me-1"></i> Back to All Orders
     </a>
 </div>
+
+@section Scripts {
+    <script>
+        // Add tooltips for truncated addresses
+        $(document).ready(function() {
+            $('[title]').tooltip();
+        });
+    </script>
+}

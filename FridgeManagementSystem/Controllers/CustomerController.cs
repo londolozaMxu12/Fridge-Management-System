@@ -19,16 +19,17 @@ namespace FridgeManagementSystem.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly FridgeManagementSystemContext _context;
         private readonly ILogger<CustomerController> _logger;
-       
 
-        public CustomerController(RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context,ILogger<CustomerController> logger)
+        public CustomerController(
+            RoleManager<IdentityRole> roleManager,
+            UserManager<ApplicationUser> userManager,
+            FridgeManagementSystemContext context,
+            ILogger<CustomerController> logger)
         {
             _roleManager = roleManager;
             _userManager = userManager;
             _context = context;
             _logger = logger;
-            
         }
 
         private async Task<bool> CheckAndSetAccess()
@@ -44,55 +45,34 @@ namespace FridgeManagementSystem.Controllers
             return isAdmin || isCustomerLiaison || isCustomer;
         }
 
-        //public IActionResult index()
-        //{
-        //    return View();
-        //}
-
-        //public async Task<IActionResult> Home(string searchTerm = "", int fridgeTypeId = 0)
-        //{
-        //    if (!await CheckAndSetAccess())
-        //        return Forbid();
-
-        //    IEnumerable<Fridge> fridges = await _homeRepository.GetFridges(searchTerm, fridgeTypeId);
-        //    IEnumerable<FridgeType> fridgeTypes = await _homeRepository.FridgeTypes();
-        //    FridgeDisplayModel FridgeModel = new FridgeDisplayModel
-        //    {
-        //        Fridges = fridges,
-        //        FridgeTypes = fridgeTypes,
-        //        searchTerm = searchTerm,
-        //        FridgeTypeId = fridgeTypeId
-        //    };
-
-        //    return View(FridgeModel);
-
-            //}
-
         public async Task<IActionResult> MyFridges()
         {
             if (!await CheckAndSetAccess())
                 return Forbid();
+
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            // FIXED: Use f.CustomerId instead of f.Customer.Id since CustomerId is now a string
             var fridges = await _context.Fridges
-                //.Include(f => f.Location)
                 .Include(f => f.Supplier)
-                .Where(f => f.Customer.Id == userId && f.IsActive && f.Status == "Assigned")
+                .Include(f => f.Customer) // Include customer to access properties
+                .Where(f => f.CustomerId == userId && f.IsActive && f.Status == "Assigned")
                 .ToListAsync();
 
             return View(fridges);
         }
+
         // GET: Customer/MyProfile
         public async Task<IActionResult> MyProfile()
         {
             if (!await CheckAndSetAccess())
                 return Forbid();
+
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var customer = await _context.Customers
                 .Include(c => c.User)
-                //.Include(c => c.Location)
-                .FirstOrDefaultAsync(c => c.Id == userId);
+                .FirstOrDefaultAsync(c => c.Id == userId); // FIXED: Now comparing string to string
 
             if (customer == null)
             {
@@ -105,34 +85,33 @@ namespace FridgeManagementSystem.Controllers
         [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> GetCustomerStats()
         {
-    
-                var totalCustomers = await _context.Customers
-                    .Include(c => c.User)
-                    .Where(c => c.User.ApprovalStatus == "Approved")
-                    .CountAsync();
+            var totalCustomers = await _context.Customers
+                .Include(c => c.User)
+                .Where(c => c.User.ApprovalStatus == "Approved")
+                .CountAsync();
 
-                var activeCustomers = await _context.Customers
-                    .Include(c => c.User)
-                    .Where(c => c.IsActive && c.User.IsActive && c.User.ApprovalStatus == "Approved")
-                    .CountAsync();
+            var activeCustomers = await _context.Customers
+                .Include(c => c.User)
+                .Where(c => c.IsActive && c.User.IsActive && c.User.ApprovalStatus == "Approved")
+                .CountAsync();
 
-                var inactiveCustomers = await _context.Customers
-                    .Include(c => c.User)
-                    .Where(c => (!c.IsActive || !c.User.IsActive) && c.User.ApprovalStatus == "Approved")
-                    .CountAsync();
+            var inactiveCustomers = await _context.Customers
+                .Include(c => c.User)
+                .Where(c => (!c.IsActive || !c.User.IsActive) && c.User.ApprovalStatus == "Approved")
+                .CountAsync();
 
-                var pendingApprovals = await _userManager.Users
-                    .Where(u => u.ApprovalStatus == "Pending" && u.Customers != null)
-                    .CountAsync();
+            var pendingApprovals = await _userManager.Users
+                .Where(u => u.ApprovalStatus == "Pending" && u.Customers != null)
+                .CountAsync();
 
-                var customers = new
-                {
-                    totalCustomers,
-                    activeCustomers,
-                    inactiveCustomers,
-                    pendingApprovals
-                };
-                
+            var customers = new
+            {
+                totalCustomers,
+                activeCustomers,
+                inactiveCustomers,
+                pendingApprovals
+            };
+
             return Json(customers);
         }
 
@@ -140,14 +119,15 @@ namespace FridgeManagementSystem.Controllers
         {
             if (!await CheckAndSetAccess())
                 return Forbid();
-            //var user = userManager.Users.ToList();
-            var customer = await _userManager.GetUsersInRoleAsync("Customer");
+
+            var customers = await _userManager.GetUsersInRoleAsync("Customer");
             if (!String.IsNullOrEmpty(searchString))
             {
-                customer = customer.Where(n => n.FullName.Contains(searchString)
-                || n.Email.Contains(searchString)).ToList();
+                customers = customers.Where(n =>
+                    (n.FullName != null && n.FullName.Contains(searchString)) ||
+                    (n.Email != null && n.Email.Contains(searchString))).ToList();
             }
-            return View(customer);
+            return View(customers);
         }
 
         [Authorize(Policy = "CustomerLiaisonAccess")]
@@ -191,9 +171,9 @@ namespace FridgeManagementSystem.Controllers
                 {
                     query = query.Where(c =>
                         c.BusinessName.Contains(searchString) ||
-                        c.User.FullName.Contains(searchString) ||
-                        c.User.Email.Contains(searchString) ||
-                        c.User.ContactNo.Contains(searchString) ||
+                        (c.User.FullName != null && c.User.FullName.Contains(searchString)) ||
+                        (c.User.Email != null && c.User.Email.Contains(searchString)) ||
+                        (c.User.ContactNo != null && c.User.ContactNo.Contains(searchString)) ||
                         c.CustomerType.Contains(searchString));
                 }
 
@@ -244,8 +224,7 @@ namespace FridgeManagementSystem.Controllers
                 // Convert to ViewModels
                 var customerViewModels = customers.Select(c => new CustomerViewModel
                 {
-                    Id = c.userId,
-                    UserId = c.UserId,
+                    Id = c.Id,
                     FullName = c.User.FullName,
                     Email = c.User.Email,
                     ContactNo = c.User.ContactNo,
@@ -294,9 +273,10 @@ namespace FridgeManagementSystem.Controllers
                 return View(new CustomerManagementViewModel { Customers = new List<CustomerViewModel>() });
             }
         }
+
         // GET: Admin/CustomerDetails/5
         [Authorize(Policy = "CustomerLiaisonAccess")]
-        public async Task<IActionResult> CustomerDetails(int id)
+        public async Task<IActionResult> CustomerDetails(string id)
         {
             // Set ViewBag for layout detection 
             var currentUser = await _userManager.GetUserAsync(User);
@@ -319,8 +299,8 @@ namespace FridgeManagementSystem.Controllers
                     .Include(c => c.ReportedFaults)
                     .Include(c => c.Quotations)
                     .Include(c => c.Allocations)
-                    .Include(c => c.Orders) 
-                        .ThenInclude(o => o.Items) 
+                    .Include(c => c.Orders)
+                        .ThenInclude(o => o.Items)
                     .FirstOrDefaultAsync(c => c.Id == id);
 
                 if (customer == null)
@@ -352,9 +332,10 @@ namespace FridgeManagementSystem.Controllers
                 return RedirectToAction(nameof(CustomerManagement));
             }
         }
+
         [Authorize(Policy = "CustomerLiaisonAccess")]
-        public async Task<IActionResult> EditCustomer(int id)
-{
+        public async Task<IActionResult> EditCustomer(string id)
+        {
             // Set ViewBag for layout detection
             var currentUser = await _userManager.GetUserAsync(User);
             var userWithDetails = await _context.Users
@@ -367,64 +348,63 @@ namespace FridgeManagementSystem.Controllers
             ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
 
             try
-    {
-        var customer = await _context.Customers
-            .Include(c => c.User)
-            .FirstOrDefaultAsync(c => c.Id == id);
+            {
+                var customer = await _context.Customers
+                    .Include(c => c.User)
+                    .FirstOrDefaultAsync(c => c.Id == id);
 
-        if (customer == null)
-        {
-            TempData["Error"] = "Customer not found.";
-            return RedirectToAction(nameof(CustomerManagement));
+                if (customer == null)
+                {
+                    TempData["Error"] = "Customer not found.";
+                    return RedirectToAction(nameof(CustomerManagement));
+                }
+
+                var model = new EditCustomerViewModel
+                {
+                    Id = customer.Id,
+                    FullName = customer.User.FullName,
+                    Email = customer.User.Email,
+                    ContactNo = customer.User.ContactNo,
+                    Address = customer.User.Address,
+                    City = customer.User.City,
+                    Suburb = customer.User.Suburb,
+                    PostalCode = customer.User.PostalCode,
+                    BusinessName = customer.BusinessName,
+                    CustomerType = customer.CustomerType,
+                    IsActive = customer.IsActive && customer.User.IsActive,
+                    ApprovalStatus = customer.User.ApprovalStatus
+                };
+
+                ViewBag.CustomerTypes = new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "SpazaShop", Text = "Spaza Shop" },
+                    new SelectListItem { Value = "Liquor", Text = "Liquor" },
+                    new SelectListItem { Value = "Other", Text = "Other" }
+                };
+
+                ViewBag.ApprovalStatuses = new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "Pending", Text = "Pending" },
+                    new SelectListItem { Value = "Approved", Text = "Approved" },
+                    new SelectListItem { Value = "Rejected", Text = "Rejected" }
+                };
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading customer for edit. CustomerId: {CustomerId}", id);
+                TempData["Error"] = "An error occurred while loading the customer for editing.";
+                return RedirectToAction(nameof(CustomerManagement));
+            }
         }
 
-        var model = new EditCustomerViewModel
-        {
-            Id = customer.Id,
-            UserId = customer.UserId,
-            FullName = customer.User.FullName,
-            Email = customer.User.Email,
-            ContactNo = customer.User.ContactNo,
-            Address = customer.User.Address,
-            City = customer.User.City,
-            Suburb = customer.User.Suburb,
-            PostalCode = customer.User.PostalCode,
-            BusinessName = customer.BusinessName,
-            CustomerType = customer.CustomerType,
-            IsActive = customer.IsActive && customer.User.IsActive,
-            ApprovalStatus = customer.User.ApprovalStatus
-        };
-
-        ViewBag.CustomerTypes = new List<SelectListItem>
-        {
-            new SelectListItem { Value = "SpazaShop", Text = "Spaza Shop" },
-            new SelectListItem { Value = "Liquor", Text = "Liquor" },
-            new SelectListItem { Value = "Other", Text = "Other" }
-        };
-
-        ViewBag.ApprovalStatuses = new List<SelectListItem>
-        {
-            new SelectListItem { Value = "Pending", Text = "Pending" },
-            new SelectListItem { Value = "Approved", Text = "Approved" },
-            new SelectListItem { Value = "Rejected", Text = "Rejected" }
-        };
-
-        return View(model);
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error loading customer for edit. CustomerId: {CustomerId}", id);
-        TempData["Error"] = "An error occurred while loading the customer for editing.";
-        return RedirectToAction(nameof(CustomerManagement));
-    }
-}
-
-// POST: Admin/EditCustomer/5
-[HttpPost]
-[ValidateAntiForgeryToken]
+        // POST: Admin/EditCustomer/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         [Authorize(Policy = "CustomerLiaisonAccess")]
-        public async Task<IActionResult> EditCustomer(int id, EditCustomerViewModel model)
-{
+        public async Task<IActionResult> EditCustomer(string id, EditCustomerViewModel model)
+        {
             // Set ViewBag for layout detection
             var currentUser = await _userManager.GetUserAsync(User);
             var userWithDetails = await _context.Users
@@ -437,85 +417,85 @@ namespace FridgeManagementSystem.Controllers
             ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
 
             if (id != model.Id)
-    {
-        TempData["Error"] = "Invalid customer ID.";
-        return RedirectToAction(nameof(CustomerManagement));
-    }
-
-    if (ModelState.IsValid)
-    {
-        try
-        {
-            var customer = await _context.Customers
-                .Include(c => c.User)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (customer == null)
             {
-                TempData["Error"] = "Customer not found.";
+                TempData["Error"] = "Invalid customer ID.";
                 return RedirectToAction(nameof(CustomerManagement));
             }
 
-            // Update ApplicationUser properties
-            customer.User.FullName = model.FullName;
-            customer.User.Email = model.Email;
-            customer.User.ContactNo = model.ContactNo;
-            customer.User.Address = model.Address;
-            customer.User.City = model.City;
-            customer.User.Suburb = model.Suburb;
-            customer.User.PostalCode = model.PostalCode;
-            customer.User.ApprovalStatus = model.ApprovalStatus;
-
-            // Update Customer properties
-            customer.BusinessName = model.BusinessName;
-            customer.CustomerType = model.CustomerType;
-
-            // Update active status for both customer and user
-            customer.IsActive = model.IsActive;
-            customer.User.IsActive = model.IsActive;
-
-            // If approving the customer, set approved by and timestamp
-            if (model.ApprovalStatus == "Approved" && customer.User.ApprovalStatus != "Approved")
+            if (ModelState.IsValid)
             {
-                customer.User.ApprovedById = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                customer.User.ApprovedAt = DateTime.UtcNow;
+                try
+                {
+                    var customer = await _context.Customers
+                        .Include(c => c.User)
+                        .FirstOrDefaultAsync(c => c.Id == id);
+
+                    if (customer == null)
+                    {
+                        TempData["Error"] = "Customer not found.";
+                        return RedirectToAction(nameof(CustomerManagement));
+                    }
+
+                    // Update ApplicationUser properties
+                    customer.User.FullName = model.FullName;
+                    customer.User.Email = model.Email;
+                    customer.User.ContactNo = model.ContactNo;
+                    customer.User.Address = model.Address;
+                    customer.User.City = model.City;
+                    customer.User.Suburb = model.Suburb;
+                    customer.User.PostalCode = model.PostalCode;
+                    customer.User.ApprovalStatus = model.ApprovalStatus;
+
+                    // Update Customer properties
+                    customer.BusinessName = model.BusinessName;
+                    customer.CustomerType = model.CustomerType;
+
+                    // Update active status for both customer and user
+                    customer.IsActive = model.IsActive;
+                    customer.User.IsActive = model.IsActive;
+
+                    // If approving the customer, set approved by and timestamp
+                    if (model.ApprovalStatus == "Approved" && customer.User.ApprovalStatus != "Approved")
+                    {
+                        customer.User.ApprovedById = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                        customer.User.ApprovedAt = DateTime.UtcNow;
+                    }
+
+                    _context.Customers.Update(customer);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = "Customer updated successfully!";
+                    return RedirectToAction(nameof(CustomerManagement));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error updating customer. CustomerId: {CustomerId}", id);
+                    TempData["Error"] = "An error occurred while updating the customer.";
+                }
             }
 
-            _context.Customers.Update(customer);
-            await _context.SaveChangesAsync();
+            // If we got this far, something failed; redisplay form
+            ViewBag.CustomerTypes = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "SpazaShop", Text = "Spaza Shop" },
+                new SelectListItem { Value = "Liquor", Text = "Liquor" },
+                new SelectListItem { Value = "Other", Text = "Other" }
+            };
 
-            TempData["SuccessMessage"] = "Customer updated successfully!";
-            return RedirectToAction(nameof(CustomerManagement));
+            ViewBag.ApprovalStatuses = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "Pending", Text = "Pending" },
+                new SelectListItem { Value = "Approved", Text = "Approved" },
+                new SelectListItem { Value = "Rejected", Text = "Rejected" }
+            };
+
+            return View(model);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating customer. CustomerId: {CustomerId}", id);
-            TempData["Error"] = "An error occurred while updating the customer.";
-        }
-    }
-
-    // If we got this far, something failed; redisplay form
-    ViewBag.CustomerTypes = new List<SelectListItem>
-    {
-        new SelectListItem { Value = "SpazaShop", Text = "Spaza Shop" },
-        new SelectListItem { Value = "Liquor", Text = "Liquor" },
-        new SelectListItem { Value = "Other", Text = "Other" }
-    };
-
-    ViewBag.ApprovalStatuses = new List<SelectListItem>
-    {
-        new SelectListItem { Value = "Pending", Text = "Pending" },
-        new SelectListItem { Value = "Approved", Text = "Approved" },
-        new SelectListItem { Value = "Rejected", Text = "Rejected" }
-    };
-
-    return View(model);
-}
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "CustomerLiaisonAccess")]
-        public async Task<IActionResult> DeactivateCustomer(int id)
+        public async Task<IActionResult> DeactivateCustomer(string id)
         {
             // Set ViewBag for layout detection
             var currentUser = await _userManager.GetUserAsync(User);
@@ -561,7 +541,7 @@ namespace FridgeManagementSystem.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "CustomerLiaisonAccess")]
-        public async Task<IActionResult> ActivateCustomer(int id)
+        public async Task<IActionResult> ActivateCustomer(string id)
         {
             // Set ViewBag for layout detection
             var currentUser = await _userManager.GetUserAsync(User);
@@ -606,7 +586,7 @@ namespace FridgeManagementSystem.Controllers
         // GET: Customer/ActiveCustomers
         [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> ActiveCustomers(int pageNumber = 1, int pageSize = 10, string sortBy = "FullName",
-    string sortOrder = "asc", string searchString = "", string customerTypeFilter = "")
+            string sortOrder = "asc", string searchString = "", string customerTypeFilter = "")
         {
             // Set ViewBag for layout detection
             var currentUser = await _userManager.GetUserAsync(User);
@@ -642,76 +622,10 @@ namespace FridgeManagementSystem.Controllers
             return await CustomerManagement(pageNumber, pageSize, sortBy, sortOrder, searchString,
                 customerTypeFilter, "inactive", approvalFilter);
         }
+
         public IActionResult AllocatedFridge()
         {
             return View();
         }
-
-
-        //public async Task<IActionResult> ListUsers()
-        //{
-        //    var users = userManager.Users.ToList();
-        //    var userRoles = new List<object>();
-        //    foreach (var user in users)
-        //    {
-        //        var roles = await userManager.GetRolesAsync(user);
-        //        userRoles.Add(new
-        //        {
-        //            user.UserName,
-        //            user.Email,
-        //            Roles = roles
-        //        });
-        //    }
-
-        //    return Json(userRoles);
-        //public CustomerController(FridgeManagementSystemContext db) { _db = db; }
-
-        //public async Task<IActionResult> Index() => View(await _db.Customers.Include(c => c.Allocations).ToListAsync());
-        ////public IActionResult Index()
-        ////{
-        ////    return View();
-        ////}
-        //public IActionResult Create() => View();
-
-        //[HttpPost]
-        //public async Task<IActionResult> Create(Customer customer)
-        //{
-        //    if (!ModelState.IsValid) return View(customer);
-        //    _db.Add(customer);
-        //    await _db.SaveChangesAsync();
-        //    return RedirectToAction(nameof(Index));
-        //}
-        //public async Task<IActionResult> Edit(int id)
-        //{
-        //    var customer = await _db.Customers.FindAsync(id);
-        //    if (customer == null) return NotFound();
-        //    return View(customer);
-        //}
-
-        //[HttpPost]
-        //public async Task<IActionResult> Edit(Customer customer)
-        //{
-        //    if (!ModelState.IsValid) return View(customer);
-        //    _db.Update(customer);
-        //    await _db.SaveChangesAsync();
-        //    return RedirectToAction(nameof(Index));
-        //}
-        //public async Task<IActionResult> Delete(int id)
-        //{
-        //    var customer = await _db.Customers.FindAsync(id);
-        //    if (customer == null) return NotFound();
-        //    _db.Customers.Remove(customer);
-        //    await _db.SaveChangesAsync();
-        //    return RedirectToAction(nameof(Index));
-        //}
-        //public async Task<IActionResult> Details(int id)
-        //{
-        //    var customer = await _db.Customers
-        //        .Include(c => c.Allocations)
-        //        .ThenInclude(a => a.Fridge)
-        //        .FirstOrDefaultAsync(c => c.CustomerId == id);
-        //    if (customer == null) return NotFound();
-        //    return View(customer);
-        //}
     }
 }

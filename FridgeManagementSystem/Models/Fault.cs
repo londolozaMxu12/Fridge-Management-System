@@ -61,7 +61,7 @@ namespace FridgeManagementSystem.Models
 
         [Required]
         [Display(Name = "Reported By")]
-        public int ReportedById { get; set; }
+        public string ReportedById { get; set; }
         public Customer ReportedBy { get; set; }
 
         public int? FridgeId { get; set; }

@@ -1,8 +1,12 @@
-﻿@model Order
+﻿@model FridgeManagementSystem.Models.Order
 @{
     ViewData["Title"] = "Allocate Fridge to Order";
     Layout = "_CustomerLiaisonLayout";
     var reservedFridges = ViewBag.ReservedFridges as List<Fridge> ?? new List<Fridge>();
+
+    // Get customer details safely
+    var customerName = Model.Customer?.User?.FullName ?? "N/A";
+    var customerEmail = Model.Customer?.User?.Email ?? "N/A";
 }
 
 <h3 class="text-center mb-4">Allocate Fridge to Order #@Model.Id</h3>
@@ -14,24 +18,84 @@
                 <h5 class="mb-0">Order Details</h5>
             </div>
             <div class="card-body">
-                <p><strong>Customer:</strong> @Model.Customer?.FullName</p>
-                <p><strong>Delivery Address:</strong> @Model.DeliveryAddress</p>
-                <p><strong>Order Date:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy")</p>
-                <p><strong>Status:</strong> <span class="badge bg-warning">@Model.OrderStatus</span></p>
+                <div class="mb-3">
+                    <strong>Customer:</strong>
+                    <div>@customerName</div>
+                    @if (!string.IsNullOrEmpty(customerEmail) && customerEmail != "N/A")
+                    {
+                        <small class="text-muted">@customerEmail</small>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <strong>Business:</strong>
+                    <div>@(Model.Customer?.BusinessName ?? "N/A")</div>
+                    @if (!string.IsNullOrEmpty(Model.Customer?.CustomerType))
+                    {
+                        <small class="text-muted">@Model.Customer.CustomerType</small>
+                    }
+                </div>
+
+                <p class="mb-3"><strong>Delivery Address:</strong> @Model.DeliveryAddress</p>
+                <p class="mb-3"><strong>Order Date:</strong> @Model.CreatedAt.ToString("MM/dd/yyyy")</p>
+                <p class="mb-3">
+                    <strong>Status:</strong>
+                    <span class="badge bg-warning">@Model.OrderStatus</span>
+                </p>
 
                 <h6>Ordered Items:</h6>
-                <ul>
-                    @foreach (var item in Model.Items)
-                    {
-                        <li>
-                            @item.Fridge?.FridgeType?.Name -
-                            @item.Fridge?.FridgeType?.Brand @item.Fridge?.FridgeType?.Model
-                            <span class="badge bg-@(item.Fridge?.Status == "Reserved" ? "warning" : "secondary")">
-                                @item.Fridge?.Status
-                            </span>
-                        </li>
-                    }
-                </ul>
+                @if (Model.Items != null && Model.Items.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Details</th>
+                                    <th>Qty</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@item.Fridge?.FridgeType?.Name</strong>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                @item.Fridge?.FridgeType?.Brand @item.Fridge?.FridgeType?.Model
+                                                @if (!string.IsNullOrEmpty(item.Fridge?.SerialNumber))
+                                                {
+                                                    <br />
+                                                    <strong>Serial:</strong>
+ 
+                                                    @item.Fridge.SerialNumber
+                                                }
+                                            </small>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary">@item.Quantity</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@(item.Fridge?.Status?.ToLower() == "reserved" ? "warning" : "secondary")">
+                                                @item.Fridge?.Status
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        No items found in this order.
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -47,21 +111,34 @@
                     @foreach (var fridge in reservedFridges)
                     {
                         <div class="border rounded p-3 mb-3">
-                            <h6>@fridge.FridgeType?.Name</h6>
-                            <p class="mb-1"><strong>Serial:</strong> @fridge.SerialNumber</p>
-                            <p class="mb-1"><strong>Brand:</strong> @fridge.FridgeType?.Brand</p>
-                            <p class="mb-1"><strong>Model:</strong> @fridge.FridgeType?.Model</p>
-                            <p class="mb-2">
-                                <strong>Status:</strong>
-                                <span class="badge bg-warning">@fridge.Status</span>
-                                
-                            </p>
+                            <div class="row">
+                                <div class="col-8">
+                                    <h6 class="mb-2">@fridge.FridgeType?.Name</h6>
+                                    <p class="mb-1"><strong>Serial:</strong> @fridge.SerialNumber</p>
+                                    <p class="mb-1"><strong>Brand:</strong> @fridge.FridgeType?.Brand</p>
+                                    <p class="mb-1"><strong>Model:</strong> @fridge.FridgeType?.Model</p>
+                                    <p class="mb-2">
+                                        <strong>Status:</strong>
+                                        <span class="badge bg-warning">@fridge.Status</span>
+                                    </p>
+                                </div>
+                                <div class="col-4 text-end">
+                                    @if (!string.IsNullOrEmpty(fridge.ImageFileName))
+                                    {
+                                        <img src="@Url.Content($"~/Images/Fridges/{fridge.ImageFileName}")"
+                                             alt="@fridge.FridgeType?.Name"
+                                             class="img-thumbnail mb-2"
+                                             style="max-height: 80px;"
+                                             onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'">
+                                    }
+                                </div>
+                            </div>
 
-                            <form method="post" asp-action="Allocate">
+                            <form method="post" asp-action="Allocate" class="mt-2">
                                 <input type="hidden" name="orderId" value="@Model.Id" />
                                 <input type="hidden" name="fridgeId" value="@fridge.FridgeId" />
-                                <button type="submit" class="btn btn-success btn-sm">
-                                    <i class="bi bi-check-lg"></i> Allocate This Fridge
+                                <button type="submit" class="btn btn-success btn-sm w-100">
+                                    <i class="bi bi-check-lg me-1"></i> Allocate This Fridge
                                 </button>
                             </form>
                         </div>
@@ -70,15 +147,69 @@
                 else
                 {
                     <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle"></i>
+                        <i class="bi bi-exclamation-triangle me-2"></i>
                         No reserved fridges found for this order. The fridges may have been already allocated or are not reserved.
                     </div>
+
+                    <div class="text-center">
+                        <a asp-controller="LiaisonOrders" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i> Back to Order Details
+                        </a>
+                    </div>
                 }
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="card mt-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">Order Summary</h6>
+            </div>
+            <div class="card-body">
+                @{
+                    var subtotal = Model.Items?.Sum(i => i.Quantity * i.UnitPrice) ?? 0;
+                    var totalAmount = subtotal + Model.ShippingFee;
+                }
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Subtotal:</span>
+                    <span>R @subtotal.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Shipping:</span>
+                    <span>R @Model.ShippingFee.ToString("N2")</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between fw-bold">
+                    <span>Total:</span>
+                    <span class="text-primary">R @totalAmount.ToString("N2")</span>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <div class="mt-3">
-    <a asp-action="Index" class="btn btn-secondary">Back to Allocation List</a>
+    <a asp-action="Index" class="btn btn-secondary me-2">
+        <i class="bi bi-arrow-left me-1"></i> Back to Allocation List
+    </a>
+    <a asp-controller="LiaisonOrders" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+        <i class="bi bi-eye me-1"></i> View Full Order Details
+    </a>
 </div>
+
+@section Scripts {
+    <script>
+        // Add confirmation for allocation
+        document.addEventListener('DOMContentLoaded', function() {
+            const allocateForms = document.querySelectorAll('form[asp-action="Allocate"]');
+
+            allocateForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    if (!confirm('Are you sure you want to allocate this fridge to the order? This action cannot be undone.')) {
+                        e.preventDefault();
+                    }
+                });
+            });
+        });
+    </script>
+}

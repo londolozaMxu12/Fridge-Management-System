@@ -1,113 +1,302 @@
-﻿@{
+﻿@model IEnumerable<FridgeManagementSystem.Models.Order>
+@{
     ViewData["Title"] = "Orders Management";
     Layout = "_CustomerLiaisonLayout";
 }
 
 <h3 class="text-center mb-4">List of Orders</h3>
 
-@if (ViewBag.Orders == null || !((IEnumerable<Order>)ViewBag.Orders).Any())
+<!-- Display success/error messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (Model == null || !Model.Any())
 {
     <div class="text-center py-5">
         <h4>No orders found</h4>
+        <p class="text-muted">There are currently no orders to display.</p>
     </div>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Customer</th>
-                <th>Units</th>
-                <th>Total</th>
-                <th>Payment Method</th>
-                <th>Payment Status</th>
-                <th>Order Status</th>
-                <th>Date</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            @foreach (Order order in ViewBag.Orders)
-            {
-                int count = 0;
-                decimal total = order.ShippingFee;
-                foreach (OrderItem item in order.Items)
-                {
-                    count += item.Quantity;
-                    total += item.Quantity * item.UnitPrice;
-                }
-
-                string paymentBadgeColor = "bg-danger";
-                if (order.PaymentStatus == "pending")
-                {
-                    paymentBadgeColor = "bg-warning text-dark";
-                }
-                else if (order.PaymentStatus == "accepted")
-                {
-                    paymentBadgeColor = "bg-success";
-                }
-                else if (order.PaymentStatus == "canceled")
-                {
-                    paymentBadgeColor = "bg-secondary";
-                }
-
-                string orderBadgeColor = "bg-danger";
-                if (order.OrderStatus == "Received")
-                {
-                    orderBadgeColor = "bg-warning text-dark";
-                }
-                else if (order.OrderStatus == "Accepted")
-                {
-                    orderBadgeColor = "bg-success";
-                }
-                else if (order.OrderStatus == "Canceled")
-                {
-                    orderBadgeColor = "bg-secondary";
-                }
-                else if (order.OrderStatus == "Shipped")
-                {
-                    orderBadgeColor = "bg-primary";
-                }
-                else if (order.OrderStatus == "Delivered")
-                {
-                    orderBadgeColor = "bg-success";
-                }
-                else if (order.OrderStatus == "Returned")
-                {
-                    orderBadgeColor = "bg-info text-dark";
-                }
-
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
                 <tr>
-                    <td>@order.Id</td>
-                    <td>@(order.Customer?.FullName ?? "N/A")</td>
-                    <td>@count</td>
-                    <td>R @(total)</td>
-                    <td>@order.PaymentMethod</td>
-                    <td><span class="badge rounded-pill @paymentBadgeColor">@order.PaymentStatus</span></td>
-                    <td><span class="badge rounded-pill @orderBadgeColor">@order.OrderStatus</span></td>
-                    <td>@order.CreatedAt.ToString("MM/dd/yyyy")</td>
-                    <td>
-                        <a class="btn btn-primary btn-sm" asp-controller="LiaisonOrders" asp-action="Details"
-                           asp-route-id="@order.Id">Details</a>
-                    </td>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Business</th>
+                    <th>Units</th>
+                    <th>Total</th>
+                    <th>Payment Method</th>
+                    <th>Payment Status</th>
+                    <th>Order Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
 
-    <nav>
-        <ul class="pagination">
-            @for (int i = 1; i <= ViewBag.TotalPages; i++)
-            {
-                string active = "";
-                if (i == ViewBag.PageIndex) active = "active";
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    // Calculate order totals
+                    int unitCount = 0;
+                    decimal orderTotal = order.ShippingFee;
 
-                <li class="page-item @active">
-                    <a class="page-link" asp-route-pageIndex=@i>@i</a>
-                </li>
-            }
-        </ul>
-    </nav>
+                    if (order.Items != null && order.Items.Any())
+                    {
+                        foreach (var item in order.Items)
+                        {
+                            unitCount += item.Quantity;
+                            orderTotal += item.Quantity * item.UnitPrice;
+                        }
+                    }
+
+                    // Payment status badge colors
+                    string paymentBadgeColor = "bg-secondary";
+                    if (order.PaymentStatus?.ToLower() == "pending")
+                    {
+                        paymentBadgeColor = "bg-warning text-dark";
+                    }
+                    else if (order.PaymentStatus?.ToLower() == "accepted" || order.PaymentStatus?.ToLower() == "completed")
+                    {
+                        paymentBadgeColor = "bg-success";
+                    }
+                    else if (order.PaymentStatus?.ToLower() == "failed" || order.PaymentStatus?.ToLower() == "canceled")
+                    {
+                        paymentBadgeColor = "bg-danger";
+                    }
+                    else if (order.PaymentStatus?.ToLower() == "refunded")
+                    {
+                        paymentBadgeColor = "bg-info text-dark";
+                    }
+
+                    // Order status badge colors
+                    string orderBadgeColor = "bg-secondary";
+                    switch (order.OrderStatus?.ToLower())
+                    {
+                        case "received":
+                            orderBadgeColor = "bg-warning text-dark";
+                            break;
+                        case "accepted":
+                            orderBadgeColor = "bg-primary";
+                            break;
+                        case "processing":
+                            orderBadgeColor = "bg-info";
+                            break;
+                        case "shipped":
+                            orderBadgeColor = "bg-info text-dark";
+                            break;
+                        case "delivered":
+                            orderBadgeColor = "bg-success";
+                            break;
+                        case "cancelled":
+                        case "canceled":
+                            orderBadgeColor = "bg-danger";
+                            break;
+                        case "returned":
+                            orderBadgeColor = "bg-dark";
+                            break;
+                    }
+
+                    <tr>
+                        <td>
+                            <strong>#@order.Id</strong>
+                        </td>
+                        <td>
+                            @if (order.Customer?.User != null)
+                            {
+                                <div>
+                                    <strong>@(order.Customer.User.FullName ?? "N/A")</strong>
+                                    <br />
+                                    <small class="text-muted">@(order.Customer.User.Email ?? "No email")</small>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Customer not found</span>
+                            }
+                        </td>
+                        <td>
+                            @if (order.Customer != null)
+                            {
+                                <span>@(order.Customer.BusinessName ?? "N/A")</span>
+                                <br />
+                                <small class="text-muted">@order.Customer.CustomerType</small>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">@unitCount units</span>
+                        </td>
+                        <td>
+                            <strong>R @orderTotal.ToString("N2")</strong>
+                            <br />
+                            <small class="text-muted">Shipping: R @order.ShippingFee.ToString("N2")</small>
+                        </td>
+                        <td>
+                            @{
+                                var paymentMethod = order.PaymentMethod ?? "Unknown";
+                                var formattedPaymentMethod = paymentMethod.Replace("OnDelivery", " on Delivery").Replace("Cash", "Cash");
+                            }
+                            <span class="badge bg-light text-dark">@formattedPaymentMethod</span>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill @paymentBadgeColor">
+                                @order.PaymentStatus
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill @orderBadgeColor">
+                                @order.OrderStatus
+                            </span>
+                        </td>
+                        <td>
+                            @order.CreatedAt.ToString("MM/dd/yyyy")
+                            <br />
+                            <small class="text-muted">@order.CreatedAt.ToString("HH:mm")</small>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a class="btn btn-primary btn-sm" asp-controller="LiaisonOrders" asp-action="Details"
+                                   asp-route-id="@order.Id" title="View Details">
+                                    <i class="fas fa-eye"></i> Details
+                                </a>
+                                @if (order.OrderStatus?.ToLower() != "cancelled" && order.OrderStatus?.ToLower() != "canceled" && order.OrderStatus?.ToLower() != "delivered")
+                                {
+                                    <a class="btn btn-outline-secondary btn-sm" asp-controller="LiaisonOrders" asp-action="Edit"
+                                       asp-route-id="@order.Id" title="Edit Order">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (ViewBag.TotalPages > 1)
+    {
+        <nav aria-label="Order pagination">
+            <ul class="pagination justify-content-center">
+                <!-- Previous page -->
+                @if (ViewBag.PageIndex > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-route-pageIndex="@(ViewBag.PageIndex - 1)" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                }
+                else
+                {
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&laquo;</span>
+                    </li>
+                }
+
+                <!-- Page numbers -->
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    string active = i == ViewBag.PageIndex ? "active" : "";
+                    <li class="page-item @active">
+                        <a class="page-link" asp-route-pageIndex="@i">@i</a>
+                    </li>
+                }
+
+                <!-- Next page -->
+                @if (ViewBag.PageIndex < ViewBag.TotalPages)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-route-pageIndex="@(ViewBag.PageIndex + 1)" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                }
+                else
+                {
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&raquo;</span>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+
+    <!-- Order statistics -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Order Summary</h6>
+                    <div class="row text-center">
+                        <div class="col">
+                            <h4>@ViewBag.TotalCount</h4>
+                            <small class="text-muted">Total Orders</small>
+                        </div>
+                        <div class="col">
+                            <h4>@Model.Count(o => o.OrderStatus?.ToLower() == "received")</h4>
+                            <small class="text-muted">Received</small>
+                        </div>
+                        <div class="col">
+                            <h4>@Model.Count(o => o.OrderStatus?.ToLower() == "accepted")</h4>
+                            <small class="text-muted">Accepted</small>
+                        </div>
+                        <div class="col">
+                            <h4>@Model.Count(o => o.OrderStatus?.ToLower() == "processing")</h4>
+                            <small class="text-muted">Processing</small>
+                        </div>
+                        <div class="col">
+                            <h4>@Model.Count(o => o.OrderStatus?.ToLower() == "shipped")</h4>
+                            <small class="text-muted">Shipped</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function () {
+            $('.alert').alert('close');
+        }, 3000);
+
+        // Add some interactive features
+        $(document).ready(function () {
+            // Add hover effects to table rows
+            $('table tbody tr').hover(
+                function () {
+                    $(this).addClass('table-active');
+                },
+                function () {
+                    $(this).removeClass('table-active');
+                }
+            );
+
+            // Tooltip initialization
+            $('[title]').tooltip();
+        });
+    </script>
 }

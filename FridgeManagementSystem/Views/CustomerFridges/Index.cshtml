@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Fridge>
+﻿@model IEnumerable<FridgeManagementSystem.Models.Fridge>
 @{
     ViewData["Title"] = "My Fridges";
     Layout = "_CustomerLayout";
@@ -6,7 +6,7 @@
 
 <div class="container-fluid text-light">
     <div class="text-center d-flex justify-content-between align-items-center mb-4">
-        <h3 class=" text-center text-light">
+        <h3 class="text-center text-light">
             <i class="bi bi-refrigerator me-2"></i>My Fridges
         </h3>
         <div class="badge bg-secondary fs-6">
@@ -37,7 +37,7 @@
                         <div class="card-header bg-light">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0 text-dark">@fridge.FridgeType?.Name</h5>
-
+                                <span class="badge bg-success">@fridge.Status</span>
                             </div>
                         </div>
 
@@ -65,12 +65,12 @@
                             <div class="mb-3">
                                 <div class="row small">
                                     <div class="col-6">
-                                        <strong>Brand:</strong><br>
-                                        @fridge.FridgeType?.Brand
+                                        <strong class="text-dark">Brand:</strong><br>
+                                        <span class="text-dark">@fridge.FridgeType?.Brand</span>
                                     </div>
                                     <div class="col-6">
-                                        <strong>Model:</strong><br>
-                                        @fridge.FridgeType?.Model
+                                        <strong class="text-dark">Model:</strong><br>
+                                        <span class="text-dark">@fridge.FridgeType?.Model</span>
                                     </div>
                                 </div>
                             </div>
@@ -78,15 +78,30 @@
                             <div class="mb-3">
                                 <div class="row small">
                                     <div class="col-6">
-                                        <strong>Serial No:</strong><br>
+                                        <strong class="text-dark">Serial No:</strong><br>
                                         <span class="text-dark">@fridge.SerialNumber</span>
                                     </div>
                                     <div class="col-6">
-                                        <strong>Allocated On:</strong><br>
-                                        <span class="text-dark">@fridge.AllocationDate?.ToString("dd/MM/yyyy")</span>
+                                        <strong class="text-dark">Allocated On:</strong><br>
+                                        <span class="text-dark">@fridge.AllocationDate?.ToString("MM/dd/yyyy")</span>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Next Service Information -->
+                            @if (fridge.NextServiceDate.HasValue)
+                            {
+                                var daysUntilService = (fridge.NextServiceDate.Value - DateTime.Now).Days;
+                                var alertClass = daysUntilService <= 7 ? "alert-warning" : "alert-info";
+
+                                <div class="alert @alertClass py-2 mb-3">
+                                    <small>
+                                        <i class="bi bi-tools me-1"></i>
+                                        <strong>Next Service:</strong> @fridge.NextServiceDate?.ToString("MM/dd/yyyy")<br>
+                                        <em>@daysUntilService days from now</em>
+                                    </small>
+                                </div>
+                            }
 
                             <!-- Status Information -->
                             @if (fridge.Status == "Allocated")
@@ -95,7 +110,17 @@
                                     <small>
                                         <i class="bi bi-check-circle me-1"></i>
                                         <strong>Ready for Use</strong><br>
-
+                                        Your fridge is allocated and ready to use
+                                    </small>
+                                </div>
+                            }
+                            else if (fridge.Status == "Maintenance")
+                            {
+                                <div class="alert alert-warning py-2 mb-3">
+                                    <small>
+                                        <i class="bi bi-tools me-1"></i>
+                                        <strong>Under Maintenance</strong><br>
+                                        Your fridge is currently being serviced
                                     </small>
                                 </div>
                             }
@@ -107,6 +132,20 @@
                                    class="btn btn-primary btn-sm">
                                     <i class="bi bi-info-circle me-1"></i>View Details
                                 </a>
+
+                                @if (fridge.Status == "Allocated")
+                                {
+                                    <div class="btn-group w-100" role="group">
+                                        <a asp-action="RequestMaintenance" asp-route-id="@fridge.FridgeId"
+                                           class="btn btn-outline-warning btn-sm">
+                                            <i class="bi bi-tools me-1"></i>Maintenance
+                                        </a>
+                                        <a asp-action="ReportFault" asp-route-id="@fridge.FridgeId"
+                                           class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Report Issue
+                                        </a>
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>
@@ -115,7 +154,7 @@
         </div>
 
         <!-- Allocation History Section -->
-        @if (ViewBag.AllocationHistory != null)
+        @if (ViewBag.AllocationHistory != null && ((IEnumerable<dynamic>)ViewBag.AllocationHistory).Any())
         {
             <div class="mt-5">
                 <h5 class="text-light mb-3">
@@ -135,15 +174,17 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var allocation in ViewBag.AllocationHistory)
+                                    @foreach (var allocation in (IEnumerable<Allocation>)ViewBag.AllocationHistory)
                                     {
                                         <tr>
-                                            <td>@allocation.Fridge.FridgeType.Name</td>
-                                            <td>@allocation.Fridge.SerialNumber</td>
-                                            <td>@allocation.AllocationDate.ToString("dd/MM/yyyy")</td>
-                                            <td>#@allocation.OrderId</td>
+                                            <td>@(allocation.Fridge?.FridgeType?.Name ?? "N/A")</td>
+                                            <td>@(allocation.Fridge?.SerialNumber ?? "N/A")</td>
+                                            <td>@allocation.AllocationDate.ToString("MM/dd/yyyy")</td>
+                                            <td>#@(allocation.OrderId?.ToString() ?? "N/A")</td>
                                             <td>
-                                                <span class="badge bg-success">Allocated</span>
+                                                <span class="badge bg-@(allocation.IsActive ? "success" : "secondary")">
+                                                    @(allocation.IsActive ? "Active" : "Inactive")
+                                                </span>
                                             </td>
                                         </tr>
                                     }
@@ -156,3 +197,70 @@
         }
     }
 </div>
+
+<!-- Quick Actions Section -->
+@if (Model.Any())
+{
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-tools" style="font-size: 2rem;"></i>
+                        <h5>Maintenance</h5>
+                        <p class="small">Schedule maintenance for your fridges</p>
+                        <a href="#" class="btn btn-light btn-sm">Learn More</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                        <h5>Report Issues</h5>
+                        <p class="small">Report any problems with your fridges</p>
+                        <a href="#" class="btn btn-dark btn-sm">Report Now</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-telephone" style="font-size: 2rem;"></i>
+                        <h5>Support</h5>
+                        <p class="small">24/7 customer support available</p>
+                        <a href="#" class="btn btn-light btn-sm">Contact Us</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add hover effects to cards
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                    this.style.transition = 'transform 0.3s ease';
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(alert => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 3000);
+        });
+    </script>
+}

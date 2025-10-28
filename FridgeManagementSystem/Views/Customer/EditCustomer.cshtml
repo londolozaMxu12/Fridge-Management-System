@@ -13,12 +13,25 @@
     }
 }
 
-
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-user-edit"></i> @ViewData["Title"]</h1>
+    <a asp-action="CustomerManagement" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to List
+    </a>
+</div>
 
 @if (TempData["Error"] != null)
 {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
@@ -30,37 +43,41 @@
         {
             <small class="text-warning">Customer Liaison Edit Mode</small>
         }
+        else
+        {
+            <small class="text-info">Administrator Edit Mode</small>
+        }
     </div>
     <div class="card-body">
         <form asp-action="EditCustomer" method="post">
+            @Html.AntiForgeryToken()
             <input type="hidden" asp-for="Id" />
-            <input type="hidden" asp-for="UserId" />
 
             <div class="row">
                 <div class="col-md-6">
                     <h5 class="border-bottom pb-2 mb-3">Personal Information</h5>
 
                     <div class="mb-3">
-                        <label asp-for="Id" class="form-label">Custoner #</label>
+                        <label asp-for="Id" class="form-label">Customer ID</label>
                         <input asp-for="Id" class="form-control" readonly />
-                        
+                        <small class="form-text text-muted">This is the unique identifier for the customer</small>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="FullName" class="form-label">Full Name *</label>
-                        <input asp-for="FullName" class="form-control" />
+                        <input asp-for="FullName" class="form-control" placeholder="Enter full name" />
                         <span asp-validation-for="FullName" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Email" class="form-label">Email *</label>
-                        <input asp-for="Email" class="form-control" />
+                        <input asp-for="Email" class="form-control" placeholder="Enter email address" />
                         <span asp-validation-for="Email" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="ContactNo" class="form-label">Contact Number</label>
-                        <input asp-for="ContactNo" class="form-control" />
+                        <input asp-for="ContactNo" class="form-control" placeholder="Enter contact number" />
                         <span asp-validation-for="ContactNo" class="text-danger"></span>
                     </div>
                 </div>
@@ -70,7 +87,7 @@
 
                     <div class="mb-3">
                         <label asp-for="BusinessName" class="form-label">Business Name *</label>
-                        <input asp-for="BusinessName" class="form-control" />
+                        <input asp-for="BusinessName" class="form-control" placeholder="Enter business name" />
                         <span asp-validation-for="BusinessName" class="text-danger"></span>
                     </div>
 
@@ -81,73 +98,122 @@
                         </select>
                         <span asp-validation-for="CustomerType" class="text-danger"></span>
                     </div>
+
+                    <div class="mb-3 form-check form-switch">
+                        <input asp-for="IsActive" class="form-check-input" style="transform: scale(1.5);" />
+                        <label asp-for="IsActive" class="form-check-label fw-bold">Active Customer</label>
+                        <span asp-validation-for="IsActive" class="text-danger"></span>
+                        <small class="form-text text-muted d-block">Toggle to activate or deactivate this customer account</small>
+                    </div>
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row mt-4">
                 <div class="col-md-6">
                     <h5 class="border-bottom pb-2 mb-3">Address Information</h5>
 
                     <div class="mb-3">
                         <label asp-for="Address" class="form-label">Address</label>
-                        <input asp-for="Address" class="form-control" />
+                        <input asp-for="Address" class="form-control" placeholder="Enter street address" />
                         <span asp-validation-for="Address" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="City" class="form-label">City</label>
-                        <input asp-for="City" class="form-control" />
+                        <input asp-for="City" class="form-control" placeholder="Enter city" />
                         <span asp-validation-for="City" class="text-danger"></span>
                     </div>
-                </div>
-
-                <div class="col-md-6">
-                    <h5 class="border-bottom pb-2 mb-3 mt-4 mt-md-0">Status Information</h5>
 
                     <div class="mb-3">
                         <label asp-for="Suburb" class="form-label">Suburb</label>
-                        <input asp-for="Suburb" class="form-control" />
+                        <input asp-for="Suburb" class="form-control" placeholder="Enter suburb" />
                         <span asp-validation-for="Suburb" class="text-danger"></span>
                     </div>
+                </div>
+
+                <div class="col-md-6">
+                    <h5 class="border-bottom pb-2 mb-3 mt-4 mt-md-0">Status & Additional Information</h5>
 
                     <div class="mb-3">
                         <label asp-for="PostalCode" class="form-label">Postal Code</label>
-                        <input asp-for="PostalCode" class="form-control" />
+                        <input asp-for="PostalCode" class="form-control" placeholder="Enter postal code" />
                         <span asp-validation-for="PostalCode" class="text-danger"></span>
                     </div>
-                </div>
-            </div>
 
-            <div class="row">
-                <div class="col-md-6">
                     <div class="mb-3">
                         <label asp-for="ApprovalStatus" class="form-label">Approval Status *</label>
                         <select asp-for="ApprovalStatus" asp-items="ViewBag.ApprovalStatuses" class="form-select">
                             <option value="">Select Approval Status</option>
                         </select>
                         <span asp-validation-for="ApprovalStatus" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            @if (Model.ApprovalStatus == "Approved")
+                            {
+                                <span class="text-success">Customer is approved and can access all features</span>
+                            }
+                            else if (Model.ApprovalStatus == "Pending")
+                            {
+                                <span class="text-warning">Customer is awaiting approval</span>
+                            }
+                            else if (Model.ApprovalStatus == "Rejected")
+                            {
+                                <span class="text-danger">Customer application was rejected</span>
+                            }
+                        </small>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3 form-check form-switch mt-4">
-                        <input asp-for="IsActive" class="form-check-input" style="transform: scale(1.5);" />
-                        <label asp-for="IsActive" class="form-check-label fw-bold">Active Customer</label>
-                        <span asp-validation-for="IsActive" class="text-danger"></span>
-                    </div>
+
+                    @if (Model.ApprovalStatus == "Approved")
+                    {
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>Approved Customer</strong> - This customer has been approved and can access the system.
+                        </div>
+                    }
+                    else if (Model.ApprovalStatus == "Pending")
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-clock"></i>
+                            <strong>Pending Approval</strong> - This customer is waiting for approval.
+                        </div>
+                    }
+                    else if (Model.ApprovalStatus == "Rejected")
+                    {
+                        <div class="alert alert-danger">
+                            <i class="fas fa-times-circle"></i>
+                            <strong>Rejected</strong> - This customer application was rejected.
+                        </div>
+                    }
                 </div>
             </div>
 
             <div class="row mt-4">
                 <div class="col-12">
-                    <button type="submit" class="btn btn-primary me-2">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                    <a asp-action="CustomerDetails" asp-route-id="@Model.Id" class="btn btn-info me-2">
-                        <i class="fas fa-eye"></i> View Details
-                    </a>
-                    <a asp-action="CustomerManagement" class="btn btn-secondary">
-                        <i class="fas fa-times"></i> Cancel
-                    </a>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                            <a asp-action="CustomerDetails" asp-route-id="@Model.Id" class="btn btn-info me-2">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                            <a asp-action="CustomerManagement" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+
+                        @if (!Model.IsActive)
+                        {
+                            <div class="text-end">
+                                <span class="badge bg-danger fs-6">Currently Inactive</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-end">
+                                <span class="badge bg-success fs-6">Currently Active</span>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </form>
@@ -158,4 +224,79 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        $(document).ready(function () {
+            // Add confirmation for status changes
+            $('form').submit(function (e) {
+                const currentActive = '@Model.IsActive' === 'True';
+                const newActive = $('#IsActive').is(':checked');
+                const currentApproval = '@Model.ApprovalStatus';
+                const newApproval = $('#ApprovalStatus').val();
+
+                // Check if approval status is changing to Approved
+                if (currentApproval !== 'Approved' && newApproval === 'Approved') {
+                    if (!confirm('Are you sure you want to approve this customer? This will grant them full system access.')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
+                // Check if customer is being deactivated
+                if (currentActive && !newActive) {
+                    if (!confirm('Are you sure you want to deactivate this customer? They will lose access to the system.')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
+                // Check if customer is being activated
+                if (!currentActive && newActive) {
+                    if (!confirm('Are you sure you want to activate this customer? They will regain system access.')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            // Real-time status indicator updates
+            $('#IsActive').change(function () {
+                const isActive = $(this).is(':checked');
+                $('.status-indicator').text(isActive ? 'Active' : 'Inactive')
+                    .removeClass(isActive ? 'bg-danger' : 'bg-success')
+                    .addClass(isActive ? 'bg-success' : 'bg-danger');
+            });
+
+            // Approval status visual feedback
+            $('#ApprovalStatus').change(function () {
+                const status = $(this).val();
+                let message = '';
+                let alertClass = '';
+
+                switch (status) {
+                    case 'Approved':
+                        message = 'Customer will be approved and gain full system access';
+                        alertClass = 'alert-success';
+                        break;
+                    case 'Pending':
+                        message = 'Customer will be set to pending approval';
+                        alertClass = 'alert-warning';
+                        break;
+                    case 'Rejected':
+                        message = 'Customer application will be rejected';
+                        alertClass = 'alert-danger';
+                        break;
+                }
+
+                // Show temporary feedback
+                if (message) {
+                    const feedback = $('<div class="alert ' + alertClass + ' alert-dismissible fade show mt-2"><i class="fas fa-info-circle"></i> ' + message + '</div>');
+                    $('#ApprovalStatus').after(feedback);
+                    setTimeout(() => feedback.alert('close'), 3000);
+                }
+            });
+        });
+    </script>
 }

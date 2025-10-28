@@ -36,19 +36,21 @@ namespace FridgeManagementSystem.Controllers
                 // Get customer's allocated fridges
                 var allocatedFridges = await _context.Fridges
                     .Include(f => f.FridgeType)
-                    .Include(f => f.Customer)
-                        .ThenInclude(c => c.User)
-                    .Where(f => f.Customer.Id == userId && f.Status == "Allocated")
+                    .Include(f => f.Customer)  // Include Customer
+                        .ThenInclude(c => c.User)  // Then include User for customer details
+                    .Where(f => f.CustomerId == userId && f.Status == "Allocated")  // Use CustomerId (string)
                     .OrderByDescending(f => f.AllocationDate)
                     .Take(4)
                     .ToListAsync();
 
-                // Also get fridges from allocations (for historical records)
+                // Also get fridges from allocations (for historical records) - FIXED: Use CustomerId
                 var allocationFridges = await _context.Allocations
                     .Include(a => a.Fridge)
                         .ThenInclude(f => f.FridgeType)
+                    .Include(a => a.Customer)  // Include Customer
+                        .ThenInclude(c => c.User)  // Then include User
                     .Include(a => a.Order)
-                    .Where(a => a.Customer.Id == userId)
+                    .Where(a => a.CustomerId == userId)  // Use CustomerId (string)
                     .OrderByDescending(a => a.AllocationDate)
                     .Take(6)
                     .ToListAsync();
@@ -73,13 +75,13 @@ namespace FridgeManagementSystem.Controllers
 
                 var fridge = await _context.Fridges
                     .Include(f => f.FridgeType)
-                    .Include(f => f.Customer)
-                        .ThenInclude(c => c.User)
+                    .Include(f => f.Customer)  // Include Customer
+                        .ThenInclude(c => c.User)  // Then include User for customer details
                     .Include(f => f.Allocations)
                         .ThenInclude(a => a.Order)
                     .Include(f => f.MaintenanceRecords)
                     .Include(f => f.ReportedFaults)
-                    .FirstOrDefaultAsync(f => f.FridgeId == id && f.Customer.Id == userId);
+                    .FirstOrDefaultAsync(f => f.FridgeId == id && f.CustomerId == userId);  // Use CustomerId (string)
 
                 if (fridge == null)
                 {
@@ -87,14 +89,6 @@ namespace FridgeManagementSystem.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Get maintenance schedule for this fridge
-                //var maintenanceSchedule = await _context.ScheduleMaintenances
-                //    .Include(s => s.MaintenanceRecord)
-                //    .Where(s => s.FridgeId == id && s.ScheduledDate >= DateTime.UtcNow)
-                //    .OrderBy(s => s.ScheduledDate)
-                //    .ToListAsync();
-
-                //ViewBag.MaintenanceSchedule = maintenanceSchedule;
                 return View(fridge);
             }
             catch (Exception ex)
@@ -105,5 +99,6 @@ namespace FridgeManagementSystem.Controllers
             }
         }
 
+        
     }
 }

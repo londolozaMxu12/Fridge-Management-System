@@ -4,8 +4,8 @@ namespace FridgeManagementSystem.ViewModels
 {
     public class EditCustomerViewModel
     {
-        public int Id { get; set; }
-        public string UserId { get; set; }
+        public string Id { get; set; }
+        //public string UserId { get; set; }
 
         [Required]
         [Display(Name = "Full Name")]

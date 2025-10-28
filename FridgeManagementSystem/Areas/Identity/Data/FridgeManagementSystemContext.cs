@@ -12,13 +12,14 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     public FridgeManagementSystemContext(DbContextOptions<FridgeManagementSystemContext> options)
         : base(options)
     {
-  
     }
-    public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+
+    // Remove duplicate - ApplicationUsers is already inherited from IdentityDbContext
+    // public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+
     public DbSet<IdentityRole> IdentityRoles { get; set; }
 
     // FOR BUSINESS TABLES
-    //public DbSet<ApplicationUser> Admin {  get; set; }
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Supplier> Suppliers { get; set; }
     public DbSet<Employee> Employees { get; set; }
@@ -28,7 +29,6 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     public DbSet<Fault> Faults { get; set; }
     public DbSet<FaultTechnician> FaultTechnicians { get; set; }
     public DbSet<RepairSchedule> RepairSchedules { get; set; }
-   
     public DbSet<FridgeRequest> FridgeRequests { get; set; }
     public DbSet<City> Cities { get; set; }
     public DbSet<CustomerData> CustomerDatas { get; set; }
@@ -40,9 +40,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     public DbSet<Province> Provinces { get; set; }
     public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
     public DbSet<PurchasingManager> PurchasingManagers { get; set; }
-    public DbSet<PurchasingOrderDetails> OrderDetails { get; set; }
     public DbSet<CartDetails> CartDetails { get; set; }
-    
     public DbSet<FridgeType> FridgeType { get; set; }
     public DbSet<OrderStatus> OrderStatus { get; set; }
     public DbSet<ShoppingCart> ShoppingCart { get; set; }
@@ -51,25 +49,22 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     public DbSet<Quotation> Quotations { get; set; }
     public DbSet<StockLevel> StockLevels { get; set; }
     public DbSet<Suburb> Suburbs { get; set; }
-    
     public DbSet<FaultReport> FaultReports { get; set; }
     public DbSet<Allocation> Allocations { get; set; }
     public DbSet<ScheduleMaintenance> ScheduleMaintenances { get; set; }
-
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderItem> OrderItems { get; set; }
-    
     public DbSet<CartItem> CartItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
-        // 1. Configure ApplicationUser relationships
+        // 1. Configure ApplicationUser relationships - FIXED
         builder.Entity<ApplicationUser>()
             .HasOne(u => u.Customers)
             .WithOne(c => c.User)
-            .HasForeignKey<Customer>(c => c.UserId)
+            .HasForeignKey<Customer>(c => c.Id)  // Use Id as FK since UserId was removed
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<ApplicationUser>()
@@ -90,12 +85,12 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(u => u.ApprovedById)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // 2. Configure Allocation relationships - ONLY ONCE
+        // 2. Configure Allocation relationships
         builder.Entity<Allocation>(entity =>
         {
             entity.HasKey(a => a.AllocationId);
 
-            // Customer relationship
+            // Customer relationship - UPDATED for string CustomerId
             entity.HasOne(a => a.Customer)
                 .WithMany(c => c.Allocations)
                 .HasForeignKey(a => a.CustomerId)
@@ -120,7 +115,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // 3. Configure Fridge relationships
+        // 3. Configure Fridge relationships - UPDATED for string CustomerId
         builder.Entity<Fridge>()
             .HasIndex(f => f.SerialNumber)
             .IsUnique();
@@ -129,10 +124,12 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .Property(f => f.Price)
             .HasPrecision(16, 2);
 
+        // UPDATED: CustomerId is now string? (nullable)
         builder.Entity<Fridge>()
             .HasOne(f => f.Customer)
             .WithMany(c => c.Fridges)
             .HasForeignKey(f => f.CustomerId)
+            .IsRequired(false)  // Make it optional since CustomerId is nullable
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<Fridge>()
@@ -153,16 +150,18 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(f => f.CreatedById)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // 4. Configure Order relationships
+        // 4. Configure Order relationships - UPDATED for string CustomerId
         builder.Entity<Order>()
             .Property(o => o.ShippingFee)
             .HasPrecision(16, 2);
 
+        // UPDATED: CustomerId is now string
         builder.Entity<Order>()
             .HasOne(o => o.Customer)
             .WithMany(u => u.Orders)
             .HasForeignKey(o => o.CustomerId)
             .OnDelete(DeleteBehavior.Restrict);
+
 
         builder.Entity<Order>()
             .HasOne(o => o.Fridge)
@@ -218,7 +217,10 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(e => e.CreatedById)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // 9. Configure Customer relationships
+        // 9. Configure Customer relationships - UPDATED
+        builder.Entity<Customer>()
+            .HasKey(c => c.Id);  // Explicitly set string Id as PK
+
         builder.Entity<Customer>()
             .HasOne(c => c.CreatedBy)
             .WithMany()
@@ -248,7 +250,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .Property(r => r.EstimatedHours)
             .HasPrecision(5, 2);
 
-        // 13. ScheduleMaintenance configuration
+        // 13. ScheduleMaintenance configuration - UPDATED for string CustomerId
         builder.Entity<ScheduleMaintenance>(entity =>
         {
             entity.HasKey(e => e.scheduleMaintenanceId);
@@ -260,13 +262,18 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
                 .WithMany(e => e.ScheduledMaintenances)
                 .HasForeignKey(e => e.MaintenanceTechnicianId)
                 .OnDelete(DeleteBehavior.NoAction);
-        });
-        builder.Entity<ScheduleMaintenance>()
-              .HasOne(s => s.Customer)
-              .WithMany(c => c.ScheduleMaintenances)
-              .HasForeignKey(s => s.CustomerId)
-              .OnDelete(DeleteBehavior.Cascade);
 
+            // UPDATED: Customer relationship with string CustomerId
+            entity.HasOne(e => e.Customer)
+                .WithMany(c => c.ScheduleMaintenances)
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ADDITIONAL: Configure string primary key for Customer
+        builder.Entity<Customer>()
+            .Property(c => c.Id)
+            .HasMaxLength(450); 
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -29,6 +29,11 @@
             _ => "bg-secondary"
         };
     }
+
+    string GetStatusDisplay(bool isActive)
+    {
+        return isActive ? "Active" : "Inactive";
+    }
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -81,7 +86,7 @@
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <button class="btn btn-outline-success w-100" onclick="exportActiveCustomers()">
+                        <button class="btn btn-outline-success w-100" onclick="alert('Export feature coming soon!')">
                             <i class="fas fa-download me-2"></i>Export List
                         </button>
                     </div>
@@ -128,10 +133,19 @@
                 </select>
             </div>
 
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-success me-2 w-100">
+            <div class="col-md-2">
+                <label for="SortOrder" class="form-label">Order</label>
+                <select class="form-select" id="SortOrder" name="sortOrder">
+                    <option value="asc" selected="@(Model.SortOrder == "asc")">Ascending</option>
+                    <option value="desc" selected="@(Model.SortOrder == "desc")">Descending</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-success me-2">
                     <i class="fas fa-search"></i> Search
                 </button>
+                <a asp-action="ActiveCustomers" class="btn btn-outline-secondary">Clear Filters</a>
             </div>
         </form>
     </div>
@@ -176,7 +190,24 @@
                                     }
                                 </a>
                             </th>
-                            <th>Business Name</th>
+                            <th>
+                                <a asp-action="ActiveCustomers"
+                                   asp-route-sortBy="BusinessName"
+                                   asp-route-sortOrder="@(Model.SortBy == "BusinessName" && Model.SortOrder == "asc" ? "desc" : "asc")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-customerTypeFilter="@Model.CustomerTypeFilter"
+                                   class="text-decoration-none text-dark">
+                                    Business Name
+                                    @if (Model.SortBy == "BusinessName")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down")"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-sort"></i>
+                                    }
+                                </a>
+                            </th>
                             <th>Customer Type</th>
                             <th>Contact Info</th>
                             <th>Status</th>
@@ -231,16 +262,20 @@
                                 </td>
                                 <td>
                                     <div>
-                                        <i class="fas fa-phone text-muted me-1"></i> @customer.ContactNo
+                                        <i class="fas fa-phone text-muted me-1"></i> @(customer.ContactNo ?? "N/A")
                                     </div>
                                     <small class="text-muted">Registered: @customer.CreatedAt.ToString("MMM dd, yyyy")</small>
                                 </td>
                                 <td>
                                     <span class="badge bg-success">
-                                        <i class="fas fa-check-circle me-1"></i> Active
+                                        <i class="fas fa-check-circle me-1"></i> @GetStatusDisplay(customer.IsActive)
                                     </span>
                                     <br />
-                                    <small class="text-muted">Approved: @customer.ApprovalStatus</small>
+                                    <small class="text-muted">
+                                        <span class="badge @(customer.ApprovalStatus == "Approved" ? "bg-success" : customer.ApprovalStatus == "Rejected" ? "bg-danger" : "bg-warning")">
+                                            @customer.ApprovalStatus
+                                        </span>
+                                    </small>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
@@ -347,24 +382,27 @@
 
 @section Scripts {
     <script>
-        function exportActiveCustomers() {
-            // Get current filter parameters
-            const params = new URLSearchParams({
-                searchString: '@Model.SearchString',
-                customerTypeFilter: '@Model.CustomerTypeFilter',
-                sortBy: '@Model.SortBy',
-                sortOrder: '@Model.SortOrder',
-                export: 'true'
-            });
-
-            window.location.href = '/Customer/ExportActiveCustomers?' + params.toString();
-        }
-
         // Auto-focus search input
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('SearchString');
             if (searchInput) {
                 searchInput.focus();
+            }
+        });
+
+        // Enhanced filter form handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const sortBySelect = document.getElementById('SortBy');
+            const sortOrderSelect = document.getElementById('SortOrder');
+
+            if (sortBySelect && sortOrderSelect) {
+                // Update sort order when sort by changes for better UX
+                sortBySelect.addEventListener('change', function() {
+                    // Keep current sort order unless it's a new selection
+                    if (this.value !== '@Model.SortBy') {
+                        sortOrderSelect.value = 'asc';
+                    }
+                });
             }
         });
     </script>
@@ -391,5 +429,9 @@
             .quick-stat-card:hover {
                 transform: translateY(-2px);
             }
+
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+        }
     </style>
 }
