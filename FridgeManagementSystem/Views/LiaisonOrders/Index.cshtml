@@ -161,17 +161,7 @@ else
                                    asp-route-id="@order.Id" title="View Details">
                                     <i class="fas fa-eye"></i> Details
                                 </a>
-                                @{
-                                    var nonEditableStatuses = new[] { "cancelled", "canceled", "delivered", "returned" };
-                                    var canEdit = !nonEditableStatuses.Contains(order.OrderStatus?.ToLower());
-                                }
-                                @if (canEdit)
-                                {
-                                    <a class="btn btn-outline-secondary btn-sm" asp-controller="LiaisonOrders" asp-action="Edit"
-                                       asp-route-id="@order.Id" title="Edit Order">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                }
+                                
                             </div>
                         </td>
                     </tr>

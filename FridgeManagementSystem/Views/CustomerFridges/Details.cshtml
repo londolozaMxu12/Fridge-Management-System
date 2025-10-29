@@ -231,14 +231,14 @@
             <div class="card mt-4">
                 <div class="card-header bg-primary">
                     <h5 class="card-title mb-0 text-light">
-                        <i class="bi bi-lightning me-2"></i>Quick Actions
+                        <i class="bi bg-info me-2"></i>Quick Actions
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-2">
                         <div class="col-md-4">
-                            <a asp-action="ReportFault" asp-route-id="@Model.FridgeId"
-                               class="btn btn-outline-warning w-100">
+                            <a asp-controller="CustomerFault" asp-action="Create" asp-route-id="@Model.FridgeId"
+                               class="btn btn-outline-danger w-100">
                                 <i class="bi bi-exclamation-triangle me-1"></i>Report Fault
                             </a>
                         </div>
@@ -309,17 +309,17 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-dismiss alerts after 3 seconds
+            // Auto-dismiss alerts after 5 seconds
             setTimeout(function() {
                 const alerts = document.querySelectorAll('.alert');
                 alerts.forEach(alert => {
                     const bsAlert = new bootstrap.Alert(alert);
                     bsAlert.close();
                 });
-            }, 3000);
+            }, 5000);
 
             // Add confirmation for critical actions
-            const reportButtons = document.querySelectorAll('a[href*="ReportFault"], a[href*="RequestMaintenance"]');
+            const reportButtons = document.querySelectorAll('a[href*="Create"], a[href*="RequestMaintenance"]');
             reportButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
                     if (!confirm('Are you sure you want to proceed with this action?')) {

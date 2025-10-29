@@ -114,7 +114,7 @@
                                     </small>
                                 </div>
                             }
-                            else if (fridge.Status == "Maintenance")
+                            else if (fridge.Status == "Under-Maintenance")
                             {
                                 <div class="alert alert-warning py-2 mb-3">
                                     <small>
@@ -140,9 +140,9 @@
                                            class="btn btn-outline-warning btn-sm">
                                             <i class="bi bi-tools me-1"></i>Maintenance
                                         </a>
-                                        <a asp-action="ReportFault" asp-route-id="@fridge.FridgeId"
+                                        <a asp-action="Create" asp-controller="CustomerFault" asp-route-id="@fridge.FridgeId"
                                            class="btn btn-outline-danger btn-sm">
-                                            <i class="bi bi-exclamation-triangle me-1"></i>Report Issue
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Report Fault
                                         </a>
                                     </div>
                                 }
@@ -217,9 +217,9 @@
                 <div class="card bg-warning text-dark">
                     <div class="card-body text-center">
                         <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
-                        <h5>Report Issues</h5>
+                        <h5>Report Faults</h5>
                         <p class="small">Report any problems with your fridges</p>
-                        <a href="#" class="btn btn-dark btn-sm">Report Now</a>
+                        <a asp-controller="CustomerFault" asp-action="Create" class="btn btn-dark btn-sm">Report Now</a>
                     </div>
                 </div>
             </div>
@@ -260,7 +260,7 @@
                     const bsAlert = new bootstrap.Alert(alert);
                     bsAlert.close();
                 });
-            }, 3000);
+            }, 5000);
         });
     </script>
 }

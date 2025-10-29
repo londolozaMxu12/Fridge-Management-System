@@ -53,7 +53,7 @@ namespace FridgeManagementSystem.Controllers
                 .Include(o => o.Items)
                     .ThenInclude(i => i.Fridge)
                     .ThenInclude(f => f.FridgeType)
-                .Where(o => o.OrderStatus == "Accepted" &&
+                .Where(o => o.OrderStatus == "Accepted" || o.OrderStatus == "Processing" &&
                            o.Items.Any(i => i.Fridge.Status == "Reserved"))
                 .OrderBy(o => o.CreatedAt)
                 .ToListAsync();
