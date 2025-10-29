@@ -10,6 +10,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+
 
 namespace FridgeManagementSystem.Controllers
 {
@@ -643,6 +647,54 @@ namespace FridgeManagementSystem.Controllers
         public IActionResult AllocatedFridge()
         {
             return View();
+        }
+
+        [Authorize(Policy = "CustomerLiaisonAccess")]
+        public async Task<IActionResult> ExportAllCustomers()
+        {
+            var customers = await _context.Customers
+                .Include(c => c.User)
+                .OrderBy(c => c.User.FullName)
+                .ToListAsync();
+
+            return GenerateCustomerCsv(customers, "All_Customers.csv");
+        }
+
+        [Authorize(Policy = "CustomerLiaisonAccess")]
+        public async Task<IActionResult> ExportActiveCustomers()
+        {
+            var customers = await _context.Customers
+                .Include(c => c.User)
+                .Where(c => c.IsActive && c.User.IsActive)
+                .OrderBy(c => c.User.FullName)
+                .ToListAsync();
+
+            return GenerateCustomerCsv(customers, "Active_Customers.csv");
+        }
+
+        [Authorize(Policy = "CustomerLiaisonAccess")]
+        public async Task<IActionResult> ExportInactiveCustomers()
+        {
+            var customers = await _context.Customers
+                .Include(c => c.User)
+                .Where(c => !c.IsActive || !c.User.IsActive)
+                .OrderBy(c => c.User.FullName)
+                .ToListAsync();
+
+            return GenerateCustomerCsv(customers, "Inactive_Customers.csv");
+        }
+
+        private FileContentResult GenerateCustomerCsv(IEnumerable<Customer> customers, string fileName)
+        {
+            var csv = new StringBuilder();
+            csv.AppendLine("Full Name,Email,Contact No,Business Name,Customer Type,City,Suburb,Active,Approval Status,Created At");
+
+            foreach (var c in customers)
+            {
+                csv.AppendLine($"\"{c.User?.FullName}\",\"{c.User?.Email}\",\"{c.User?.ContactNo}\",\"{c.BusinessName}\",\"{c.CustomerType}\",\"{c.User?.City}\",\"{c.User?.Suburb}\",\"{(c.IsActive && c.User?.IsActive == true ? "Active" : "Inactive")}\",\"{c.User?.ApprovalStatus}\",\"{c.CreatedAt:yyyy-MM-dd}\"");
+            }
+
+            return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", fileName);
         }
     }
 }
