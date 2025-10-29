@@ -319,7 +319,9 @@ namespace FridgeManagementSystem.Controllers
                         .ThenInclude(u => u.ApprovedBy)
                     .Include(c => c.CreatedBy)
                     .Include(c => c.Fridges)
-                        .ThenInclude(f => f.FridgeType)
+                    .ThenInclude(f => f.FridgeType)
+                    .Include(c=> c.Allocations)
+                        
                     .FirstOrDefaultAsync(c => c.Id == id);
 
                 if (customer == null)

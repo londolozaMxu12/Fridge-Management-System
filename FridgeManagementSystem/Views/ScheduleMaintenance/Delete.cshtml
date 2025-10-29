@@ -1,0 +1,40 @@
+﻿@model FridgeManagementSystem.Models.ScheduleMaintenance
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            body{
+                color:black;
+            }
+        </style>
+    </head>
+<body>
+    <h2>Cancel Schedule</h2>
+
+    <h4>Are you sure you want to delete this schedule?</h4>
+    <hr />
+
+    <div>
+        <dl class="row">
+            <dt class="col-sm-3">Customer</dt>
+            <dd class="col-sm-9">@Model.Customer?.BusinessName</dd>
+
+            <dt class="col-sm-3">Technician</dt>
+            <dd class="col-sm-9">@Model.MaintenanceTechnician?.EmployeeNo</dd>
+
+            <dt class="col-sm-3">Description</dt>
+            <dd class="col-sm-9">@Model.Description</dd>
+
+            <dt class="col-sm-3">Scheduled Date</dt>
+            <dd class="col-sm-9">@Model.ScheduledDate.ToString("yyyy-MM-dd HH:mm")</dd>
+        </dl>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="scheduleMaintenanceId" />
+            <button type="submit" class="btn btn-danger">Delete</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</body>
+</html>

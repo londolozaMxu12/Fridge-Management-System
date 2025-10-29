@@ -19,6 +19,7 @@ namespace FridgeManagementSystem.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
 
+
         public ScheduleMaintenanceController(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, FridgeManagementSystemContext context)
         {
             _roleManager = roleManager;
@@ -162,6 +163,42 @@ namespace FridgeManagementSystem.Controllers
                 else
                     throw;
             }
+
+            return RedirectToAction(nameof(Index));
+        }
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var schedule = await _context.ScheduleMaintenances
+                .Include(s => s.Customer)
+                .Include(s => s.MaintenanceTechnician)
+                .FirstOrDefaultAsync(m => m.scheduleMaintenanceId == id);
+
+            if (schedule == null)
+            {
+                return NotFound();
+            }
+
+            return View(schedule);
+        }
+
+        // POST: ScheduleMaintenance/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var schedule = await _context.ScheduleMaintenances.FindAsync(id);
+            if (schedule == null)
+            {
+                return NotFound();
+            }
+
+            _context.ScheduleMaintenances.Remove(schedule);
+            await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Index));
         }

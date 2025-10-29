@@ -1,8 +1,9 @@
-﻿@using FridgeManagementSystem.Areas.Identity.Data
+﻿@* @using FridgeManagementSystem.Areas.Identity.Data
 @using Microsoft.AspNetCore.Identity
-@using FridgeManagementSystem.Models
-@model IEnumerable<ApplicationUser>
-@using System.Linq
+@using FridgeManagementSystem.Models *@
+@model IEnumerable<FridgeManagementSystem.Models.Customer> 
+@* @model IEnumerable<ApplicationUser> *@
+@* @using System.Linq *@
 
 <!DOCTYPE html>
 <html>
@@ -63,7 +64,7 @@
     <div class="row">
         <div class="col-md-3">
             <form class="d-flex" asp-action="CustomerList" asp-controller="MaintenanceManagement">
-                <input name="searchString" class="form-control ne-1" type="search" placeholder="Search by Full Name" aria-label="Search" />
+                <input name="searchString" class="form-control ne-1" type="search" placeholder="Search by name" aria-label="Search" />
                 <button class="btn btn-dark" type="submit">Search</button>
             </form>
         </div>
@@ -77,19 +78,15 @@
 
 
                 <th width="600px">
-                    Email
+                    Business Name
                 </th>
 
                 <th width="600px">
-                    Full Name
+                    Business Type
                 </th>
                 <th width="600px">
-                    Fride Type
+                    Allocated Fridge
                 </th>
-                <th width="600px">
-                    Allocation Date
-                </th>
-
                 <th></th>
             </tr>
         </thead>
@@ -100,25 +97,44 @@
 
 
                     <td>
-                        @item.Email
+                        @item.BusinessName
                     </td>
-                    <td>
-                        @item.FullName
-                    </td>
+                    
                     <td width="600px">
+                        @item.CustomerType
                     </td>
+                    
                     <td width="600px">
-                    </td>
-
+                    @if (item.Fridges != null && item.Fridges.Any())
+                {
+                    <ul class="mb-0">
+                            @foreach (var fridge in item.Fridges)
+                        {
+                            <li>
+                                        <strong>@fridge.FridgeType.Name</strong> (@fridge.FridgeType.Brand) — Serial: @fridge.SerialNumber <br />
+                                <small class="text-muted">
+                                    Allocated on: @fridge.AllocationDate.ToString()
+                                </small>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <span class="text-muted">No fridges allocated</span>
+                }
+           
+                  </td>
                     <td width="800px">
 
-                        <a asp-action="EditUser" asp-route-Id="@item.Id" class="btn btn-primary">View History</a>
+                       @*  <a asp-action="EditUser" asp-route-Id="@item.Id" class="btn btn-primary">View History</a> *@
 
 
                         <a asp-controller="ScheduleMaintenance"
                            asp-action="Create"
                            asp-route-customerId="@item.Id"
                            class="btn btn-primary">Create Schedule</a>
+
 
                     </td>
 

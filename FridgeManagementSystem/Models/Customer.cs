@@ -31,6 +31,7 @@ namespace FridgeManagementSystem.Models
         // Navigation properties
         public ICollection<Fridge> Fridges { get; set; } = new List<Fridge>();
         public ICollection<Fault> ReportedFaults { get; set; } = new List<Fault>();
+        public ICollection<FaultReport> FaultReports { get; set; } = new List<FaultReport>();
         public ICollection<FridgeRequest> FridgeRequests { get; set; } = new List<FridgeRequest>();
         public ICollection<Quotation> Quotations { get; set; } = new List<Quotation>();
         public ICollection<Allocation> Allocations { get; set; } = new List<Allocation>();

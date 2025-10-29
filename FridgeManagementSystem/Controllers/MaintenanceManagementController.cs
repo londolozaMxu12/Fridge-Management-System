@@ -1,19 +1,22 @@
 ﻿using FridgeManagementSystem.Areas.Identity.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FridgeManagementSystem.Controllers
 {
     public class MaintenanceManagementController : Controller
     {
+        private readonly FridgeManagementSystemContext _context;
         private readonly RoleManager<IdentityRole> roleManager;
         private readonly UserManager<ApplicationUser> userManager;
 
-        public MaintenanceManagementController(RoleManager<IdentityRole> roleManager,
+        public MaintenanceManagementController(FridgeManagementSystemContext context, RoleManager<IdentityRole> roleManager,
             UserManager<ApplicationUser> userManager)
         {
             this.roleManager = roleManager;
             this.userManager = userManager;
+            this._context = context;
 
         }
         public async Task<IActionResult> ListMaintenanceManagement()
@@ -30,16 +33,36 @@ namespace FridgeManagementSystem.Controllers
         }
         public async Task<IActionResult> CustomerList(string searchString)
         {
-            var customer = await userManager.GetUsersInRoleAsync("Customer");
+            var customers = _context.Customers
+                 .Include(c => c.Fridges)
+                  .ThenInclude(f => f.FridgeType)
+                    .Include(c => c.Allocations)// Optional: load fridges for display
+                 .AsQueryable();
 
-            if (!String.IsNullOrEmpty(searchString))
+            // Apply search filter
+            if (!string.IsNullOrEmpty(searchString))
             {
-                customer = customer.Where(n => n.FullName.Contains(searchString)
-                || n.Email.Contains(searchString)).ToList();
+                customers = customers.Where(c =>
+                    c.BusinessName.Contains(searchString) ||
+                    c.CustomerType.Contains(searchString) 
+               ); // ✅ works if linked to ApplicationUser
             }
-            return View(customer);
 
+            // Execute the query
+            var result = await customers.ToListAsync();
+
+            return View(result);
         }
+        //var customer = await userManager.GetUsersInRoleAsync("Customer");
+
+        //if (!String.IsNullOrEmpty(searchString))
+        //{
+        //    customer = customer.Where(n => n.FullName.Contains(searchString)
+        //    || n.Email.Contains(searchString)).ToList();
+        //}
+        //return View(customer);
 
     }
+
+    
 }
