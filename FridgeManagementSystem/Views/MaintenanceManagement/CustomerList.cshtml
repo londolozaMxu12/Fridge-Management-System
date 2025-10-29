@@ -1,5 +1,6 @@
 ﻿@using FridgeManagementSystem.Areas.Identity.Data
 @using Microsoft.AspNetCore.Identity
+@using FridgeManagementSystem.Models
 @model IEnumerable<ApplicationUser>
 @using System.Linq
 
@@ -111,11 +112,13 @@
 
                     <td width="800px">
 
-                        <a asp-action="EditUser" asp-route-Id="@item.Id">View History</a>
+                        <a asp-action="EditUser" asp-route-Id="@item.Id" class="btn btn-primary">View History</a>
 
 
-                        <a asp-controller="ScheduleMaintenance" asp-action="Create">Schedule Visit</a>
-
+                        <a asp-controller="ScheduleMaintenance"
+                           asp-action="Create"
+                           asp-route-customerId="@item.Id"
+                           class="btn btn-primary">Create Schedule</a>
 
                     </td>
 
