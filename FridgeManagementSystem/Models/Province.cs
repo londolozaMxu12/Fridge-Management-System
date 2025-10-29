@@ -11,6 +11,6 @@ namespace FridgeManagementSystem.Models
         [Display(Name = "Province Name")]
         public string ProvinceName { get; set; }
 
-        public ICollection<City> Cities { get; set; }
+        //public ICollection<City> Cities { get; set; }
     }
 }

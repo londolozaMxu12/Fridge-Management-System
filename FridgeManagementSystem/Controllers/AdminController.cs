@@ -167,7 +167,7 @@ namespace FridgeManagementSystem.Controllers
                     UserId = user.Id,
                     Title = "Account Approved",
                     Message = "Your account has been approved. You can now access all the features.",
-                    Link = GenerateAbsoluteUrl($"/Customers/Index/{user.Customers?.Id}")
+                    Link = GenerateAbsoluteUrl($"/Home/Index/{user.Customers?.Id}")
                 };
 
                 _context.Notifications.Add(notification);

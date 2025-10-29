@@ -30,14 +30,14 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     public DbSet<FaultTechnician> FaultTechnicians { get; set; }
     public DbSet<RepairSchedule> RepairSchedules { get; set; }
     public DbSet<FridgeRequest> FridgeRequests { get; set; }
-    public DbSet<City> Cities { get; set; }
+    //public DbSet<City> Cities { get; set; }
     public DbSet<CustomerData> CustomerDatas { get; set; }
     public DbSet<CustomerLiaison> CustomerLiaisons { get; set; }
     public DbSet<FridgeInventory> FridgeInventories { get; set; }
     public DbSet<InventoryLiaison> InventoryLiaisons { get; set; }
     public DbSet<MaintenanceRecord> MaintenanceRecords { get; set; }
     public DbSet<MaintenanceTech> MaintenanceTechs { get; set; }
-    public DbSet<Province> Provinces { get; set; }
+    //public DbSet<Province> Provinces { get; set; }
     public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
     public DbSet<PurchasingManager> PurchasingManagers { get; set; }
     public DbSet<CartDetails> CartDetails { get; set; }
@@ -48,7 +48,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
     public DbSet<PurchasingOrder> PurchasingOrders { get; set; }
     public DbSet<Quotation> Quotations { get; set; }
     public DbSet<StockLevel> StockLevels { get; set; }
-    public DbSet<Suburb> Suburbs { get; set; }
+    //public DbSet<Suburb> Suburbs { get; set; }
     public DbSet<FaultReport> FaultReports { get; set; }
     public DbSet<Allocation> Allocations { get; set; }
     public DbSet<ScheduleMaintenance> ScheduleMaintenances { get; set; }
@@ -62,9 +62,58 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<RFQ> RFQs { get; set; }
 
+    public DbSet<Invoice> Invoices { get; set; }
+    public DbSet<InvoiceItem> InvoiceItems { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+       
+        // Invoice configuration (if not already present)
+        builder.Entity<Invoice>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.InvoiceNumber).IsUnique();
+            entity.HasIndex(e => e.OrderId);
+
+            // This should already match the configuration above
+            entity.HasOne(i => i.Order)
+                  .WithMany(o => o.Invoices)
+                  .HasForeignKey(i => i.OrderId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(i => i.Subtotal)
+                  .HasPrecision(16, 2);
+
+            entity.Property(i => i.ShippingFee)
+                  .HasPrecision(16, 2);
+
+            entity.Property(i => i.TotalAmount)
+                  .HasPrecision(16, 2);
+        });
+
+        // InvoiceItem configuration (if not already present)
+        builder.Entity<InvoiceItem>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(ii => ii.Invoice)
+                  .WithMany(i => i.InvoiceItems)
+                  .HasForeignKey(ii => ii.InvoiceId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(ii => ii.Fridge)
+                  .WithMany()
+                  .HasForeignKey(ii => ii.FridgeId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(ii => ii.UnitPrice)
+                  .HasPrecision(16, 2);
+
+            entity.Property(ii => ii.TotalPrice)
+                  .HasPrecision(16, 2);
+        });
 
         // 1. Configure ApplicationUser relationships - FIXED
         builder.Entity<ApplicationUser>()
@@ -91,31 +140,31 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(u => u.ApprovedById)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Configure ApplicationUser relationships
-        //builder.Entity<ApplicationUser>()
-        //    .HasMany(u => u.PurchaseRequests)
-        //    .WithOne(pr => pr.RequestedBy)
-        //    .HasForeignKey(pr => pr.RequestedById)
-        //    .OnDelete(DeleteBehavior.Restrict);
+        // Add this configuration for Quotation decimal properties
+        builder.Entity<Quotation>(entity =>
+        {
+            entity.Property(q => q.ShippingCost)
+                .HasPrecision(18, 2);  // Or use decimal(16,2) if you prefer
 
-        //builder.Entity<ApplicationUser>()
-        //    .HasMany(u => u.CreatedSuppliers)
-        //    .WithOne(s => s.CreatedBy)
-        //    .HasForeignKey(s => s.CreatedById)
-        //    .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(q => q.TotalPrice)
+                .HasPrecision(18, 2);
+
+            entity.Property(q => q.UnitPrice)
+                .HasPrecision(18, 2);
+        });
 
         // 2. Configure Allocation relationships - ONLY ONCE
         builder.Entity<Allocation>(entity =>
         {
             entity.HasKey(a => a.AllocationId);
 
-            // Customer relationship - UPDATED for string CustomerId
+            // Customer relationship
             entity.HasOne(a => a.Customer)
                 .WithMany(c => c.Allocations)
                 .HasForeignKey(a => a.CustomerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Fridge relationship
+            // Fridge relationship - ONLY ONE relationship to Fridge
             entity.HasOne(a => a.Fridge)
                 .WithMany(f => f.Allocations)
                 .HasForeignKey(a => a.FridgeId)
@@ -133,7 +182,13 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(a => a.AllocatedById)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
+            // IGNORE all problematic FridgeId properties
+            entity.Ignore("FridgeId1");
+            entity.Ignore("FridgeId2");
+            entity.Ignore("FridgeId3");
+            entity.Ignore("FridgeId4");
+            entity.Ignore("FridgeId5");
+            entity.Ignore("FridgeId6");
         });
 
         // 3. Configure Fridge relationships - UPDATED for string CustomerId
@@ -171,41 +226,50 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(f => f.CreatedById)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // 4. Configure Order relationships - UPDATED for string CustomerId
-        builder.Entity<Order>()
-            .Property(o => o.ShippingFee)
-            .HasPrecision(16, 2);
+        // 4. Configure Order relationships - CORRECTED (REMOVE Fridge relationship)
+        builder.Entity<Order>(entity =>
+        {
+            entity.Property(o => o.ShippingFee)
+                .HasPrecision(16, 2);
 
-        // UPDATED: CustomerId is now string
-        builder.Entity<Order>()
-            .HasOne(o => o.Customer)
-            .WithMany(u => u.Orders)
-            .HasForeignKey(o => o.CustomerId)
-            .OnDelete(DeleteBehavior.Restrict);
+            // UPDATED: Customer relationship
+            entity.HasOne(o => o.Customer)
+                .WithMany(u => u.Orders)
+                .HasForeignKey(o => o.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasMany(o => o.Invoices)
+                  .WithOne(i => i.Order)
+                  .HasForeignKey(i => i.OrderId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<Order>()
-            .HasOne(o => o.Fridge)
-            .WithOne(f => f.Order)
-            .HasForeignKey<Order>(o => o.FridgeId)
-            .OnDelete(DeleteBehavior.SetNull);
+            // REMOVED: Fridge relationship - This is causing the NULL FridgeId issue
+            // Order should only relate to Fridges through OrderItems, not directly
+            // entity.HasOne(o => o.Fridge)... 
+
+            // Configure OrderItems relationship
+            entity.HasMany(o => o.Items)
+                .WithOne(oi => oi.Order)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         // 5. Configure OrderItem relationships
-        builder.Entity<OrderItem>()
-            .Property(oi => oi.UnitPrice)
-            .HasPrecision(16, 2);
+        builder.Entity<OrderItem>(entity =>
+        {
+            entity.Property(oi => oi.UnitPrice)
+                .HasPrecision(16, 2);
 
-        builder.Entity<OrderItem>()
-            .HasOne(oi => oi.Order)
-            .WithMany(o => o.Items)
-            .HasForeignKey(oi => oi.OrderId)
-            .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(oi => oi.Order)
+                .WithMany(o => o.Items)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<OrderItem>()
-            .HasOne(oi => oi.Fridge)
-            .WithMany(f => f.OrderItems)
-            .HasForeignKey(oi => oi.FridgeId)
-            .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(oi => oi.Fridge)
+                .WithMany(f => f.OrderItems)
+                .HasForeignKey(oi => oi.FridgeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
         // 6. Configure ShoppingCart relationships
         builder.Entity<ShoppingCart>()
@@ -238,15 +302,20 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(e => e.CreatedById)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // 9. Configure Customer relationships - UPDATED
-        builder.Entity<Customer>()
-            .HasKey(c => c.Id);  // Explicitly set string Id as PK
+        builder.Entity<Customer>(entity =>
+        {
+            entity.HasKey(c => c.Id);
 
-        builder.Entity<Customer>()
-            .HasOne(c => c.CreatedBy)
-            .WithMany()
-            .HasForeignKey(c => c.CreatedById)
-            .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(c => c.CreatedBy)
+                .WithMany()
+                .HasForeignKey(c => c.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // If you don't want any Suburb relationship, ignore all SuburbId properties
+            entity.Ignore("SuburbId");
+            entity.Ignore("SuburbId1");
+            entity.Ignore("SuburbId2");
+        });
 
         // 10. Configure Supplier relationships
         builder.Entity<Supplier>()
@@ -289,7 +358,6 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
               .WithMany(c => c.ScheduleMaintenances)
               .HasForeignKey(s => s.CustomerId)
               .OnDelete(DeleteBehavior.Cascade);
-
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

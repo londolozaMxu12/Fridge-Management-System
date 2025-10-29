@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FridgeManagementSystem.Models
 {
-    [Table("OrderItems")]
+    
     public class OrderItem
     {
         [Key]

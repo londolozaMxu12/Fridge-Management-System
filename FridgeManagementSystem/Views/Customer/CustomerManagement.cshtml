@@ -78,9 +78,12 @@
                 <label for="CustomerTypeFilter" class="form-label">Customer Type</label>
                 <select class="form-select" id="CustomerTypeFilter" name="customerTypeFilter">
                     <option value="">All Types</option>
-                    @foreach (var type in ViewBag.CustomerTypes)
+                    @if (ViewBag.CustomerTypes != null)
                     {
-                        <option value="@type" selected="@(Model.CustomerTypeFilter == type)">@type</option>
+                        @foreach (var type in ViewBag.CustomerTypes)
+                        {
+                            <option value="@type" selected="@(Model.CustomerTypeFilter == type)">@type</option>
+                        }
                     }
                 </select>
             </div>
@@ -96,9 +99,12 @@
                 <label for="ApprovalFilter" class="form-label">Approval Status</label>
                 <select class="form-select" id="ApprovalFilter" name="approvalFilter">
                     <option value="">All Approval</option>
-                    @foreach (var status in ViewBag.ApprovalStatuses)
+                    @if (ViewBag.ApprovalStatuses != null)
                     {
-                        <option value="@status" selected="@(Model.ApprovalFilter == status)">@status</option>
+                        @foreach (var status in ViewBag.ApprovalStatuses)
+                        {
+                            <option value="@status" selected="@(Model.ApprovalFilter == status)">@status</option>
+                        }
                     }
                 </select>
             </div>

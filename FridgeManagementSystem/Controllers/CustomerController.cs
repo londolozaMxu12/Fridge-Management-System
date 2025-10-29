@@ -132,120 +132,134 @@ namespace FridgeManagementSystem.Controllers
 
         [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> CustomerManagement(int pageNumber = 1, int pageSize = 5, string sortBy = "CreatedAt",
-           string sortOrder = "desc",
-           string searchString = "",
-           string customerTypeFilter = "",
-           string statusFilter = "active",
-           string approvalFilter = "")
+    string sortOrder = "desc",
+    string searchString = "",
+    string customerTypeFilter = "",
+    string statusFilter = "active",
+    string approvalFilter = "")
         {
-            // Set ViewBag for layout detection
-            var currentUser = await _userManager.GetUserAsync(User);
-            var userWithDetails = await _context.Users
-                .Include(u => u.Employees)
-                .ThenInclude(e => e.EmployeeType)
-                .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
-
-            var isCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison";
-            ViewBag.IsCustomerLiaison = isCustomerLiaison && !User.IsInRole("Admin");
-            ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+            // Initialize ViewBag properties first to ensure they're never null
+            ViewBag.CustomerTypes = new List<string>();
+            ViewBag.ApprovalStatuses = new List<string> { "Pending", "Approved", "Rejected" };
 
             try
             {
-                // Build base query with includes
-                var query = _context.Customers
-                    .Include(c => c.User)
-                    .AsQueryable();
+                // Set ViewBag for layout detection
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                {
+                    TempData["Error"] = "User not found.";
+                    return View(new CustomerManagementViewModel { Customers = new List<CustomerViewModel>() });
+                }
+
+                var userWithDetails = await _context.Users
+                    .Include(u => u.Employees)
+                    .ThenInclude(e => e.EmployeeType)
+                    .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+
+                var isCustomerLiaison = userWithDetails?.Employees?.EmployeeType?.Name == "CustomerLiaison";
+                ViewBag.IsCustomerLiaison = isCustomerLiaison && !User.IsInRole("Admin");
+                ViewBag.UserRole = User.IsInRole("Admin") ? "Admin" : "CustomerLiaison";
+
+                // SIMPLIFIED QUERY APPROACH to avoid SuburbId issue
+                var customersQuery = _context.Customers.AsQueryable();
+                var usersQuery = _context.Users.AsQueryable();
+
+                // Join manually to avoid the SuburbId issue
+                var query = from customer in customersQuery
+                            join user in usersQuery on customer.Id equals user.Id
+                            select new { customer, user };
 
                 // Apply status filter
                 if (statusFilter == "active")
                 {
-                    query = query.Where(c => c.IsActive && c.User.IsActive);
+                    query = query.Where(x => x.customer.IsActive && x.user.IsActive);
                 }
                 else if (statusFilter == "inactive")
                 {
-                    query = query.Where(c => !c.IsActive || !c.User.IsActive);
+                    query = query.Where(x => !x.customer.IsActive || !x.user.IsActive);
                 }
 
                 // Apply search filter
                 if (!string.IsNullOrEmpty(searchString))
                 {
-                    query = query.Where(c =>
-                        c.BusinessName.Contains(searchString) ||
-                        (c.User.FullName != null && c.User.FullName.Contains(searchString)) ||
-                        (c.User.Email != null && c.User.Email.Contains(searchString)) ||
-                        (c.User.ContactNo != null && c.User.ContactNo.Contains(searchString)) ||
-                        c.CustomerType.Contains(searchString));
+                    query = query.Where(x =>
+                        (x.customer.BusinessName != null && x.customer.BusinessName.Contains(searchString)) ||
+                        (x.user.FullName != null && x.user.FullName.Contains(searchString)) ||
+                        (x.user.Email != null && x.user.Email.Contains(searchString)) ||
+                        (x.user.ContactNo != null && x.user.ContactNo.Contains(searchString)) ||
+                        (x.customer.CustomerType != null && x.customer.CustomerType.Contains(searchString)));
                 }
 
                 // Apply customer type filter
                 if (!string.IsNullOrEmpty(customerTypeFilter))
                 {
-                    query = query.Where(c => c.CustomerType == customerTypeFilter);
+                    query = query.Where(x => x.customer.CustomerType == customerTypeFilter);
                 }
 
                 // Apply approval filter
                 if (!string.IsNullOrEmpty(approvalFilter))
                 {
-                    query = query.Where(c => c.User.ApprovalStatus == approvalFilter);
+                    query = query.Where(x => x.user.ApprovalStatus == approvalFilter);
                 }
 
                 // Apply sorting
-                query = sortBy.ToLower() switch
+                var orderedQuery = sortBy.ToLower() switch
                 {
                     "fullname" => sortOrder == "desc"
-                        ? query.OrderByDescending(c => c.User.FullName)
-                        : query.OrderBy(c => c.User.FullName),
+                        ? query.OrderByDescending(x => x.user.FullName)
+                        : query.OrderBy(x => x.user.FullName),
                     "email" => sortOrder == "desc"
-                        ? query.OrderByDescending(c => c.User.Email)
-                        : query.OrderBy(c => c.User.Email),
+                        ? query.OrderByDescending(x => x.user.Email)
+                        : query.OrderBy(x => x.user.Email),
                     "businessname" => sortOrder == "desc"
-                        ? query.OrderByDescending(c => c.BusinessName)
-                        : query.OrderBy(c => c.BusinessName),
+                        ? query.OrderByDescending(x => x.customer.BusinessName)
+                        : query.OrderBy(x => x.customer.BusinessName),
                     "customertype" => sortOrder == "desc"
-                        ? query.OrderByDescending(c => c.CustomerType)
-                        : query.OrderBy(c => c.CustomerType),
+                        ? query.OrderByDescending(x => x.customer.CustomerType)
+                        : query.OrderBy(x => x.customer.CustomerType),
                     "status" => sortOrder == "desc"
-                        ? query.OrderByDescending(c => c.IsActive)
-                        : query.OrderBy(c => c.IsActive),
+                        ? query.OrderByDescending(x => x.customer.IsActive)
+                        : query.OrderBy(x => x.customer.IsActive),
                     _ => sortOrder == "desc"
-                        ? query.OrderByDescending(c => c.CreatedAt)
-                        : query.OrderBy(c => c.CreatedAt)
+                        ? query.OrderByDescending(x => x.customer.CreatedAt)
+                        : query.OrderBy(x => x.customer.CreatedAt)
                 };
 
-                // Get total count after all filtering
-                var totalCount = await query.CountAsync();
+                // Get total count
+                var totalCount = await orderedQuery.CountAsync();
 
                 // Apply pagination
-                var customers = await query
+                var results = await orderedQuery
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync();
 
                 // Convert to ViewModels
-                var customerViewModels = customers.Select(c => new CustomerViewModel
+                var customerViewModels = results.Select(x => new CustomerViewModel
                 {
-                    Id = c.Id,
-                    FullName = c.User.FullName,
-                    Email = c.User.Email,
-                    ContactNo = c.User.ContactNo,
-                    City = c.User.City,
-                    Suburb = c.User.Suburb,
-                    BusinessName = c.BusinessName,
-                    CustomerType = c.CustomerType,
-                    IsActive = c.IsActive && c.User.IsActive,
-                    CreatedAt = c.CreatedAt,
-                    ApprovalStatus = c.User.ApprovalStatus,
+                    Id = x.customer.Id,
+                    FullName = x.user.FullName ?? "N/A",
+                    Email = x.user.Email ?? "N/A",
+                    ContactNo = x.user.ContactNo ?? "N/A",
+                    City = x.user.City ?? "N/A",
+                    Suburb = x.user.Suburb ?? "N/A",
+                    BusinessName = x.customer.BusinessName ?? "N/A",
+                    CustomerType = x.customer.CustomerType ?? "N/A",
+                    IsActive = x.customer.IsActive && x.user.IsActive,
+                    CreatedAt = x.customer.CreatedAt,
+                    ApprovalStatus = x.user.ApprovalStatus ?? "Pending",
                 }).ToList();
 
                 // Get customer types for filter dropdown
                 var customerTypes = await _context.Customers
+                    .Where(c => c.CustomerType != null)
                     .Select(c => c.CustomerType)
                     .Distinct()
                     .OrderBy(ct => ct)
                     .ToListAsync();
 
-                // Get approval statuses for filter dropdown
-                var approvalStatuses = new List<string> { "Pending", "Approved", "Rejected" };
+                ViewBag.CustomerTypes = customerTypes;
 
                 var viewModel = new CustomerManagementViewModel
                 {
@@ -261,20 +275,24 @@ namespace FridgeManagementSystem.Controllers
                     ApprovalFilter = approvalFilter
                 };
 
-                ViewBag.CustomerTypes = customerTypes;
-                ViewBag.ApprovalStatuses = approvalStatuses;
-
                 return View(viewModel);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading customers for management");
-                TempData["Error"] = "An error occurred while loading customers.";
-                return View(new CustomerManagementViewModel { Customers = new List<CustomerViewModel>() });
+                TempData["Error"] = "An error occurred while loading customers. Please check the database connection and relationships.";
+
+                return View(new CustomerManagementViewModel
+                {
+                    Customers = new List<CustomerViewModel>(),
+                    PageNumber = 1,
+                    PageSize = pageSize,
+                    TotalCount = 0
+                });
             }
         }
 
-        // GET: Admin/CustomerDetails/5
+        [Authorize(Policy = "CustomerLiaisonAccess")]
         [Authorize(Policy = "CustomerLiaisonAccess")]
         public async Task<IActionResult> CustomerDetails(string id)
         {
@@ -291,16 +309,13 @@ namespace FridgeManagementSystem.Controllers
 
             try
             {
+                // Load customer with essential data
                 var customer = await _context.Customers
                     .Include(c => c.User)
+                        .ThenInclude(u => u.ApprovedBy)
                     .Include(c => c.CreatedBy)
                     .Include(c => c.Fridges)
-                    .Include(c => c.FridgeRequests)
-                    .Include(c => c.ReportedFaults)
-                    .Include(c => c.Quotations)
-                    .Include(c => c.Allocations)
-                    .Include(c => c.Orders)
-                        .ThenInclude(o => o.Items)
+                        .ThenInclude(f => f.FridgeType)
                     .FirstOrDefaultAsync(c => c.Id == id);
 
                 if (customer == null)
@@ -309,19 +324,21 @@ namespace FridgeManagementSystem.Controllers
                     return RedirectToAction(nameof(CustomerManagement));
                 }
 
-                // Count orders using the included collection
-                var completedStatuses = new[] { "Completed", "Cancelled", "Delivered", "Refunded" };
+                // Load counts separately to avoid complex queries
+                ViewBag.FridgeCount = await _context.Fridges.CountAsync(f => f.CustomerId == id);
+                ViewBag.FaultCount = await _context.Faults.CountAsync(f => f.ReportedById == id);
+                
+                ViewBag.AllocationCount = await _context.Allocations.CountAsync(a => a.CustomerId == id);
 
-                ViewBag.ActiveOrdersCount = customer.Orders?
-                    .Count(o => !completedStatuses.Contains(o.OrderStatus)) ?? 0;
+                // Order counts
+                var orders = await _context.Orders.Where(o => o.CustomerId == id).ToListAsync();
+                var completedStatuses = new[] { "Sipped", "Cancelled", "Delivered" };
 
-                ViewBag.TotalOrdersCount = customer.Orders?.Count ?? 0;
-                ViewBag.CompletedOrdersCount = customer.Orders?
-                    .Count(o => completedStatuses.Contains(o.OrderStatus)) ?? 0;
-                ViewBag.PendingOrdersCount = customer.Orders?
-                    .Count(o => o.OrderStatus == "Received") ?? 0;
-                ViewBag.ProcessingOrdersCount = customer.Orders?
-                    .Count(o => o.OrderStatus == "Processing") ?? 0;
+                ViewBag.ActiveOrdersCount = orders.Count(o => !completedStatuses.Contains(o.OrderStatus));
+                ViewBag.TotalOrdersCount = orders.Count;
+                ViewBag.CompletedOrdersCount = orders.Count(o => completedStatuses.Contains(o.OrderStatus));
+                ViewBag.PendingOrdersCount = orders.Count(o => o.OrderStatus == "Received");
+                ViewBag.ProcessingOrdersCount = orders.Count(o => o.OrderStatus == "Processing");
 
                 return View(customer);
             }

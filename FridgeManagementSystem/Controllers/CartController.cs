@@ -283,7 +283,6 @@ namespace FridgeManagementSystem.Controllers
                 // Validate delivery address and payment method
                 if (string.IsNullOrEmpty(deliveryAddress) || string.IsNullOrEmpty(paymentMethod))
                 {
-                    // Fallback to TempData if parameters are empty
                     deliveryAddress = TempData["DeliveryAddress"] as string ?? "";
                     paymentMethod = TempData["PaymentMethod"] as string ?? "";
                 }
@@ -314,7 +313,7 @@ namespace FridgeManagementSystem.Controllers
                     return RedirectToAction("Index", "Cart");
                 }
 
-                // Create the order
+                // Create the order FIRST to get the OrderId
                 var order = new Order
                 {
                     CustomerId = userId,
@@ -327,17 +326,27 @@ namespace FridgeManagementSystem.Controllers
                     Items = new List<OrderItem>()
                 };
 
+                // Save the order FIRST to get the ID
+                _context.Orders.Add(order);
+                await _context.SaveChangesAsync(); // This generates the OrderId
+
+                _logger.LogInformation($"Order {order.Id} created. Now adding order items...");
+
                 // Add order items and reserve fridges
                 var reservedFridgeIds = new List<int>();
                 foreach (var item in cartItems)
                 {
-                    // Add order item
-                    order.Items.Add(new OrderItem
+                    // Create order item WITH the OrderId
+                    var orderItem = new OrderItem
                     {
+                        OrderId = order.Id, // THIS WAS MISSING!
                         FridgeId = item.FridgeId,
                         Quantity = item.Quantity,
                         UnitPrice = item.UnitPrice
-                    });
+                    };
+
+                    // Add to context
+                    _context.OrderItems.Add(orderItem);
 
                     // Reserve the fridge (change status from Available to Reserved)
                     var fridge = await _context.Fridges
@@ -358,7 +367,7 @@ namespace FridgeManagementSystem.Controllers
 
                         reservedFridgeIds.Add(fridge.FridgeId);
 
-                        _logger.LogInformation($"Reserved fridge {fridge.FridgeId} ({fridge.FridgeType.Name}) for order");
+                        _logger.LogInformation($"Reserved fridge {fridge.FridgeId} ({fridge.FridgeType.Name}) for order {order.Id}");
                     }
                     else
                     {
@@ -366,23 +375,26 @@ namespace FridgeManagementSystem.Controllers
                     }
                 }
 
-                // Save the order to get the ID
-                _context.Orders.Add(order);
+                // Save order items and fridge updates
                 await _context.SaveChangesAsync();
 
-                // 🔔 NOTIFY ALL CUSTOMER LIAISONS ABOUT THE NEW ORDER
+                //NOTIFY ALL CUSTOMER LIAISONS ABOUT THE NEW ORDER
                 await _notification.NotifyLiaisonsAboutNewOrder(order);
 
                 // Clear the cart after successful order creation
                 _context.CartItems.RemoveRange(cart.Items);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Order {order.Id} created successfully for user {userId}. {reservedFridgeIds.Count} fridges reserved.");
+                _logger.LogInformation($"Order {order.Id} completed successfully for user {userId}. {reservedFridgeIds.Count} fridges reserved.");
 
                 // Set success message and return to confirmation view
                 ViewBag.SuccessMessage = $"Order created successfully! Your order ID is: {order.Id}. " +
                                        $"We have reserved {reservedFridgeIds.Count} item(s) for you. " +
                                        $"You will be notified when your order is processed.";
+                ViewBag.OrderId = order.Id;
+
+                // Set success message
+                ViewBag.SuccessMessage = $"Order created successfully! Your order ID is: {order.Id}.";
                 ViewBag.OrderId = order.Id;
 
                 return View();

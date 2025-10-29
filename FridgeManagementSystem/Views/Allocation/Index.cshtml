@@ -22,6 +22,7 @@ else
                     <th>Customer</th>
                     <th>Business</th>
                     <th>Items</th>
+                    <th>Reserved Fridges</th>
                     <th>Order Date</th>
                     <th>Delivery Address</th>
                     <th>Actions</th>
@@ -30,11 +31,19 @@ else
             <tbody>
                 @foreach (var order in Model)
                 {
-                    var totalItems = order.Items?.Sum(i => i.Quantity) ?? 0;
-                    var itemNames = order.Items?
+                    // Calculate order statistics
+                    var orderItems = order.Items ?? new List<OrderItem>();
+                    var totalItems = orderItems.Sum(i => i.Quantity);
+                    var distinctItems = orderItems.Count;
+                    var reservedFridges = orderItems.Count(i => i.Fridge?.Status == "Reserved");
+                    var allocatedFridges = orderItems.Count(i => i.Fridge?.Status == "Allocated");
+
+                    // Get item names safely
+                    var itemNames = orderItems
                     .Select(i => i.Fridge?.FridgeType?.Name)
                     .Where(name => !string.IsNullOrEmpty(name))
-                    .ToList() ?? new List<string>();
+                    .Distinct()
+                    .ToList();
 
                     // Get customer details safely
                     var customerName = order.Customer?.User?.FullName ?? "N/A";
@@ -59,27 +68,83 @@ else
                             }
                         </td>
                         <td>
-                            <span class="badge bg-primary">@totalItems item(s)</span><br>
-                            <small class="text-muted">@string.Join(", ", itemNames.Distinct())</small>
+                            <span class="badge bg-primary">@totalItems unit@(totalItems != 1 ? "s" : "")</span>
+                            <br />
+                            <small class="text-muted">@distinctItems item@(distinctItems != 1 ? "s" : "")</small>
                         </td>
-                        <td>@order.CreatedAt.ToString("MM/dd/yyyy")</td>
+                        <td>
+                            @if (reservedFridges > 0)
+                            {
+                                <span class="badge bg-warning">@reservedFridges reserved</span>
+                            }
+                            @if (allocatedFridges > 0)
+                            {
+                                <span class="badge bg-success">@allocatedFridges allocated</span>
+                            }
+                            @if (reservedFridges == 0 && allocatedFridges == 0)
+                            {
+                                <span class="badge bg-secondary">No fridges</span>
+                            }
+                        </td>
+                        <td>
+                            @order.CreatedAt.ToString("MM/dd/yyyy")
+                            <br />
+                            <small class="text-muted">@order.CreatedAt.ToString("HH:mm")</small>
+                        </td>
                         <td>
                             <div class="text-truncate" style="max-width: 200px;" title="@order.DeliveryAddress">
                                 @order.DeliveryAddress
                             </div>
                         </td>
                         <td>
-                            <a class="btn btn-primary btn-sm" asp-action="Details" asp-route-orderId="@order.Id">
-                                <i class="bi bi-gear me-1"></i> Allocate
-                            </a>
-                            <a class="btn btn-outline-secondary btn-sm mt-1" asp-controller="LiaisonOrders" asp-action="Details" asp-route-id="@order.Id">
-                                <i class="bi bi-eye me-1"></i> View
-                            </a>
+                            <div class="btn-group-vertical" role="group">
+                                <a class="btn btn-primary btn-sm" asp-action="Details" asp-route-orderId="@order.Id"
+                                   title="Allocate fridges for this order">
+                                    <i class="bi bi-gear me-1"></i> Allocate
+                                    @if (reservedFridges > 0)
+                                    {
+                                        <span class="badge bg-light text-dark">@reservedFridges</span>
+                                    }
+                                </a>
+                                <a class="btn btn-outline-secondary btn-sm" asp-controller="LiaisonOrders" asp-action="Details" asp-route-id="@order.Id"
+                                   title="View order details">
+                                    <i class="bi bi-eye me-1"></i> View
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Allocation Summary</h6>
+                    <div class="row text-center">
+                        <div class="col">
+                            <h4>@Model.Count()</h4>
+                            <small class="text-muted">Orders Pending</small>
+                        </div>
+                        <div class="col">
+                            <h4>@Model.Sum(o => o.Items?.Count(i => i.Fridge?.Status == "Reserved") ?? 0)</h4>
+                            <small class="text-muted">Reserved Fridges</small>
+                        </div>
+                        <div class="col">
+                            <h4>@Model.Sum(o => o.Items?.Count(i => i.Fridge?.Status == "Allocated") ?? 0)</h4>
+                            <small class="text-muted">Allocated Fridges</small>
+                        </div>
+                        <div class="col">
+                            <h4>@Model.Sum(o => o.Items?.Sum(i => i.Quantity) ?? 0)</h4>
+                            <small class="text-muted">Total Units</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
@@ -94,9 +159,22 @@ else
 
 @section Scripts {
     <script>
-        // Add tooltips for truncated addresses
+        // Add tooltips for truncated addresses and buttons
         $(document).ready(function() {
-            $('[title]').tooltip();
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+
+            // Add row hover effects
+            $('table tbody tr').hover(
+                function() {
+                    $(this).addClass('table-active');
+                },
+                function() {
+                    $(this).removeClass('table-active');
+                }
+            );
         });
     </script>
 }

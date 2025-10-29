@@ -47,9 +47,12 @@
             break;
     }
 
-    // Calculate totals
-    decimal subtotal = Model.Items?.Sum(i => i.Quantity * i.UnitPrice) ?? 0;
+    // Calculate totals and item counts
+    var orderItems = Model.Items ?? new List<OrderItem>();
+    decimal subtotal = orderItems.Sum(i => i.Quantity * i.UnitPrice);
     decimal totalAmount = subtotal + Model.ShippingFee;
+    int totalUnits = orderItems.Sum(i => i.Quantity);
+    int distinctItems = orderItems.Count;
 
     // Customer details from ViewBag (set in controller)
     string customerName = ViewBag.CustomerName ?? "N/A";
@@ -102,7 +105,13 @@
                     <div class="col-sm-8">
                         @{
                             var paymentMethod = Model.PaymentMethod ?? "Unknown";
-                            var formattedPaymentMethod = paymentMethod.Replace("OnDelivery", " on Delivery").Replace("Cash", "Cash");
+                            var formattedPaymentMethod = paymentMethod switch
+                            {
+                                "CreditCard" => "Credit Card",
+                                "CashOnDelivery" => "Cash on Delivery",
+                                "PayPal" => "PayPal",
+                                _ => paymentMethod
+                            };
                         }
                         <span class="badge bg-light text-dark">@formattedPaymentMethod</span>
                     </div>
@@ -248,11 +257,15 @@
 
 <!-- Order Items Section -->
 <div class="card mb-4">
-    <div class="card-header">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0"><i class="bi bi-cart me-2"></i>Order Items</h5>
+        <div>
+            <span class="badge bg-primary me-2">@distinctItems item@(distinctItems != 1 ? "s" : "")</span>
+            <span class="badge bg-secondary">@totalUnits unit@(totalUnits != 1 ? "s" : "")</span>
+        </div>
     </div>
     <div class="card-body">
-        @if (Model.Items != null && Model.Items.Any())
+        @if (orderItems.Any())
         {
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -266,7 +279,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model.Items)
+                        @foreach (var item in orderItems)
                         {
                             <tr>
                                 <td>
@@ -294,9 +307,14 @@
                                         {
                                             <br />
                                             <strong>Serial:</strong>
- 
                                             @item.Fridge.SerialNumber
                                         }
+                                        <br />
+                                        <strong>Fridge ID:</strong> @item.FridgeId
+                                        <br />
+                                        <span class="badge @(item.Fridge?.Status?.ToLower() == "reserved" ? "bg-warning" : "bg-success")">
+                                            @item.Fridge?.Status
+                                        </span>
                                     </small>
                                 </td>
                                 <td class="text-center">
@@ -344,60 +362,60 @@
     </div>
 </div>
 
-<!-- Allocated Fridge Section -->
-@if (Model.FridgeId != null)
+<!-- Allocated Fridges Section - UPDATED for multiple items -->
+@if (orderItems.Any(i => i.Fridge != null))
 {
     <div class="card mb-4">
         <div class="card-header">
-            <h5 class="card-title mb-0"><i class="bi bi-box-seam me-2"></i>Allocated Fridge</h5>
+            <h5 class="card-title mb-0"><i class="bi bi-box-seam me-2"></i>Order Fridges</h5>
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-8">
-                    <div class="row mb-3">
-                        <div class="col-sm-4 fw-bold">Fridge ID:</div>
-                        <div class="col-sm-8">@Model.FridgeId</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4 fw-bold">Serial Number:</div>
-                        <div class="col-sm-8">@(Model.Fridge?.SerialNumber ?? "N/A")</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4 fw-bold">Name:</div>
-                        <div class="col-sm-8">@(Model.Fridge?.FridgeType?.Name ?? "N/A")</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4 fw-bold">Brand:</div>
-                        <div class="col-sm-8">@(Model.Fridge?.FridgeType?.Brand ?? "N/A")</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4 fw-bold">Model:</div>
-                        <div class="col-sm-8">@(Model.Fridge?.FridgeType?.Model ?? "N/A")</div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-4 fw-bold">Status:</div>
-                        <div class="col-sm-8">
-                            <span class="badge bg-success">Allocated</span>
+                @foreach (var item in orderItems.Where(i => i.Fridge != null))
+                {
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-8">
+                                        <h6 class="card-title">@item.Fridge.FridgeType?.Name</h6>
+                                        <div class="mb-2">
+                                            <small class="text-muted">
+                                                <strong>Fridge ID:</strong> @item.FridgeId<br />
+                                                <strong>Serial:</strong> @(item.Fridge.SerialNumber ?? "N/A")<br />
+                                                <strong>Brand:</strong> @(item.Fridge.FridgeType?.Brand ?? "N/A")<br />
+                                                <strong>Model:</strong> @(item.Fridge.FridgeType?.Model ?? "N/A")
+                                            </small>
+                                        </div>
+                                        <div>
+                                            <span class="badge @(item.Fridge.Status?.ToLower() == "reserved" ? "bg-warning" : "bg-success")">
+                                                @item.Fridge.Status
+                                            </span>
+                                            <span class="badge bg-primary">Qty: @item.Quantity</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        @if (!string.IsNullOrEmpty(item.Fridge.ImageFileName))
+                                        {
+                                            <img src="@Url.Content($"~/Images/Fridges/{item.Fridge.ImageFileName}")"
+                                                 alt="@item.Fridge.FridgeType?.Name"
+                                                 class="img-fluid rounded shadow"
+                                                 style="max-height: 100px;"
+                                                 onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'">
+                                        }
+                                        else
+                                        {
+                                            <img src="@Url.Content("~/Images/default-fridge.jpg")"
+                                                 alt="Default Fridge Image"
+                                                 class="img-fluid rounded shadow"
+                                                 style="max-height: 100px;">
+                                        }
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-4 text-center">
-                    @if (!string.IsNullOrEmpty(Model.Fridge?.ImageFileName))
-                    {
-                        <img src="@Url.Content($"~/Images/Fridges/{Model.Fridge.ImageFileName}")"
-                             alt="@Model.Fridge.FridgeType?.Name"
-                             class="img-fluid rounded shadow"
-                             style="max-height: 200px;"
-                             onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'">
-                    }
-                    else
-                    {
-                        <img src="@Url.Content("~/Images/default-fridge.jpg")"
-                             alt="Default Fridge Image"
-                             class="img-fluid rounded shadow"
-                             style="max-height: 200px;">
-                    }
-                </div>
+                }
             </div>
         </div>
     </div>
@@ -530,7 +548,10 @@
             }
 
             // Tooltip initialization
-            $('[title]').tooltip();
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
         });
     </script>
 }

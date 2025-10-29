@@ -7,6 +7,13 @@
     // Get customer details safely
     var customerName = Model.Customer?.User?.FullName ?? "N/A";
     var customerEmail = Model.Customer?.User?.Email ?? "N/A";
+
+    // Calculate order statistics
+    var orderItems = Model.Items ?? new List<OrderItem>();
+    var totalUnits = orderItems.Sum(i => i.Quantity);
+    var distinctItems = orderItems.Count;
+    var reservedCount = reservedFridges.Count;
+    var allocatedCount = orderItems.Count(i => i.Fridge?.Status == "Allocated");
 }
 
 <h3 class="text-center mb-4">Allocate Fridge to Order #@Model.Id</h3>
@@ -14,8 +21,12 @@
 <div class="row">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Order Details</h5>
+                <div>
+                    <span class="badge bg-light text-dark me-1">@distinctItems item@(distinctItems != 1 ? "s" : "")</span>
+                    <span class="badge bg-light text-dark">@totalUnits unit@(totalUnits != 1 ? "s" : "")</span>
+                </div>
             </div>
             <div class="card-body">
                 <div class="mb-3">
@@ -37,14 +48,14 @@
                 </div>
 
                 <p class="mb-3"><strong>Delivery Address:</strong> @Model.DeliveryAddress</p>
-                <p class="mb-3"><strong>Order Date:</strong> @Model.CreatedAt.ToString("MM/dd/yyyy")</p>
+                <p class="mb-3"><strong>Order Date:</strong> @Model.CreatedAt.ToString("MM/dd/yyyy HH:mm")</p>
                 <p class="mb-3">
                     <strong>Status:</strong>
                     <span class="badge bg-warning">@Model.OrderStatus</span>
                 </p>
 
                 <h6>Ordered Items:</h6>
-                @if (Model.Items != null && Model.Items.Any())
+                @if (orderItems.Any())
                 {
                     <div class="table-responsive">
                         <table class="table table-sm">
@@ -57,8 +68,15 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var item in Model.Items)
+                                @foreach (var item in orderItems)
                                 {
+                                    var statusBadgeClass = item.Fridge?.Status?.ToLower() switch
+                                    {
+                                        "reserved" => "bg-warning",
+                                        "allocated" => "bg-success",
+                                        _ => "bg-secondary"
+                                    };
+
                                     <tr>
                                         <td>
                                             <strong>@item.Fridge?.FridgeType?.Name</strong>
@@ -73,13 +91,15 @@
  
                                                     @item.Fridge.SerialNumber
                                                 }
+                                                <br />
+                                                <strong>ID:</strong> @item.FridgeId
                                             </small>
                                         </td>
                                         <td class="text-center">
                                             <span class="badge bg-primary">@item.Quantity</span>
                                         </td>
                                         <td>
-                                            <span class="badge bg-@(item.Fridge?.Status?.ToLower() == "reserved" ? "warning" : "secondary")">
+                                            <span class="badge @statusBadgeClass">
                                                 @item.Fridge?.Status
                                             </span>
                                         </td>
@@ -102,21 +122,52 @@
 
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0">Reserved Fridges Ready for Allocation</h5>
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Fridges Ready for Allocation</h5>
+                <div>
+                    @if (reservedCount > 0)
+                    {
+                        <span class="badge bg-warning">@reservedCount reserved</span>
+                    }
+                    @if (allocatedCount > 0)
+                    {
+                        <span class="badge bg-success">@allocatedCount allocated</span>
+                    }
+                </div>
             </div>
             <div class="card-body">
                 @if (reservedFridges.Any())
                 {
+                    <!-- Bulk Allocation Option -->
+                    @if (reservedCount > 1)
+                    {
+                        <div class="alert alert-info mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-lightning-fill me-2"></i>
+                                    <strong>Quick Allocation:</strong> Allocate all @reservedCount reserved fridges at once
+                                </div>
+                                <form method="post" asp-action="AllocateAll" class="d-inline">
+                                    <input type="hidden" name="orderId" value="@Model.Id" />
+                                    <button type="submit" class="btn btn-warning btn-sm"
+                                            onclick="return confirm('Are you sure you want to allocate ALL @reservedCount reserved fridges to this order?')">
+                                        <i class="bi bi-check-all me-1"></i> Allocate All
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+
                     @foreach (var fridge in reservedFridges)
                     {
-                        <div class="border rounded p-3 mb-3">
+                        <div class="border rounded p-3 mb-3 allocation-item">
                             <div class="row">
                                 <div class="col-8">
                                     <h6 class="mb-2">@fridge.FridgeType?.Name</h6>
                                     <p class="mb-1"><strong>Serial:</strong> @fridge.SerialNumber</p>
                                     <p class="mb-1"><strong>Brand:</strong> @fridge.FridgeType?.Brand</p>
                                     <p class="mb-1"><strong>Model:</strong> @fridge.FridgeType?.Model</p>
+                                    <p class="mb-1"><strong>Fridge ID:</strong> @fridge.FridgeId</p>
                                     <p class="mb-2">
                                         <strong>Status:</strong>
                                         <span class="badge bg-warning">@fridge.Status</span>
@@ -131,13 +182,20 @@
                                              style="max-height: 80px;"
                                              onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'">
                                     }
+                                    else
+                                    {
+                                        <img src="@Url.Content("~/Images/default-fridge.jpg")"
+                                             alt="Default Fridge"
+                                             class="img-thumbnail mb-2"
+                                             style="max-height: 80px;">
+                                    }
                                 </div>
                             </div>
 
                             <form method="post" asp-action="Allocate" class="mt-2">
                                 <input type="hidden" name="orderId" value="@Model.Id" />
                                 <input type="hidden" name="fridgeId" value="@fridge.FridgeId" />
-                                <button type="submit" class="btn btn-success btn-sm w-100">
+                                <button type="submit" class="btn btn-success btn-sm w-100 allocate-btn">
                                     <i class="bi bi-check-lg me-1"></i> Allocate This Fridge
                                 </button>
                             </form>
@@ -148,7 +206,14 @@
                 {
                     <div class="alert alert-warning">
                         <i class="bi bi-exclamation-triangle me-2"></i>
-                        No reserved fridges found for this order. The fridges may have been already allocated or are not reserved.
+                        @if (allocatedCount > 0)
+                        {
+                            <text>All fridges have been allocated for this order. No reserved fridges remaining.</text>
+                        }
+                        else
+                        {
+                            <text>No reserved fridges found for this order. The fridges may have been already allocated or are not reserved.</text>
+                        }
                     </div>
 
                     <div class="text-center">
@@ -167,7 +232,7 @@
             </div>
             <div class="card-body">
                 @{
-                    var subtotal = Model.Items?.Sum(i => i.Quantity * i.UnitPrice) ?? 0;
+                    var subtotal = orderItems.Sum(i => i.Quantity * i.UnitPrice);
                     var totalAmount = subtotal + Model.ShippingFee;
                 }
                 <div class="d-flex justify-content-between mb-1">
@@ -183,6 +248,26 @@
                     <span>Total:</span>
                     <span class="text-primary">R @totalAmount.ToString("N2")</span>
                 </div>
+
+                <!-- Allocation Progress -->
+                @if (distinctItems > 0)
+                {
+                    <div class="mt-3">
+                        <small class="text-muted">Allocation Progress</small>
+                        <div class="progress" style="height: 8px;">
+                            @{
+                                var progressPercentage = (allocatedCount / (double)distinctItems) * 100;
+                            }
+                            <div class="progress-bar bg-success" role="progressbar"
+                                 style="width: @progressPercentage%"
+                                 aria-valuenow="@progressPercentage"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                        <small class="text-muted">@allocatedCount of @distinctItems fridges allocated</small>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -199,10 +284,9 @@
 
 @section Scripts {
     <script>
-        // Add confirmation for allocation
         document.addEventListener('DOMContentLoaded', function() {
+            // Add confirmation for individual allocation
             const allocateForms = document.querySelectorAll('form[asp-action="Allocate"]');
-
             allocateForms.forEach(form => {
                 form.addEventListener('submit', function(e) {
                     if (!confirm('Are you sure you want to allocate this fridge to the order? This action cannot be undone.')) {
@@ -210,6 +294,40 @@
                     }
                 });
             });
+
+            // Add hover effects to allocation items
+            const allocationItems = document.querySelectorAll('.allocation-item');
+            allocationItems.forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f8f9fa';
+                    this.style.borderColor = '#0d6efd';
+                });
+                item.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                    this.style.borderColor = '';
+                });
+            });
+
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
         });
     </script>
+
+    <style>
+        .allocation-item {
+            transition: all 0.2s ease-in-out;
+        }
+
+            .allocation-item:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+
+        .allocate-btn:hover {
+            transform: scale(1.02);
+        }
+    </style>
 }

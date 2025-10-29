@@ -26,11 +26,11 @@ namespace FridgeManagementSystem.Models
         public string PaymentStatus { get; set; } = "pending";
         public string PaymentDetails { get; set; } = "";
         public string OrderStatus { get; set; } = "Received";
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        public virtual ICollection<Allocation> Allocations { get; set; } = new List<Allocation>();
+        public ICollection<Allocation> Allocations { get; set; } = new List<Allocation>();
+        
+        public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 
-        public int? FridgeId { get; set; }
-        public Fridge? Fridge { get; set; }
     }
 }

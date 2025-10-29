@@ -39,7 +39,7 @@ else
                     <th>Order #</th>
                     <th>Customer</th>
                     <th>Business</th>
-                    <th>Units</th>
+                    <th>Items</th>
                     <th>Total</th>
                     <th>Payment Method</th>
                     <th>Payment Status</th>
@@ -52,65 +52,44 @@ else
             <tbody>
                 @foreach (var order in Model)
                 {
-                    // Calculate order totals
-                    int unitCount = 0;
-                    decimal orderTotal = order.ShippingFee;
-
-                    if (order.Items != null && order.Items.Any())
-                    {
-                        foreach (var item in order.Items)
-                        {
-                            unitCount += item.Quantity;
-                            orderTotal += item.Quantity * item.UnitPrice;
-                        }
-                    }
+                    // Calculate order totals from OrderItems
+                    var orderItems = order.Items ?? new List<OrderItem>();
+                    int unitCount = orderItems.Sum(item => item.Quantity);
+                    decimal itemsTotal = orderItems.Sum(item => item.Quantity * item.UnitPrice);
+                    decimal orderTotal = itemsTotal + order.ShippingFee;
 
                     // Payment status badge colors
-                    string paymentBadgeColor = "bg-secondary";
-                    if (order.PaymentStatus?.ToLower() == "pending")
+                    string paymentBadgeColor = order.PaymentStatus?.ToLower() switch
                     {
-                        paymentBadgeColor = "bg-warning text-dark";
-                    }
-                    else if (order.PaymentStatus?.ToLower() == "accepted" || order.PaymentStatus?.ToLower() == "completed")
-                    {
-                        paymentBadgeColor = "bg-success";
-                    }
-                    else if (order.PaymentStatus?.ToLower() == "failed" || order.PaymentStatus?.ToLower() == "canceled")
-                    {
-                        paymentBadgeColor = "bg-danger";
-                    }
-                    else if (order.PaymentStatus?.ToLower() == "refunded")
-                    {
-                        paymentBadgeColor = "bg-info text-dark";
-                    }
+                        "pending" => "bg-warning text-dark",
+                        "accepted" or "completed" => "bg-success",
+                        "failed" or "canceled" => "bg-danger",
+                        "refunded" => "bg-info text-dark",
+                        _ => "bg-secondary"
+                    };
 
                     // Order status badge colors
-                    string orderBadgeColor = "bg-secondary";
-                    switch (order.OrderStatus?.ToLower())
+                    string orderBadgeColor = order.OrderStatus?.ToLower() switch
                     {
-                        case "received":
-                            orderBadgeColor = "bg-warning text-dark";
-                            break;
-                        case "accepted":
-                            orderBadgeColor = "bg-primary";
-                            break;
-                        case "processing":
-                            orderBadgeColor = "bg-info";
-                            break;
-                        case "shipped":
-                            orderBadgeColor = "bg-info text-dark";
-                            break;
-                        case "delivered":
-                            orderBadgeColor = "bg-success";
-                            break;
-                        case "cancelled":
-                        case "canceled":
-                            orderBadgeColor = "bg-danger";
-                            break;
-                        case "returned":
-                            orderBadgeColor = "bg-dark";
-                            break;
-                    }
+                        "received" => "bg-warning text-dark",
+                        "accepted" => "bg-primary",
+                        "processing" => "bg-info",
+                        "shipped" => "bg-info text-dark",
+                        "delivered" => "bg-success",
+                        "cancelled" or "canceled" => "bg-danger",
+                        "returned" => "bg-dark",
+                        _ => "bg-secondary"
+                    };
+
+                    // Format payment method
+                    var paymentMethod = order.PaymentMethod ?? "Unknown";
+                    var formattedPaymentMethod = paymentMethod switch
+                    {
+                        "CreditCard" => "Credit Card",
+                        "CashOnDelivery" => "Cash on Delivery",
+                        "PayPal" => "PayPal",
+                        _ => paymentMethod
+                    };
 
                     <tr>
                         <td>
@@ -143,28 +122,32 @@ else
                             }
                         </td>
                         <td>
-                            <span class="badge bg-light text-dark">@unitCount units</span>
+                            <span class="badge bg-light text-dark" title="@orderItems.Count distinct items">
+                                @unitCount unit@(unitCount != 1 ? "s" : "")
+                                @if (orderItems.Count > 1)
+                                {
+                                    <small>(@orderItems.Count types)</small>
+                                }
+                            </span>
                         </td>
                         <td>
                             <strong>R @orderTotal.ToString("N2")</strong>
                             <br />
+                            <small class="text-muted">Items: R @itemsTotal.ToString("N2")</small>
+                            <br />
                             <small class="text-muted">Shipping: R @order.ShippingFee.ToString("N2")</small>
                         </td>
                         <td>
-                            @{
-                                var paymentMethod = order.PaymentMethod ?? "Unknown";
-                                var formattedPaymentMethod = paymentMethod.Replace("OnDelivery", " on Delivery").Replace("Cash", "Cash");
-                            }
                             <span class="badge bg-light text-dark">@formattedPaymentMethod</span>
                         </td>
                         <td>
                             <span class="badge rounded-pill @paymentBadgeColor">
-                                @order.PaymentStatus
+                                @order.PaymentStatus?.ToUpper()
                             </span>
                         </td>
                         <td>
                             <span class="badge rounded-pill @orderBadgeColor">
-                                @order.OrderStatus
+                                @order.OrderStatus?.ToUpper()
                             </span>
                         </td>
                         <td>
@@ -178,7 +161,11 @@ else
                                    asp-route-id="@order.Id" title="View Details">
                                     <i class="fas fa-eye"></i> Details
                                 </a>
-                                @if (order.OrderStatus?.ToLower() != "cancelled" && order.OrderStatus?.ToLower() != "canceled" && order.OrderStatus?.ToLower() != "delivered")
+                                @{
+                                    var nonEditableStatuses = new[] { "cancelled", "canceled", "delivered", "returned" };
+                                    var canEdit = !nonEditableStatuses.Contains(order.OrderStatus?.ToLower());
+                                }
+                                @if (canEdit)
                                 {
                                     <a class="btn btn-outline-secondary btn-sm" asp-controller="LiaisonOrders" asp-action="Edit"
                                        asp-route-id="@order.Id" title="Edit Order">
@@ -278,7 +265,7 @@ else
 
 @section Scripts {
     <script>
-        // Auto-dismiss alerts after 5 seconds
+        // Auto-dismiss alerts after 3 seconds
         setTimeout(function () {
             $('.alert').alert('close');
         }, 3000);
@@ -296,7 +283,10 @@ else
             );
 
             // Tooltip initialization
-            $('[title]').tooltip();
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
         });
     </script>
 }

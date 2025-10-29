@@ -4,7 +4,7 @@ using FridgeManagementSystem.Authorization;
 using FridgeManagementSystem.Data;
 using FridgeManagementSystem.Services;
 using Microsoft.AspNetCore.Authorization;
-//using FridgeManagementSystem.Services;
+using FridgeManagementSystem.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -72,6 +72,7 @@ builder.Services.AddScoped<IAuthorizationHandler, CustomerLiaisonAuthorizationHa
 builder.Services.AddScoped<IOrderNotificationRepository, OrderNotificationRepository>();
 builder.Services.AddScoped<IFaultNotificationRepository, FaultNotificationRepository>();
 builder.Services.AddScoped<ITechnicianReportRepository, TechnicianReportRepository>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IEmployeeNumberService, EmployeeNumberService>();
 
 // Register Admin Seed Service

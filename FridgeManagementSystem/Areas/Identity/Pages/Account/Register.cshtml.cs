@@ -198,8 +198,9 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                 user.Suburb = Input.Suburb;
                 user.PostalCode = Input.PostalCode;
                 user.ApprovalStatus = "Pending"; // Customers need approval
-                user.IsActive= true;
-                user.CreatedAt= DateTime.UtcNow;
+                user.IsActive = true;
+                user.CreatedAt = DateTime.UtcNow;
+
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
                 var result = await _userManager.CreateAsync(user, Input.Password);
@@ -208,60 +209,37 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User created a new account with password.");
 
-                    // ensure Customer role exist
-                    if(!await _roleManager.RoleExistsAsync("Customer"))
+                    // Ensure Customer role exists
+                    if (!await _roleManager.RoleExistsAsync("Customer"))
                     {
                         await _roleManager.CreateAsync(new IdentityRole("Customer"));
                     }
 
                     // Automatically assign Customer role
-
                     await _userManager.AddToRoleAsync(user, "Customer");
-                    //await _userManager.AddToRoleAsync(user, Input.Role);
-                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // string from Identity
-                    // Create customer record
+
+                    // Create customer record - ONLY SET THE ID ONCE
                     var customer = new Customer
                     {
-                        Id = user.Id,
+                        Id = user.Id, // This is correct - use the newly created user's ID
                         BusinessName = Input.BusinessName,
                         CustomerType = Input.CustomerType,
                         CreatedByFullName = user.FullName,
                         CreatedAt = DateTime.UtcNow,
-                        CreatedById = user.Id
+                        CreatedById = null // Use user.Id here too, not the current authenticated user
                     };
 
                     _context.Customers.Add(customer);
 
                     // Create notifications for administrators and customer liaisons
                     await CreateApprovalNotifications(user);
-                    customer.Id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
                     await _context.SaveChangesAsync();
 
                     // Redirect to custom confirmation page with login details
                     return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
-
-                    //var userId = await _userManager.GetUserIdAsync(user);
-                    //var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    //code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    //var callbackUrl = Url.Page(
-                    //    "/Account/ConfirmEmail",
-                    //    pageHandler: null,
-                    //    values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
-                    //    protocol: Request.Scheme);
-
-                    //await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                    //    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-
-                    //if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                    //{
-                    //    return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
-                    //}
-                    //else
-                    //{
-                    //    await _signInManager.SignInAsync(user, isPersistent: false);
-                    //    return LocalRedirect(returnUrl);
-                    //}
                 }
+
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
@@ -296,23 +274,49 @@ namespace FridgeManagementSystem.Areas.Identity.Pages.Account
         }
         private async Task CreateApprovalNotifications(ApplicationUser user)
         {
-            // Get all admins and customer liaisons
-            var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
-            var liaisonUsers = await _userManager.GetUsersInRoleAsync("CustomerLiaison");
-
-            var usersToNotify = adminUsers.Union(liaisonUsers).ToList();
-
-            foreach (var notifyUser in usersToNotify)
+            try
             {
-                var notification = new Notification
-                {
-                    UserId = notifyUser.Id,
-                    Title = "New Customer Registration Requires Approval",
-                    Message = $"Customer {user.FullName} ({user.Email}) from {user.City + ", " + user.Suburb} has been registered and requires approval.",
-                    Link = GenerateAbsoluteUrl($"/Admin/ApproveCustomer/{user.Id}")
-                };
+                // Get all admin users
+                var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
 
-                _context.Notifications.Add(notification);
+                // Get customer liaison employees by querying the Employee and EmployeeType tables
+                var liaisonUsers = await _context.Users
+                    .Where(u => u.Employees != null &&
+                               u.Employees.EmployeeType != null &&
+                               u.Employees.EmployeeType.Name == "CustomerLiaison" &&
+                               u.Employees.IsActive)
+                    .ToListAsync();
+
+                // Combine both lists and remove duplicates
+                var usersToNotify = adminUsers
+                    .Union(liaisonUsers)
+                    .GroupBy(u => u.Id)
+                    .Select(g => g.First())
+                    .ToList();
+
+                _logger.LogInformation("Sending approval notifications to {Count} users", usersToNotify.Count);
+
+                foreach (var notifyUser in usersToNotify)
+                {
+                    var notification = new Notification
+                    {
+                        UserId = notifyUser.Id,
+                        Title = "New Customer Registration Requires Approval",
+                        Message = $"Customer {user.FullName} ({user.Email}) from {user.City}, {user.Suburb} has been registered and requires approval.",
+                        Link = GenerateAbsoluteUrl($"/Admin/ApproveCustomer/{user.Id}"),
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false
+                    };
+
+                    _context.Notifications.Add(notification);
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating approval notifications for user {UserId}", user.Id);
+                // Don't throw here - we don't want registration to fail just because notifications failed
             }
         }
     }

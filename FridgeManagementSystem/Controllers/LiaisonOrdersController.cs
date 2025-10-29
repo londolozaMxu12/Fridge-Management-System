@@ -149,7 +149,6 @@ namespace FridgeManagementSystem.Controllers
                     .Include(o => o.Items)
                         .ThenInclude(i => i.Fridge)
                         .ThenInclude(f => f.FridgeType)
-                    .Include(o => o.Fridge)
                     .Include(o => o.Allocations)
                     .FirstOrDefaultAsync(o => o.Id == id);
 
@@ -164,6 +163,10 @@ namespace FridgeManagementSystem.Controllers
                 {
                     _logger.LogWarning($"Order {id} has no items when viewing details");
                 }
+                else
+                {
+                    _logger.LogInformation($"Order {id} has {order.Items.Count} items");
+                }
 
                 // Get customer details
                 var customerDetails = GetCustomerDetails(order);
@@ -172,10 +175,15 @@ namespace FridgeManagementSystem.Controllers
                 var numOrders = await _context.Orders
                     .CountAsync(o => o.CustomerId == order.CustomerId);
 
+                // Calculate order total from items
+                var orderTotal = order.Items.Sum(item => item.UnitPrice * item.Quantity) + order.ShippingFee;
+
                 ViewBag.NumOrders = numOrders;
                 ViewBag.CustomerName = customerDetails.name;
                 ViewBag.CustomerEmail = customerDetails.email;
                 ViewBag.CustomerPhone = customerDetails.phone;
+                ViewBag.OrderTotal = orderTotal;
+                ViewBag.ItemCount = order.Items.Count;
 
                 return View(order);
             }
@@ -304,8 +312,7 @@ namespace FridgeManagementSystem.Controllers
                 var allocations = _context.Allocations.Where(a => a.OrderId == order.Id);
                 _context.Allocations.RemoveRange(allocations);
 
-                // Clear fridge reference from order
-                order.FridgeId = null;
+                // No need to clear fridge reference from order since FridgeId is removed
 
                 // Notify about freed fridges
                 if (freedFridgeIds.Any())
@@ -379,7 +386,14 @@ namespace FridgeManagementSystem.Controllers
                         PaymentStatus = o.PaymentStatus,
                         TotalAmount = o.Items.Sum(i => i.UnitPrice * i.Quantity) + o.ShippingFee,
                         CreatedAt = o.CreatedAt,
-                        ItemCount = o.Items.Count
+                        ItemCount = o.Items.Count,
+                        FridgeDetails = o.Items.Select(i => new
+                        {
+                            FridgeId = i.FridgeId,
+                            FridgeName = i.Fridge.FridgeType.Name,
+                            Brand = i.Fridge.FridgeType.Brand,
+                            Model = i.Fridge.FridgeType.Model
+                        })
                     })
                     .ToListAsync();
 
@@ -389,6 +403,44 @@ namespace FridgeManagementSystem.Controllers
             {
                 _logger.LogError(ex, "Error loading orders with customer details");
                 return Json(new { error = "An error occurred while loading orders" });
+            }
+        }
+
+        // New method to get order items with fridge details
+        public async Task<IActionResult> GetOrderItems(int orderId)
+        {
+            if (!await IsCustomerLiaisonAsync())
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                var orderItems = await _context.OrderItems
+                    .Where(oi => oi.OrderId == orderId)
+                    .Include(oi => oi.Fridge)
+                        .ThenInclude(f => f.FridgeType)
+                    .Select(oi => new
+                    {
+                        OrderItemId = oi.Id,
+                        FridgeId = oi.FridgeId,
+                        FridgeName = oi.Fridge.FridgeType.Name,
+                        Brand = oi.Fridge.FridgeType.Brand,
+                        Model = oi.Fridge.FridgeType.Model,
+                        SerialNumber = oi.Fridge.SerialNumber,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.Quantity * oi.UnitPrice,
+                        FridgeStatus = oi.Fridge.Status
+                    })
+                    .ToListAsync();
+
+                return Json(new { success = true, items = orderItems });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error loading order items for order {orderId}");
+                return Json(new { success = false, message = "Error loading order items" });
             }
         }
     }

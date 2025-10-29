@@ -49,7 +49,7 @@
     <div class="col-md-6">
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Basic Information</h5>
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Contact Information</h5>
             </div>
             <div class="card-body">
                 <div class="row mb-3">
@@ -163,8 +163,8 @@
                 <div class="row mb-3">
                     <div class="col-sm-6 fw-bold">Total Fridges:</div>
                     <div class="col-sm-6">
-                        <span class="badge @(Model.Fridges?.Count() > 0 ? "bg-primary" : "bg-secondary")">
-                            @(Model.Fridges?.Count() ?? 0)
+                        <span class="badge @(ViewBag.FridgeCount > 0 ? "bg-primary" : "bg-secondary")">
+                            @(ViewBag.FridgeCount ?? 0)
                         </span>
                     </div>
                 </div>
@@ -173,7 +173,7 @@
                     <div class="col-sm-6">
                         @if (ViewBag.ActiveOrdersCount > 0)
                         {
-                            <span class="badge bg-warning text-dark">@ViewBag.ActiveOrdersCount active order(s)</span>
+                            <span class="badge bg-warning text-light">@ViewBag.ActiveOrdersCount active order(s)</span>
                         }
                         else
                         {
@@ -192,24 +192,17 @@
                 <div class="row mb-3">
                     <div class="col-sm-6 fw-bold">Reported Faults:</div>
                     <div class="col-sm-6">
-                        <span class="badge @(Model.ReportedFaults?.Count() > 0 ? "bg-danger" : "bg-secondary")">
-                            @(Model.ReportedFaults?.Count() ?? 0)
+                        <span class="badge @(ViewBag.FaultCount > 0 ? "bg-danger" : "bg-secondary")">
+                            @(ViewBag.FaultCount ?? 0)
                         </span>
                     </div>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-sm-6 fw-bold">Fridge Requests:</div>
-                    <div class="col-sm-6">
-                        <span class="badge @(Model.FridgeRequests?.Count() > 0 ? "bg-info" : "bg-secondary")">
-                            @(Model.FridgeRequests?.Count() ?? 0)
-                        </span>
-                    </div>
-                </div>
+                
                 <div class="row mb-3">
                     <div class="col-sm-6 fw-bold">Allocations:</div>
                     <div class="col-sm-6">
-                        <span class="badge @(Model.Allocations?.Count() > 0 ? "bg-success" : "bg-secondary")">
-                            @(Model.Allocations?.Count() ?? 0)
+                        <span class="badge @(ViewBag.AllocationCount > 0 ? "bg-success" : "bg-secondary")">
+                            @(ViewBag.AllocationCount ?? 0)
                         </span>
                     </div>
                 </div>
@@ -235,7 +228,7 @@
                             <thead>
                                 <tr>
                                     <th>Serial Number</th>
-                                    <th>Brand & Model</th>
+                                    <th>Type</th>
                                     <th>Status</th>
                                     <th>Acquisition Date</th>
                                     <th>Allocation Date</th>
@@ -246,7 +239,7 @@
                                 {
                                     <tr>
                                         <td>@fridge.SerialNumber</td>
-                                        <td>@fridge.DisplayName</td>
+                                        <td>@(fridge.FridgeType?.Name ?? "N/A")</td>
                                         <td>
                                             <span class="badge @(fridge.Status == "Allocated" ? "bg-success" : fridge.Status == "Reserved" ? "bg-warning" : "bg-secondary")">
                                                 @fridge.Status
@@ -264,7 +257,7 @@
                 {
                     <div class="text-center py-3">
                         <i class="fas fa-refrigerator fa-2x text-muted mb-2"></i>
-                        <p class="text-muted">No fridges assigned to this customer.</p>
+                        <p class="text-muted">No fridges allocated to this customer.</p>
                     </div>
                 }
             </div>
@@ -277,7 +270,7 @@
     {
         return customerType?.ToLower() switch
         {
-            "spazashop" => "bg-primary",
+            "spazashop" or "spazashop" => "bg-primary",
             "liquor" => "bg-success",
             "other" => "bg-info",
             _ => "bg-secondary"

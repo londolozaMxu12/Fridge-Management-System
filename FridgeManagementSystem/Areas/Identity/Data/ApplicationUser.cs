@@ -40,7 +40,5 @@ namespace FridgeManagementSystem.Areas.Identity.Data
 
         public ShoppingCart? ShoppingCart { get; set; }
 
-        //public Allocation? Allocations { get; set; }
-        public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }

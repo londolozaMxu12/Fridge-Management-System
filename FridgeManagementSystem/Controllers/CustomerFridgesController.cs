@@ -33,29 +33,42 @@ namespace FridgeManagementSystem.Controllers
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                // Get customer's allocated fridges
-                var allocatedFridges = await _context.Fridges
-                    .Include(f => f.FridgeType)
-                    .Include(f => f.Customer)  // Include Customer
-                        .ThenInclude(c => c.User)  // Then include User for customer details
-                    .Where(f => f.CustomerId == userId && f.Status == "Allocated")  // Use CustomerId (string)
+                // Get customer
+                var customer = await _context.Customers
+                    .FirstOrDefaultAsync(c => c.Id == userId);
+
+                if (customer == null)
+                {
+                    return View(new List<Fridge>());
+                }
+
+                // Get fridges from ACTIVE allocations
+                var allocatedFridges = await _context.Allocations
+                    .Include(a => a.Fridge)
+                        .ThenInclude(f => f.FridgeType)
+                    .Include(a => a.Fridge)
+                        .ThenInclude(f => f.Customer)
+                            .ThenInclude(c => c.User)
+                    .Where(a => a.CustomerId == customer.Id && a.IsActive)
+                    .Select(a => a.Fridge)
+                    .Where(f => f.IsActive)
                     .OrderByDescending(f => f.AllocationDate)
                     .Take(4)
                     .ToListAsync();
 
-                // Also get fridges from allocations (for historical records) - FIXED: Use CustomerId
-                var allocationFridges = await _context.Allocations
+                // Get allocation history
+                var allocationHistory = await _context.Allocations
                     .Include(a => a.Fridge)
                         .ThenInclude(f => f.FridgeType)
-                    .Include(a => a.Customer)  // Include Customer
-                        .ThenInclude(c => c.User)  // Then include User
+                    .Include(a => a.Customer)
+                        .ThenInclude(c => c.User)
                     .Include(a => a.Order)
-                    .Where(a => a.CustomerId == userId)  // Use CustomerId (string)
+                    .Where(a => a.CustomerId == customer.Id)
                     .OrderByDescending(a => a.AllocationDate)
                     .Take(6)
                     .ToListAsync();
 
-                ViewBag.AllocationHistory = allocationFridges;
+                ViewBag.AllocationHistory = allocationHistory;
                 return View(allocatedFridges);
             }
             catch (Exception ex)

@@ -2,165 +2,778 @@
 @{
     Layout = "_CustomerLayout";
 
-    string paymentBadgeColor = "bg-danger";
-    if (Model.PaymentStatus == "pending")
-    {
-        paymentBadgeColor = "bg-warning text-dark";
-    }
-    else if (Model.PaymentStatus == "accepted")
-    {
-        paymentBadgeColor = "bg-success";
-    }
-    else if (Model.PaymentStatus == "canceled")
-    {
-        paymentBadgeColor = "bg-danger";
-    }
+    // Calculate order statistics
+    var orderItems = Model.Items ?? new List<OrderItem>();
+    decimal subtotal = orderItems.Sum(i => i.Quantity * i.UnitPrice);
+    decimal totalAmount = subtotal + Model.ShippingFee;
+    int totalUnits = orderItems.Sum(i => i.Quantity);
+    int distinctItems = orderItems.Count;
 
-    string orderBadgeColor = "bg-secondary";
-    if (Model.OrderStatus == "Received")
+    // Payment status badge colors
+    string paymentBadgeColor = Model.PaymentStatus?.ToLower() switch
     {
-        orderBadgeColor = "bg-warning text-dark";
-    }
-    else if (Model.OrderStatus == "Accepted")
+        "pending" => "bg-warning text-dark",
+        "accepted" or "paid" or "completed" => "bg-success",
+        "canceled" or "cancelled" or "failed" => "bg-danger",
+        "refunded" => "bg-info text-dark",
+        _ => "bg-secondary"
+    };
+
+    // Order status badge colors
+    string orderBadgeColor = Model.OrderStatus?.ToLower() switch
     {
-        orderBadgeColor = "bg-success";
-    }
-    else if (Model.OrderStatus == "Cancelled")
+        "received" or "pending" => "bg-warning text-dark",
+        "accepted" or "processing" => "bg-primary",
+        "shipped" => "bg-info text-dark",
+        "delivered" or "completed" => "bg-success",
+        "canceled" or "cancelled" => "bg-danger",
+        "returned" => "bg-secondary",
+        _ => "bg-secondary"
+    };
+
+    // Format payment method
+    string paymentMethodDisplay = Model.PaymentMethod?.ToLower() switch
     {
-        orderBadgeColor = "bg-secondary";
-    }
-    else if (Model.OrderStatus == "Shipped")
-    {
-        orderBadgeColor = "bg-primary";
-    }
-    else if (Model.OrderStatus == "Delivered")
-    {
-        orderBadgeColor = "bg-success";
-    }
-    else if (Model.OrderStatus == "Returned")
-    {
-        orderBadgeColor = "bg-info text-dark";
-    }
+        "creditcard" => "Credit Card",
+        "cashondelivery" => "Cash on Delivery",
+        "paypal" => "PayPal",
+        "eft" => "EFT",
+        "banktransfer" => "Bank Transfer",
+        _ => Model.PaymentMethod
+    };
 }
 
-<h3 class="text-center mb-4">Order Details</h3>
-
-<a class="btn btn-secondary rounded-pill px-4 mb-3" asp-controller="CustomerOrders" asp-action="Index">
-    <i class="bi bi-arrow-left me-2"></i>Back to Orders
-</a>
-
-<div class="col-lg-9 col-md-8">
-    <div class="card">
-        <div class="card-header bg-success">
-            <h5 class="card-title mb-0 text-light">
-                @* <h3 class="mb-4">Order Details</h3> *@
-                Order Details
-            </h5>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 text-light">
+            <i class="fas fa-receipt me-2"></i>Order #@Model.Id
+        </h1>
+        <div>
+            <button class="btn btn-info me-2" onclick="loadTrackingInfo(@Model.Id, true)">
+                <i class="fas fa-shipping-fast me-2"></i>Refresh Tracking
+            </button>
+            <a class="btn btn-outline-light" asp-controller="CustomerOrders" asp-action="Index">
+                <i class="fas fa-arrow-left me-2"></i>Back to Orders
+            </a>
         </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="row mb-2 pb-2 border-bottom">
-                    <div class="col">Order ID</div>
-                    <div class="col">@Model.Id</div>
-                </div>
+    </div>
 
-                <div class="row mb-2 pb-2 border-bottom">
-                    <div class="col">Delivery Address</div>
-                    <div class="col">@Model.DeliveryAddress</div>
-                </div>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-                <div class="row mb-2 pb-2 border-bottom">
-                    <div class="col">Payment Method</div>
-                    <div class="col">@Model.PaymentMethod</div>
-                </div>
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-                <div class="row mb-2 pb-2 border-bottom">
-                    <div class="col">Payment Status</div>
-                    <div class="col">
-                        <span class="badge rounded-pill @paymentBadgeColor">@Model.PaymentStatus</span>
+    <div class="row">
+        <!-- Order Information & Tracking -->
+        <div class="col-lg-8">
+            <!-- Real-time Tracking Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shipping-fast me-2"></i>Live Order Tracking
+                    </h5>
+                    <button class="btn btn-light btn-sm" onclick="loadTrackingInfo(@Model.Id, true)">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="card-body" id="trackingSection">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading tracking information...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading real-time tracking information...</p>
                     </div>
                 </div>
+            </div>
 
-                <div class="row mb-2 pb-2 border-bottom">
-                    <div class="col">Order Status</div>
-                    <div class="col">
-                        <span class="badge rounded-pill @orderBadgeColor">@Model.OrderStatus</span>
+            <!-- Order Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Order Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Order ID</label>
+                                <div class="fs-5">#@Model.Id</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Order Date</label>
+                                <div>@Model.CreatedAt.ToString("MMMM dd, yyyy 'at' hh:mm tt")</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Payment Method</label>
+                                <div>@paymentMethodDisplay</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Delivery Address</label>
+                                <div>@Model.DeliveryAddress</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Payment Status</label>
+                                <div>
+                                    <span class="badge @paymentBadgeColor">@Model.PaymentStatus</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Order Status</label>
+                                <div>
+                                    <span class="badge @orderBadgeColor">@Model.OrderStatus</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="row mb-2">
-                    <div class="col">Order Date</div>
-                    <div class="col">@Model.CreatedAt.ToString("MM/dd/yyyy HH:mm")</div>
+            <!-- Order Items -->
+            <div class="card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-boxes me-2"></i>Order Items
+                    </h5>
+                    <div>
+                        <span class="badge bg-light text-dark me-1">@distinctItems item@(distinctItems != 1 ? "s" : "")</span>
+                        <span class="badge bg-light text-dark">@totalUnits unit@(totalUnits != 1 ? "s" : "")</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (orderItems.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 100px">Image</th>
+                                        <th>Product Details</th>
+                                        <th style="width: 100px" class="text-center">Quantity</th>
+                                        <th style="width: 120px" class="text-end">Unit Price</th>
+                                        <th style="width: 120px" class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in orderItems)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(item.Fridge?.ImageFileName))
+                                                {
+                                                    <img src="@Url.Content($"~/Images/Fridges/{item.Fridge.ImageFileName}")"
+                                                         width="80"
+                                                         alt="@item.Fridge.FridgeType?.Name"
+                                                         class="img-thumbnail"
+                                                         onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'" />
+                                                }
+                                                else
+                                                {
+                                                    <img src="@Url.Content("~/Images/default-fridge.jpg")"
+                                                         width="80"
+                                                         alt="Default Fridge"
+                                                         class="img-thumbnail" />
+                                                }
+                                            </td>
+                                            <td>
+                                                <h6 class="mb-1">
+                                                    <a asp-controller="Store" asp-action="Details" asp-route-id="@item.FridgeId"
+                                                       class="text-decoration-none text-dark">
+                                                        @item.Fridge?.FridgeType?.Name
+                                                    </a>
+                                                </h6>
+                                                <small class="text-muted">
+                                                    @item.Fridge?.FridgeType?.Brand - @item.Fridge?.FridgeType?.Model
+                                                    @if (!string.IsNullOrEmpty(item.Fridge?.SerialNumber))
+                                                    {
+                                                        <br />
+                                                        <strong>Serial:</strong>
+ 
+                                                        @item.Fridge.SerialNumber
+                                                    }
+                                                    <br />
+                                                    <span class="badge @(item.Fridge?.Status?.ToLower() == "reserved" ? "bg-warning" : "bg-success")">
+                                                        @item.Fridge?.Status
+                                                    </span>
+                                                </small>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-primary rounded-pill fs-6">@item.Quantity</span>
+                                            </td>
+                                            <td class="text-end">R @item.UnitPrice.ToString("N2")</td>
+                                            <td class="text-end fw-bold">R @((item.UnitPrice * item.Quantity).ToString("N2"))</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No items found in this order.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Summary & Actions -->
+        <div class="col-lg-4">
+            <!-- Order Summary -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-receipt me-2"></i>Order Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span>R @subtotal.ToString("N2")</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Shipping Fee:</span>
+                        <span>R @Model.ShippingFee.ToString("N2")</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold fs-5">
+                        <span>Total Amount:</span>
+                        <span class="text-primary">R @totalAmount.ToString("N2")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Actions -->
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cog me-2"></i>Order Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @{
+                        var cancellableStatuses = new[] { "Received", "Pending", "Processing" };
+                        var canCancel = cancellableStatuses.Contains(Model.OrderStatus);
+                    }
+
+                    @if (canCancel)
+                    {
+                        <button class="btn btn-danger w-100 mb-2"
+                                onclick="confirmCancel(@Model.Id, '@Model.OrderStatus')">
+                            <i class="fas fa-times me-2"></i>Cancel Order
+                        </button>
+                    }
+
+                    <div class="btn-group w-100 mb-2">
+                        <a class="btn btn-outline-primary"
+                           href="@Url.Action("DownloadInvoice", "CustomerOrders", new { id = Model.Id })"
+                           title="Download PDF Invoice">
+                            <i class="fas fa-download me-2"></i>Download Invoice
+                        </a>
+                        <button class="btn btn-outline-info"
+                                onclick="viewInvoice(@Model.Id)"
+                                title="View Invoice Online">
+                            <i class="fas fa-eye me-2"></i>View
+                        </button>
+                    </div>
+
+                    <button class="btn btn-outline-secondary w-100 mb-2" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Print Invoice
+                    </button>
+
+                    <a asp-controller="Store" asp-action="Index" class="btn btn-success w-100">
+                        <i class="fas fa-shopping-cart me-2"></i>Continue Shopping
+                    </a>
+                </div>
+            </div>
+
+            <!-- Support Information -->
+            <div class="card mt-4">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-headset me-2"></i>Need Help?
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-2">
+                        If you have any questions about your order, please contact our customer support team.
+                    </p>
+                    <div class="small">
+                        <i class="fas fa-phone me-2"></i> <strong>Support:</strong> (123) 456-7890<br>
+                        <i class="fas fa-envelope me-2"></i> <strong>Email:</strong> support@fridgemanagement.com
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+@section Scripts {
+    <script>
+                // Invoice functionality
+        function viewInvoice(orderId) {
+            // Show loading state
+            Swal.fire({
+                title: 'Generating Invoice...',
+                text: 'Please wait while we prepare your invoice',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
 
-<div class="card mt-4">
+            fetch(`/CustomerOrders/ViewInvoice?id=${orderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Create PDF viewer modal
+                        const pdfUrl = 'data:application/pdf;base64,' + data.data;
 
-    <div class="col bg-light">
-        <div class="border rounded py-3 px-4 h-100">
-            <h3 class="mb-4">Order</h3>
-
-
-        </div>
-    </div>
-</div>
-
-<table class="table">
-    <thead>
-        <tr>
-            <th style="width: 100px">Description</th>
-            <th></th>
-            <th style="width:100px">Units</th>
-            <th style="width:100px">Amount</th>
-        </tr>
-    </thead>
-    <tbody>
-        @{
-            decimal subtotal = 0;
-            foreach (var item in Model.Items)
-            {
-                subtotal += item.UnitPrice * item.Quantity;
-
-                <tr>
-                    <td>
-                        <img src="@Url.Content($"~/Images/Fridges/{item.Fridge.ImageFileName}")"
-                             width="100"
-                             alt="@item.Fridge.FridgeType?.Name"
-                             onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'" />
-                    </td>
-                    <td>
-                        <h4>
-                            <a style="text-decoration: none; color: inherit;" asp-controller="Store"
-                               asp-action="Details" asp-route-id="@item.Fridge.FridgeId">
-                                @item.Fridge.FridgeType?.Name
-                            </a>
-                        </h4>
-                        @item.Fridge.FridgeType?.Brand - @item.Fridge.FridgeType?.Model<br>
-                        R @(item.UnitPrice.ToString("F2"))
-                    </td>
-                    <td>@item.Quantity</td>
-                    <td>R @((item.UnitPrice * item.Quantity).ToString("F2"))</td>
-                </tr>
-            }
+                        Swal.fire({
+                            title: 'Invoice Preview',
+                            html: `
+                                <div class="text-center">
+                                    <iframe src="${pdfUrl}" width="100%" height="500px" style="border: none;"></iframe>
+                                    <div class="mt-3">
+                                        <a href="${pdfUrl}" download="invoice.pdf" class="btn btn-primary me-2">
+                                            <i class="fas fa-download me-1"></i>Download
+                                        </a>
+                                        <button class="btn btn-secondary" onclick="window.print()">
+                                            <i class="fas fa-print me-1"></i>Print
+                                        </button>
+                                    </div>
+                                </div>
+                            `,
+                            width: '80%',
+                            showConfirmButton: false,
+                            showCloseButton: true
+                        });
+                    } else {
+                        throw new Error(data.message || 'Failed to generate invoice');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: error.message || 'An error occurred while generating the invoice.',
+                        icon: 'error',
+                        confirmButtonColor: '#d33'
+                    });
+                });
         }
-    </tbody>
-</table>
 
-<div class="ms-auto mb-3" style="width: 250px">
-    <div class="row">
-        <div class="col fw-bold">Subtotal:</div>
-        <div class="col text-end">R @(subtotal.ToString("F2"))</div>
-    </div>
-    <div class="row">
-        <div class="col fw-bold">Shipping Fee:</div>
-        <div class="col text-end">R @(Model.ShippingFee.ToString("F2"))</div>
-    </div>
-    <div class="row">
-        <div class="col fw-bold">Total:</div>
-        <div class="col text-end">R @((subtotal + Model.ShippingFee).ToString("F2"))</div>
-    </div>
-</div>
+        // Add click handler for download buttons to show confirmation
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.download-invoice-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const orderId = this.getAttribute('data-order-id');
+
+                    Swal.fire({
+                        title: 'Download Invoice',
+                        text: 'The invoice will be downloaded as a PDF file.',
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: 'Download',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Continue with download
+                            return true;
+                        } else {
+                            e.preventDefault();
+                        }
+                    });
+                });
+            });
+        });
+
+        // Track Order functionality for Details view
+        function loadTrackingInfo(orderId, showLoading = false) {
+            const trackingSection = document.getElementById('trackingSection');
+
+            if (showLoading) {
+                trackingSection.innerHTML = `
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading tracking information...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading real-time tracking information...</p>
+                    </div>
+                `;
+            }
+
+            fetch(`/CustomerOrders/TrackOrder?id=${orderId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        displayTrackingDetails(data.data);
+                    } else {
+                        throw new Error(data.message || 'Failed to load tracking information');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    trackingSection.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error loading tracking information: ${error.message}
+                        </div>
+                    `;
+                });
+        }
+
+        function displayTrackingDetails(trackingData) {
+            const trackingSection = document.getElementById('trackingSection');
+
+            const statusTimeline = createStatusTimeline(trackingData.Status);
+            const progressPercentage = getProgressPercentage(trackingData.Status);
+
+            const allocationsInfo = trackingData.Allocations?.length > 0 ?
+                `<p><i class="fas fa-check text-success me-2"></i><strong>${trackingData.Allocations.length}</strong> fridge(s) allocated and ready</p>` :
+                '<p><i class="fas fa-clock text-warning me-2"></i>Awaiting fridge allocation</p>';
+
+            const lastUpdate = trackingData.Allocations?.length > 0 ?
+                new Date(Math.max(...trackingData.Allocations.map(a => new Date(a.AllocationDate)))) :
+                trackingData.CreatedAt;
+
+            const html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="text-center mb-3">
+                            <h3 class="text-${getStatusColor(trackingData.Status)}">${trackingData.Status}</h3>
+                            <div class="progress" style="height: 12px;">
+                                <div class="progress-bar bg-${getStatusColor(trackingData.Status)}"
+                                     style="width: ${progressPercentage}%"
+                                     role="progressbar">
+                                    ${progressPercentage}%
+                                </div>
+                            </div>
+                            <small class="text-muted">${getStatusDescription(trackingData.Status)}</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <p><i class="fas fa-calendar me-2"></i><strong>Ordered:</strong> ${new Date(trackingData.CreatedAt).toLocaleDateString()}</p>
+                            <p><i class="fas fa-truck me-2"></i><strong>Estimated Delivery:</strong> ${new Date(trackingData.EstimatedDelivery).toLocaleDateString()}</p>
+                            <p><i class="fas fa-sync-alt me-2"></i><strong>Last Updated:</strong> ${new Date(lastUpdate).toLocaleString()}</p>
+                            ${allocationsInfo}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        ${statusTimeline}
+                    </div>
+                </div>
+
+                ${trackingData.Allocations?.length > 0 ? `
+                <div class="mt-3 p-3 bg-light rounded">
+                    <h6><i class="fas fa-info-circle me-2"></i>Allocation Details</h6>
+                    <div class="row">
+                        ${trackingData.Allocations.map(allocation => `
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-box me-1"></i> Fridge ${allocation.FridgeId}<br>
+                                    <i class="fas fa-user me-1"></i> ${allocation.AllocatedBy}<br>
+                                    <i class="fas fa-calendar me-1"></i> ${new Date(allocation.AllocationDate).toLocaleDateString()}
+                                </small>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+            `;
+
+            trackingSection.innerHTML = html;
+        }
+
+        function createStatusTimeline(currentStatus) {
+            const statuses = [
+                { status: 'Received', label: 'Order Received', icon: 'fa-shopping-cart' },
+                { status: 'Accepted', label: 'Payment Accepted', icon: 'fa-credit-card' },
+                { status: 'Processing', label: 'Processing', icon: 'fa-cogs' },
+                { status: 'Shipped', label: 'Shipped', icon: 'fa-shipping-fast' },
+                { status: 'Delivered', label: 'Delivered', icon: 'fa-check-circle' }
+            ];
+
+            const currentIndex = statuses.findIndex(s => s.status === currentStatus);
+
+            return `
+                <h6 class="mb-3">Order Journey</h6>
+                <div class="status-timeline">
+                    ${statuses.map((status, index) => `
+                        <div class="status-step ${index <= currentIndex ? 'completed' : ''} ${index === currentIndex ? 'current' : ''}">
+                            <div class="status-icon">
+                                <i class="fas ${status.icon}"></i>
+                            </div>
+                            <div class="status-label">
+                                <div class="status-title">${status.label}</div>
+                                <div class="status-description">${getStepDescription(status.status)}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function getStepDescription(status) {
+            const descriptions = {
+                'Received': 'Order confirmed and received',
+                'Accepted': 'Payment processed successfully',
+                'Processing': 'Preparing your items for shipment',
+                'Shipped': 'Your order is on the way',
+                'Delivered': 'Order delivered successfully'
+            };
+            return descriptions[status] || '';
+        }
+
+        function getProgressPercentage(status) {
+            const statusProgress = {
+                'Received': 20,
+                'Accepted': 40,
+                'Processing': 60,
+                'Shipped': 80,
+                'Delivered': 100
+            };
+            return statusProgress[status] || 0;
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'Received': 'warning',
+                'Accepted': 'primary',
+                'Processing': 'info',
+                'Shipped': 'info',
+                'Delivered': 'success',
+                'Cancelled': 'danger'
+            };
+            return colors[status] || 'secondary';
+        }
+
+        function getStatusDescription(status) {
+            const descriptions = {
+                'Received': 'Your order has been received and is being processed.',
+                'Accepted': 'Payment confirmed and order is being prepared.',
+                'Processing': 'Your items are being allocated and prepared for shipment.',
+                'Shipped': 'Your order has been shipped.',
+                'Delivered': 'Your order has been delivered successfully.',
+                'Cancelled': 'This order has been cancelled.'
+            };
+            return descriptions[status] || 'Order is being processed';
+        }
+
+        // Load tracking info when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTrackingInfo(@Model.Id);
+
+            // Auto-dismiss alerts after 3 seconds
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 3000);
+            });
+
+            // Add hover effects to table rows
+            const tableRows = document.querySelectorAll('table tbody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f8f9fa';
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                });
+            });
+        });
+
+        // Cancel order function (same as in Index view)
+        function confirmCancel(orderId, currentStatus) {
+            Swal.fire({
+                title: 'Confirm Cancellation',
+                html: `Are you sure you want to cancel this <strong>${currentStatus}</strong> order?<br><br>
+                      <small class="text-muted">This action cannot be undone.</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, Cancel Order',
+                cancelButtonText: 'No, Keep Order',
+                reverseButtons: true,
+                backdrop: true,
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    cancelOrder(orderId);
+                }
+            });
+        }
+
+        function cancelOrder(orderId) {
+            Swal.fire({
+                title: 'Cancelling Order...',
+                text: 'Please wait while we process your request',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            fetch(`/CustomerOrders/CancelOrder?id=${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ id: orderId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Order Cancelled!',
+                        text: data.message || 'Your order has been cancelled successfully.',
+                        icon: 'success',
+                        confirmButtonColor: '#3085d6',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(data.message || 'Failed to cancel order');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: error.message || 'An error occurred while cancelling the order. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#d33'
+                });
+            });
+        }
+    </script>
+
+    <style>
+        .status-timeline {
+            position: relative;
+        }
+
+        .status-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+            .status-step:not(:last-child)::after {
+                content: '';
+                position: absolute;
+                left: 15px;
+                top: 40px;
+                bottom: -15px;
+                width: 2px;
+                background: #dee2e6;
+                z-index: 1;
+            }
+
+            .status-step.completed:not(:last-child)::after {
+                background: #28a745;
+            }
+
+            .status-step.current:not(:last-child)::after {
+                background: linear-gradient(to bottom, #28a745 50%, #dee2e6 50%);
+            }
+
+        .status-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .status-step.completed .status-icon {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-step.current .status-icon {
+            background: #007bff;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .status-label {
+            flex: 1;
+        }
+
+        .status-title {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .status-description {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .status-step.completed .status-title {
+            color: #28a745;
+        }
+
+        .status-step.current .status-title {
+            color: #007bff;
+            font-weight: 700;
+        }
+
+        @@keyframes pulse {
+            0%
+
+        {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+
+        }
+    </style>
+}

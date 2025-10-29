@@ -53,7 +53,7 @@
             <div class="collapse navbar-collapse" id="liaisonNavbar">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item active">
-                        <a class="nav-link active" asp-area="CustomerLiaison" asp-controller="CustomerManagement" asp-action="Index">
+                        <a class="nav-link active" asp-controller="CustomerManagement" asp-action="Index">
                             <i class="bi bi-speedometer2 me-1"></i>Dashboard
                         </a>
                     </li>
@@ -225,7 +225,7 @@
                         
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-0">
-                                <li class="breadcrumb-item"><a asp-area="CustomerLiaison" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a asp-controller="CustomerManagement" asp-action="Index">Dashboard</a></li>
                                 @if (ViewData["Breadcrumb"] != null)
                                 {
                                     @Html.Raw(ViewData["Breadcrumb"])
