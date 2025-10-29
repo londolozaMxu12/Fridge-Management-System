@@ -9,10 +9,12 @@ namespace FridgeManagementSystem.Controllers
     public class StoreController : Controller
     {
         private readonly FridgeManagementSystemContext _context;
+        private readonly ILogger<StoreController> _logger;
 
-        public StoreController(FridgeManagementSystemContext context)
+        public StoreController(FridgeManagementSystemContext context, ILogger<StoreController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<IActionResult> Index(StoreSearchViewModel searchModel, int pageIndex = 1)
@@ -74,15 +76,26 @@ namespace FridgeManagementSystem.Controllers
 
         public async Task<IActionResult> Details(int id)
         {
-            var fridge = await _context.Fridges
-                .Include(f => f.FridgeType)
-                .Include(f => f.Supplier)
-                .FirstOrDefaultAsync(f => f.FridgeId == id && f.IsActive && f.Status == "Available");
+            try
+            {
+                var fridge = await _context.Fridges
+                    .Include(f => f.FridgeType)
+                    .Include(f => f.Supplier) // This should now work without errors
+                    .FirstOrDefaultAsync(f => f.FridgeId == id && f.Status == "Available");
 
-            if (fridge == null)
-                return NotFound();
+                if (fridge == null)
+                {
+                    return NotFound();
+                }
 
-            return View(fridge);
+                return View(fridge);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error loading fridge details for ID: {FridgeId}", id);
+                TempData["ErrorMessage"] = "An error occurred while loading fridge details.";
+                return RedirectToAction(nameof(Index));
+            }
         }
     }
 }

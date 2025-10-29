@@ -23,7 +23,7 @@ namespace FridgeManagementSystem.Models
         [Display(Name = "Supplier Type")]
         public string SupplierType { get; set; } // Fridge, Parts, Other
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public bool IsActive { get; set; } = true;
 
         public string CreatedById { get; set; }
