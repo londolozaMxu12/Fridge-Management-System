@@ -14,13 +14,15 @@ namespace FridgeManagementSystem.Services
     public class InvoiceService : IInvoiceService
     {
         private readonly FridgeManagementSystemContext _context;
+        
+       // private readonly ILogger _logger;
 
-        public InvoiceService(FridgeManagementSystemContext context)
+        public InvoiceService(FridgeManagementSystemContext context/*, ILogger logger*/)
         {
             _context = context;
             QuestPDF.Settings.License = LicenseType.Community;
+            //_logger = logger;
         }
-
         public async Task<Invoice> GenerateInvoiceAsync(int orderId)
         {
             // Check if invoice already exists

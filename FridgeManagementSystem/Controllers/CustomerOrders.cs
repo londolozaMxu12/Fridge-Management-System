@@ -209,32 +209,21 @@ namespace FridgeManagementSystem.Controllers
                     .Include(o => o.Items)
                         .ThenInclude(i => i.Fridge)
                         .ThenInclude(f => f.FridgeType)
-                    .Include(o => o.Allocations)
-                        .ThenInclude(a => a.AllocatedBy) 
                     .FirstOrDefaultAsync(o => o.Id == id && o.CustomerId == userId);
 
                 if (order == null)
                 {
-                    _logger?.LogWarning("Order {OrderId} not found for user {UserId}", id, userId);
                     return Json(new { success = false, message = "Order not found." });
                 }
 
-                // Safely handle null collections
+                // Safely handle items - fixed version
                 var items = (order.Items ?? new List<OrderItem>()).Select(i => new
                 {
                     Name = i.Fridge?.FridgeType?.Name ?? "Unknown Product",
                     Brand = i.Fridge?.FridgeType?.Brand ?? "Unknown Brand",
                     Model = i.Fridge?.FridgeType?.Model ?? "Unknown Model",
-                    Status = i.Fridge?.Status ?? "Unknown",
                     Quantity = i.Quantity
-                });
-
-                var allocations = (order.Allocations ?? new List<Allocation>()).Select(a => new
-                {
-                    AllocationDate = a.AllocationDate,
-                    FridgeId = a.FridgeId,
-                    AllocatedBy = a.AllocatedBy?.UserName ?? a.AllocatedBy?.Email ?? "System" // Use UserName or Email instead of FullName
-                });
+                }).ToList();
 
                 var trackingInfo = new
                 {
@@ -243,20 +232,15 @@ namespace FridgeManagementSystem.Controllers
                     PaymentStatus = order.PaymentStatus ?? "Unknown",
                     CreatedAt = order.CreatedAt,
                     EstimatedDelivery = order.CreatedAt.AddDays(7),
-                    Items = items,
-                    Allocations = allocations
+                    Items = items
                 };
 
                 return Json(new { success = true, data = trackingInfo });
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error getting tracking info for order {OrderId}. Error: {ErrorMessage}", id, ex.Message);
-                return Json(new
-                {
-                    success = false,
-                    message = $"Error loading tracking information: {ex.Message}"
-                });
+                _logger?.LogError(ex, "Error in TrackOrder for order {OrderId}", id);
+                return Json(new { success = false, message = ex.Message });
             }
         }
 

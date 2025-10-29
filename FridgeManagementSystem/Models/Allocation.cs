@@ -1,5 +1,6 @@
 ﻿using FridgeManagementSystem.Areas.Identity.Data;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FridgeManagementSystem.Models
 {
@@ -20,6 +21,7 @@ namespace FridgeManagementSystem.Models
 
         [Required]
         [Display(Name = "Fridge")]
+        [Column("FridgeId")] 
         public int FridgeId { get; set; }
         public Fridge Fridge { get; set; } = null!;
 

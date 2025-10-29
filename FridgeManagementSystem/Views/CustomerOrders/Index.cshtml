@@ -351,13 +351,13 @@
                 });
             });
 
-            // Auto-dismiss alerts after 3 seconds
+            // Auto-dismiss alerts after 5 seconds
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
                 setTimeout(() => {
                     const bsAlert = new bootstrap.Alert(alert);
                     bsAlert.close();
-                }, 3000);
+                }, 5000);
             });
 
             // Add row hover effects
@@ -423,26 +423,30 @@
                 });
         }
 
-        function displayTrackingInfo(trackingData) {
+                function displayTrackingInfo(trackingData) {
             const trackingContent = document.getElementById('trackingContent');
 
-            // Create status timeline
-            const statusTimeline = createStatusTimeline(trackingData.Status);
+            console.log('Tracking Data:', trackingData); // Debug log
 
-            // Create items list
-            const itemsList = trackingData.Items?.map(item => `
+            // Safely get values with fallbacks
+            const status = trackingData.Status || 'Unknown';
+            const paymentStatus = trackingData.PaymentStatus || 'Unknown';
+            const createdAt = trackingData.CreatedAt ? new Date(trackingData.CreatedAt) : new Date();
+            const estimatedDelivery = trackingData.EstimatedDelivery ? new Date(trackingData.EstimatedDelivery) : new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+            // Create status timeline
+            const statusTimeline = createStatusTimeline(status);
+
+            // Create items list - handle both array and undefined
+            const items = trackingData.Items || [];
+            const itemsList = items.length > 0 ? items.map(item => `
                 <div class="border-bottom pb-2 mb-2">
-                    <strong>${item.Name}</strong><br>
+                    <strong>${item.Name || 'Unknown Product'}</strong><br>
                     <small class="text-muted">
-                        ${item.Brand} ${item.Model} • Qty: ${item.Quantity} • Status: ${item.Status}
+                        ${item.Brand || ''} ${item.Model || ''} • Qty: ${item.Quantity || 0}
                     </small>
                 </div>
-            `).join('') || '<p class="text-muted">No items found</p>';
-
-            // Create allocations info
-            const allocationsInfo = trackingData.Allocations?.length > 0 ?
-                `<p><i class="fas fa-check text-success me-2"></i>${trackingData.Allocations.length} fridge(s) allocated</p>` :
-                '<p><i class="fas fa-clock text-warning me-2"></i>Awaiting allocation</p>';
+            `).join('') : '<p class="text-muted">No items found</p>';
 
             const html = `
                 <div class="row">
@@ -450,11 +454,10 @@
                         <div class="card mb-3">
                             <div class="card-body">
                                 <h6 class="card-title">Order Information</h6>
-                                <p><strong>Status:</strong> <span class="badge ${getOrderBadgeColor(trackingData.Status)}">${trackingData.Status}</span></p>
-                                <p><strong>Payment:</strong> <span class="badge ${getPaymentBadgeColor(trackingData.PaymentStatus)}">${trackingData.PaymentStatus}</span></p>
-                                <p><strong>Order Date:</strong> ${new Date(trackingData.CreatedAt).toLocaleDateString()}</p>
-                                <p><strong>Estimated Delivery:</strong> ${new Date(trackingData.EstimatedDelivery).toLocaleDateString()}</p>
-                                ${allocationsInfo}
+                                <p><strong>Status:</strong> <span class="badge ${getOrderBadgeColor(status)}">${status}</span></p>
+                                <p><strong>Payment:</strong> <span class="badge ${getPaymentBadgeColor(paymentStatus)}">${paymentStatus}</span></p>
+                                <p><strong>Order Date:</strong> ${createdAt.toLocaleDateString()}</p>
+                                <p><strong>Estimated Delivery:</strong> ${estimatedDelivery.toLocaleDateString()}</p>
                             </div>
                         </div>
                     </div>
@@ -532,7 +535,7 @@
             return colors[status] || 'bg-secondary';
         }
 
-        // Cancel order functions (existing)
+        // Cancel order functions
         function confirmCancel(orderId, currentStatus) {
             const statusText = currentStatus === 'Received' ? 'Received' : currentStatus;
 
@@ -557,7 +560,6 @@
         }
 
         function cancelOrder(orderId) {
-            // ... existing cancelOrder implementation ...
             Swal.fire({
                 title: 'Cancelling Order...',
                 text: 'Please wait while we process your request',
@@ -610,8 +612,6 @@
             });
         }
     </script>
-
-    </div>
 }
 
 @functions {

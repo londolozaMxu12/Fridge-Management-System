@@ -158,6 +158,9 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
         {
             entity.HasKey(a => a.AllocationId);
 
+            entity.Property(e => e.FridgeId)
+             .HasColumnName("FridgeId");
+
             // Customer relationship
             entity.HasOne(a => a.Customer)
                 .WithMany(c => c.Allocations)
@@ -189,6 +192,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             entity.Ignore("FridgeId4");
             entity.Ignore("FridgeId5");
             entity.Ignore("FridgeId6");
+            entity.Ignore("FridgeId7");
         });
 
         // 3. Configure Fridge relationships - UPDATED for string CustomerId

@@ -1,6 +1,7 @@
 ﻿using FridgeManagementSystem.Areas.Identity.Data;
 using FridgeManagementSystem.Data;
 using FridgeManagementSystem.Models;
+using FridgeManagementSystem.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,9 +14,9 @@ namespace FridgeManagementSystem.Controllers
     {
         private readonly FridgeManagementSystemContext _context;
         private readonly IOrderNotificationRepository _notification;
-        private readonly ILogger<LiaisonOrdersController> _logger;
+        private readonly ILogger  _logger;
 
-        public LiaisonOrdersController(FridgeManagementSystemContext context, IOrderNotificationRepository notification, ILogger<LiaisonOrdersController> logger)
+        public LiaisonOrdersController(FridgeManagementSystemContext context, IOrderNotificationRepository notification, ILogger logger)
         {
             _context = context;
             _notification = notification;
@@ -87,7 +88,7 @@ namespace FridgeManagementSystem.Controllers
             return (
                 order.Customer.User.FullName ?? "Unknown",
                 order.Customer.User.Email ?? "Unknown",
-                order.Customer.User.PhoneNumber ?? "Unknown"
+                order.Customer.User.ContactNo ?? "Unknown"
             );
         }
 
@@ -196,20 +197,15 @@ namespace FridgeManagementSystem.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Edit(int id, string payment_status, string order_status)
+        public async Task<IActionResult> Edit(int id, string? payment_status, string? order_status)
         {
-            if (!await IsCustomerLiaisonAsync())
-            {
-                return Forbid();
-            }
-
             try
             {
                 var order = await _context.Orders
+                    .Include(o => o.Customer)
+                    .ThenInclude(c => c.User)
                     .Include(o => o.Items)
                         .ThenInclude(i => i.Fridge)
-                    .Include(o => o.Customer)
-                        .ThenInclude(c => c.User)
                     .FirstOrDefaultAsync(o => o.Id == id);
 
                 if (order == null)
@@ -218,68 +214,65 @@ namespace FridgeManagementSystem.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Access user details for logging
-                var customerDetails = GetCustomerDetails(order);
-                _logger.LogInformation($"Editing order {id} for customer: {customerDetails.name}");
+                // Store original values
+                var originalPaymentStatus = order.PaymentStatus;
+                var originalOrderStatus = order.OrderStatus;
 
-                string previousOrderStatus = order.OrderStatus;
-                string previousPaymentStatus = order.PaymentStatus;
+                // Apply business rules
+                var businessRules = new OrderBusinessRules(_context);
 
                 if (!string.IsNullOrEmpty(payment_status))
                 {
-                    order.PaymentStatus = payment_status;
-
-                    // Notify about payment status change
-                    if (payment_status != previousPaymentStatus)
-                    {
-                        await _notification.NotifyAboutPaymentStatusUpdate(order, previousPaymentStatus);
-                    }
+                    var newPaymentStatus = payment_status.Trim();
+                    await businessRules.ApplyBusinessRulesAsync(order, newPaymentStatus, originalOrderStatus);
+                    order.PaymentStatus = newPaymentStatus;
                 }
 
                 if (!string.IsNullOrEmpty(order_status))
                 {
-                    // Validate the status change
-                    if (!ValidateOrderStatusChange(order_status, order.OrderStatus, order.PaymentStatus, out string validationError))
+                    var newOrderStatus = order_status.Trim();
+
+                    if (!IsValidStatusTransition(order.OrderStatus, newOrderStatus))
                     {
-                        TempData["ErrorMessage"] = validationError;
+                        TempData["ErrorMessage"] = $"Invalid status transition from {order.OrderStatus} to {newOrderStatus}.";
                         return RedirectToAction(nameof(Details), new { id });
                     }
 
-                    // When order is accepted, it becomes visible in Allocation queue
-                    if (order_status.ToLower() == "accepted" && previousOrderStatus?.ToLower() != "accepted")
-                    {
-                        order.OrderStatus = order_status;
-                        await _notification.NotifyLiaisonsAboutOrderReadyForAllocation(order);
-                    }
-                    // Handle order cancellation - free up reserved fridges
-                    else if (order_status.ToLower() == "cancelled" && previousOrderStatus?.ToLower() != "cancelled")
-                    {
-                        await FreeReservedFridges(order);
-                        order.OrderStatus = order_status;
-                    }
-                    else
-                    {
-                        order.OrderStatus = order_status;
-                    }
-
-                    // Notify about status change
-                    if (order_status != previousOrderStatus)
-                    {
-                        await _notification.NotifyCustomerAboutOrderUpdate(order, previousOrderStatus);
-                    }
+                    await businessRules.ApplyBusinessRulesAsync(order, originalPaymentStatus, newOrderStatus);
+                    order.OrderStatus = newOrderStatus;
                 }
 
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = "Order updated successfully";
+                TempData["SuccessMessage"] = "Order updated successfully!";
                 return RedirectToAction(nameof(Details), new { id });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error updating order {id}");
-                TempData["ErrorMessage"] = "An error occurred while updating the order";
+                _logger.LogError(ex, "Error updating order {OrderId}", id);
+                TempData["ErrorMessage"] = ex.Message;
                 return RedirectToAction(nameof(Details), new { id });
             }
+        }
+
+
+        // Business Rule: Valid status transitions
+        private bool IsValidStatusTransition(string currentStatus, string newStatus)
+        {
+            var validTransitions = new Dictionary<string, List<string>>
+            {
+                ["Received"] = new List<string> { "Accepted", "Cancelled" },
+                ["Accepted"] = new List<string> { "Processing", "Cancelled" },
+                ["Processing"] = new List<string> { "Shipped", "Cancelled" },
+                ["Shipped"] = new List<string> { "Delivered", "Returned" },
+                ["Delivered"] = new List<string> { "Returned" },
+                ["Cancelled"] = new List<string> { }, // Once cancelled, cannot change
+                ["Returned"] = new List<string> { }   // Once returned, cannot change
+            };
+
+            currentStatus = currentStatus ?? "Received";
+            return validTransitions.ContainsKey(currentStatus) &&
+                   validTransitions[currentStatus].Contains(newStatus);
         }
 
         private async Task FreeReservedFridges(Order order)
@@ -443,5 +436,30 @@ namespace FridgeManagementSystem.Controllers
                 return Json(new { success = false, message = "Error loading order items" });
             }
         }
+
+        // Helper method to generate invoice
+        private async void GenerateInvoice(Order order)
+        {
+            try
+            {
+                // Check if invoice already exists
+                var existingInvoice = await _context.Invoices
+                    .FirstOrDefaultAsync(i => i.OrderId == order.Id);
+
+                if (existingInvoice == null)
+                {
+                    // Use your invoice service to generate invoice
+                    var invoiceService = new InvoiceService(_context);
+                    await invoiceService.GenerateInvoiceAsync(order.Id);
+                    _logger.LogInformation("Invoice generated for order {OrderId}", order.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating invoice for order {OrderId}", order.Id);
+                // Don't throw - invoice generation failure shouldn't block order update
+            }
+        }
+
     }
 }

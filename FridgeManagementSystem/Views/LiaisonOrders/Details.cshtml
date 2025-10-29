@@ -463,44 +463,61 @@
                     <input type="hidden" name="id" value="@Model.Id" />
 
                     <!-- Payment status warning -->
-                    @if (Model.PaymentStatus?.ToLower() != "accepted" && (Model.OrderStatus?.ToLower() != "cancelled" && Model.OrderStatus?.ToLower() != "returned"))
+                    @if (Model.PaymentStatus?.ToLower() != "accepted" && Model.OrderStatus == "Received")
                     {
                         <div class="alert alert-warning mb-3">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            Payment must be accepted before you can accept this order.
+                            <strong>Payment Required:</strong> Payment must be accepted before you can advance this order beyond "Received" status.
                         </div>
                     }
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Order Status</label>
                         <select class="form-select" name="order_status" id="orderStatusSelect">
-                            <option value="Received" selected="@(Model.OrderStatus == "Received")"
-                                    data-valid="@(Model.OrderStatus == "Received")">Received</option>
+                            @{
+                                var currentOrderStatus = Model.OrderStatus ?? "Received";
+                                var currentPaymentStatus = Model.PaymentStatus?.ToLower() ?? "pending";
 
-                            <option value="Accepted" selected="@(Model.OrderStatus == "Accepted")"
-                                    data-valid="@(Model.PaymentStatus?.ToLower() == "accepted" && (Model.OrderStatus == "Received" || Model.OrderStatus == "Accepted"))">
-                                Accepted
-                            </option>
+                                // Define options with their conditions
+                                var options = new[]
+                                {
+                                                        new { Value = "Received", Text = "Received", Selected = currentOrderStatus == "Received", Disabled = false },
+                                                        new { Value = "Accepted", Text = "Accepted", Selected = currentOrderStatus == "Accepted", Disabled = currentPaymentStatus != "accepted" && currentOrderStatus == "Received" },
+                                                        new { Value = "Processing", Text = "Processing", Selected = currentOrderStatus == "Processing", Disabled = currentOrderStatus != "Accepted" && currentOrderStatus != "Processing" },
+                                                        new { Value = "Shipped", Text = "Shipped", Selected = currentOrderStatus == "Shipped", Disabled = currentOrderStatus != "Processing" && currentOrderStatus != "Shipped" },
+                                                        new { Value = "Delivered", Text = "Delivered", Selected = currentOrderStatus == "Delivered", Disabled = currentOrderStatus != "Shipped" && currentOrderStatus != "Delivered" },
+                                                        new { Value = "Cancelled", Text = "Cancelled", Selected = currentOrderStatus == "Cancelled" || currentOrderStatus == "Canceled", Disabled = currentOrderStatus == "Delivered" || currentOrderStatus == "Returned" },
+                                                        new { Value = "Returned", Text = "Returned", Selected = currentOrderStatus == "Returned", Disabled = currentOrderStatus != "Shipped" && currentOrderStatus != "Delivered" && currentOrderStatus != "Returned" }
+                                                        };
+                            }
 
-                            <option value="Processing" selected="@(Model.OrderStatus == "Processing")"
-                                    data-valid="@(Model.OrderStatus == "Accepted" || Model.OrderStatus == "Processing")">Processing</option>
-
-                            <option value="Shipped" selected="@(Model.OrderStatus == "Shipped")"
-                                    data-valid="@(Model.OrderStatus == "Accepted" || Model.OrderStatus == "Processing" || Model.OrderStatus == "Shipped")">Shipped</option>
-
-                            <option value="Delivered" selected="@(Model.OrderStatus == "Delivered")"
-                                    data-valid="@(Model.OrderStatus == "Shipped" || Model.OrderStatus == "Delivered")">Delivered</option>
-
-                            <option value="Cancelled" selected="@(Model.OrderStatus == "Cancelled" || Model.OrderStatus == "Canceled")"
-                                    data-valid="@(Model.OrderStatus != "Delivered" && Model.OrderStatus != "Returned" && Model.OrderStatus != "Cancelled" && Model.OrderStatus != "Canceled")">Cancelled</option>
-
-                            <option value="Returned" selected="@(Model.OrderStatus == "Returned")"
-                                    data-valid="@(Model.OrderStatus == "Shipped" || Model.OrderStatus == "Delivered" || Model.OrderStatus == "Returned")">Returned</option>
+                            @foreach (var option in options)
+                            {
+                                if (option.Selected)
+                                {
+                                    <option value="@option.Value" selected="@option.Selected" disabled="@option.Disabled">
+                                        @option.Text
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="@option.Value" disabled="@option.Disabled">
+                                        @option.Text
+                                    </option>
+                                }
+                            }
                         </select>
 
+                        <!-- Status guidance -->
                         <div class="form-text mt-2">
-                            Current: <span class="badge @orderBadgeColor">@Model.OrderStatus</span> |
-                            Payment: <span class="badge @paymentBadgeColor">@Model.PaymentStatus</span>
+                            <div><strong>Current:</strong> <span class="badge @orderBadgeColor">@Model.OrderStatus</span></div>
+                            <div><strong>Payment:</strong> <span class="badge @paymentBadgeColor">@Model.PaymentStatus</span></div>
+                            @if (Model.PaymentStatus?.ToLower() != "accepted" && Model.OrderStatus == "Received")
+                            {
+                                <div class="text-warning mt-1">
+                                    <small><i class="bi bi-info-circle"></i> Accept payment first to unlock order progression</small>
+                                </div>
+                            }
                         </div>
                     </div>
 
@@ -519,32 +536,74 @@
             // Auto-dismiss alerts
             setTimeout(function() {
                 $('.alert').alert('close');
-            }, 3000);
+            }, 5000);
 
-            // Order status validation
-            const orderStatusSelect = document.getElementById('orderStatusSelect');
-            const saveButton = document.getElementById('saveOrderStatusBtn');
+            // Initialize order status dropdown
+            initializeOrderStatusDropdown();
+
+            function initializeOrderStatusDropdown() {
+                const orderStatusSelect = document.getElementById('orderStatusSelect');
+                const saveButton = document.getElementById('saveOrderStatusBtn');
+                const currentPaymentStatus = '@Model.PaymentStatus?.ToLower()';
+                const currentOrderStatus = '@Model.OrderStatus';
+
+                if (!orderStatusSelect) return;
+
+                // Set the current value
+                orderStatusSelect.value = currentOrderStatus;
+
+                // Disable options based on business rules
+                const options = orderStatusSelect.options;
+                for (let i = 0; i < options.length; i++) {
+                    const option = options[i];
+                    const status = option.value;
+
+                    // Business Rule: Payment must be accepted for order progression
+                    const requiresPaymentAcceptance = ['Accepted', 'Processing', 'Shipped'].includes(status);
+                    const hasPaymentAccepted = currentPaymentStatus === 'accepted';
+
+                    // Business Rule: Valid status transitions
+                    const isValidTransition = isValidStatusTransition(currentOrderStatus, status);
+
+                    option.disabled = (requiresPaymentAcceptance && !hasPaymentAccepted) || !isValidTransition;
+                }
+
+                // Update save button state
+                updateSaveButton();
+
+                // Add change event listener
+                orderStatusSelect.addEventListener('change', updateSaveButton);
+            }
 
             function updateSaveButton() {
+                const orderStatusSelect = document.getElementById('orderStatusSelect');
+                const saveButton = document.getElementById('saveOrderStatusBtn');
+
                 if (!orderStatusSelect || !saveButton) return;
 
                 const selectedOption = orderStatusSelect.options[orderStatusSelect.selectedIndex];
-                const isValid = selectedOption.getAttribute('data-valid') === 'true';
+                saveButton.disabled = selectedOption.disabled;
 
-                saveButton.disabled = !isValid;
-                if (!isValid) {
+                if (selectedOption.disabled) {
                     saveButton.title = 'This status transition is not allowed based on current order state';
                 } else {
                     saveButton.title = '';
                 }
             }
 
-            if (orderStatusSelect && saveButton) {
-                // Initial update
-                updateSaveButton();
+            // Valid status transitions (mirror server-side logic)
+            function isValidStatusTransition(currentStatus, newStatus) {
+                const validTransitions = {
+                    'Received': ['Accepted', 'Cancelled'],
+                    'Accepted': ['Processing', 'Cancelled'],
+                    'Processing': ['Shipped', 'Cancelled'],
+                    'Shipped': ['Delivered', 'Returned'],
+                    'Delivered': ['Returned'],
+                    'Cancelled': [],
+                    'Returned': []
+                };
 
-                // Update on change
-                orderStatusSelect.addEventListener('change', updateSaveButton);
+                return validTransitions[currentStatus]?.includes(newStatus) || false;
             }
 
             // Tooltip initialization
