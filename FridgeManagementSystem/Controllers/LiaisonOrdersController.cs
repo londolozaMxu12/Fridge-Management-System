@@ -14,9 +14,9 @@ namespace FridgeManagementSystem.Controllers
     {
         private readonly FridgeManagementSystemContext _context;
         private readonly IOrderNotificationRepository _notification;
-        private readonly ILogger  _logger;
+        private readonly ILogger<LiaisonOrdersController> _logger;
 
-        public LiaisonOrdersController(FridgeManagementSystemContext context, IOrderNotificationRepository notification, ILogger logger)
+        public LiaisonOrdersController(FridgeManagementSystemContext context, IOrderNotificationRepository notification, ILogger<LiaisonOrdersController> logger)
         {
             _context = context;
             _notification = notification;
@@ -218,8 +218,8 @@ namespace FridgeManagementSystem.Controllers
                 var originalPaymentStatus = order.PaymentStatus;
                 var originalOrderStatus = order.OrderStatus;
 
-                // Apply business rules
-                var businessRules = new OrderBusinessRules(_context);
+                // Apply business rules - without logger since you commented it out
+                var businessRules = new OrderBusinessRules(_context); 
 
                 if (!string.IsNullOrEmpty(payment_status))
                 {
