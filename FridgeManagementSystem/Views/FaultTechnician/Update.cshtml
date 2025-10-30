@@ -32,7 +32,7 @@
         <div class="card">
             <div class="card-header bg-warning text-dark">
                 <h3 class="card-title text-light mb-0">
-                    Fault Details 
+                    Fault Details
                 </h3>
             </div>
             <div class="card-body">
@@ -51,7 +51,7 @@
                     <div class="form-group mb-3">
                         <label asp-for="FaultId" class="form-label fw-bold"></label>
                         <input asp-for="FaultId" class="form-control" readonly />
-                        
+
                     </div>
 
                     <div class="form-group mb-3">
@@ -68,7 +68,7 @@
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label asp-for="Status" class="form-label fw-bold"></label>
-                                <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<FaultStatus>()">
+                                <select asp-for="Status" class="form-select" id="Status" asp-items="Html.GetEnumSelectList<FaultStatus>()">
                                 </select>
                                 <span asp-validation-for="Status" class="text-danger small"></span>
                             </div>
@@ -76,7 +76,7 @@
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <div class="form-check mt-4">
-                                    <input asp-for="MarkCompleted" class="form-check-input" />
+                                    <input asp-for="MarkCompleted" class="form-check-input" id="MarkCompleted" />
                                     <label asp-for="MarkCompleted" class="form-check-label fw-bold">
                                         Mark as Completed
                                     </label>
@@ -84,7 +84,7 @@
                                 <div class="form-text">
                                     <small>
                                         Check this if the fault is fully resolved and the fridge is operational.
-                                        
+
                                     </small>
                                 </div>
                             </div>
@@ -115,18 +115,36 @@
 
     <script>
         $(document).ready(function () {
-            
+            // Get the Completed status value from the enum
+            const completedStatusValue = '4';
+
             // Auto-check "Mark as Completed" when status is set to Completed
             $('#Status').change(function () {
-                if ($(this).val() === '4') { // Completed
+                if ($(this).val() === completedStatusValue) {
                     $('#MarkCompleted').prop('checked', true);
                 } else {
                     $('#MarkCompleted').prop('checked', false);
                 }
-
             });
 
+            // Auto-set status to Completed when checkbox is checked
+            $('#MarkCompleted').change(function () {
+                if ($(this).is(':checked')) {
+                    $('#Status').val(completedStatusValue);
+                } else {
+                    // If unchecking, set it back to a in progress status
+                    
+                     $('#Status').val('3'); // Example: set to InProgress
+                    // Or leave it as the current selection without changing
+                }
+            });
+
+            // Initialize the sync on page load
+            if ($('#Status').val() === completedStatusValue) {
+                $('#MarkCompleted').prop('checked', true);
+            }
         });
+
         // Auto-dismiss alerts after 3 min
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
@@ -136,5 +154,5 @@
             });
         }, 180000);
     </script>
-    
+
 }

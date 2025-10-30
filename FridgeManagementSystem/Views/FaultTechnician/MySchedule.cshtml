@@ -55,16 +55,6 @@
     </div>
 </div>
 
-@* <div class="row mb-5">
-    
-    <div class="col">
-        <form class="d-flex" role="search">
-            <input class="form-control me-2" type="search" name="search" value="@search" placeholder="Search by Fault Title or Customer Name" aria-label="Search">
-            <button class="btn btn-outline-success" type="submit">Search</button>
-        </form>
-        
-    </div>
-</div> *@
 
 <div class="card mb-4">
     <div class="card-body">
@@ -251,48 +241,6 @@ else
                                             <i class="fas fa-edit m-1"></i>
                                         </a>
                                         
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" 
-                                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                                <i class="fas fa-cog m-1"></i>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li>
-                                                    <a class="dropdown-item text-warning" href="#" 
-                                                       onclick="updateScheduleStatus(@schedule.RepairScheduleId, 'InProgress')">
-                                                        <i class="fas fa-play me-2"></i>Mark In Progress
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item text-success" href="#" 
-                                                       onclick="updateScheduleStatus(@schedule.RepairScheduleId, 'Completed')">
-                                                        <i class="fas fa-check me-2"></i>Mark Completed
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item text-info" href="#" 
-                                                       onclick="updateScheduleStatus(@schedule.RepairScheduleId, 'Rescheduled')">
-                                                        <i class="fas fa-calendar-alt me-2"></i>Mark Rescheduled
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item text-danger" href="#" 
-                                                       onclick="updateScheduleStatus(@schedule.RepairScheduleId, 'Cancelled')">
-                                                        <i class="fas fa-times me-2"></i>Mark Cancelled
-                                                    </a>
-                                                </li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li>
-                                                    <a class="dropdown-item"
-                                                       asp-controller="FaultTechnician"
-                                                       asp-action="Details"
-                                                       asp-route-id="@schedule.FaultId">
-                                                        <i class="bi bi-pencil-square me-2"></i> View Fault Details
-                                                    </a>
-                                                </li>
-                                               
-                                            </ul>
-                                        </div>
                                     </div>
                                 </td>
                             </tr>

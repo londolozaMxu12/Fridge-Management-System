@@ -648,9 +648,18 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                 // If status changed to Cancelled, update the fault status to Reported
                 if (model.Status == ScheduleStatus.Cancelled && originalStatus != ScheduleStatus.Cancelled)
                 {
-                    schedule.Fault.Status = FaultStatus.Reported; // Make sure FaultStatus.Reported exists
+                    schedule.Fault.Status = FaultStatus.Reported; 
                 }
-
+                // If status changed to Completed, update the fault status to Completed
+                else if(model.Status == ScheduleStatus.Completed && originalStatus != ScheduleStatus.Cancelled)
+                {
+                    schedule.Fault.Status = FaultStatus.Completed; 
+                }
+                else if (model.Status == ScheduleStatus.Scheduled || model.Status == ScheduleStatus.Rescheduled && originalStatus != ScheduleStatus.Cancelled)
+                {
+                    schedule.Fault.Status = FaultStatus.Scheduled;
+                }
+                
                 _context.RepairSchedules.Update(schedule);
                 await _context.SaveChangesAsync();
 

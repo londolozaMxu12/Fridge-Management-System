@@ -37,7 +37,7 @@
                         <div class="card-header bg-light">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0 text-dark">@fridge.FridgeType?.Name</h5>
-                                <span class="badge bg-success">@fridge.Status</span>
+                                <span class="badge @GetStatusBadgeClass(fridge.Status)">@fridge.Status</span>
                             </div>
                         </div>
 
@@ -78,7 +78,7 @@
                             <div class="mb-3">
                                 <div class="row small">
                                     <div class="col-6">
-                                        <strong class="text-dark">Serial No:</strong><br>
+                                        <strong class="text-dark">SN:</strong><br>
                                         <span class="text-dark">@fridge.SerialNumber</span>
                                     </div>
                                     <div class="col-6">
@@ -114,13 +114,13 @@
                                     </small>
                                 </div>
                             }
-                            else if (fridge.Status == "Under-Maintenance")
+                            else if (fridge.Status == "UnderRepair" || fridge.Status == "Under-Maintenance")
                             {
                                 <div class="alert alert-warning py-2 mb-3">
                                     <small>
                                         <i class="bi bi-tools me-1"></i>
-                                        <strong>Under Maintenance</strong><br>
-                                        Your fridge is currently being serviced
+                                        <strong>Under @(fridge.Status == "UnderRepair" ? "Repair" : "Maintenance")</strong><br>
+                                        Your fridge is currently being @(fridge.Status == "UnderRepair" ? "repaired" : "serviced")
                                     </small>
                                 </div>
                             }
@@ -167,7 +167,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Fridge</th>
-                                        <th>Serial Number</th>
+                                        <th>SN</th>
                                         <th>Allocated Date</th>
                                         <th>Order #</th>
                                         <th>Status</th>
@@ -260,7 +260,24 @@
                     const bsAlert = new bootstrap.Alert(alert);
                     bsAlert.close();
                 });
-            }, 5000);
+            }, 180000);
         });
     </script>
+}
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "allocated" => "bg-success",
+            "underrepair" => "bg-warning",
+            "under-maintenance" => "bg-warning",
+            "available" => "bg-info",
+            "maintenance" => "bg-warning",
+            "faulty" => "bg-danger",
+            "decommissioned" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
 }
