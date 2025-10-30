@@ -12,8 +12,6 @@ namespace FridgeManagementSystem.Models
         public string UserId { get; set; }
         public ApplicationUser User { get; set; }
 
-        public string Email { get; set; }   
-
         [Required]
         [Display(Name = "Company Name")]
         [StringLength(100)]

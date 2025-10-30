@@ -56,69 +56,6 @@
     </div>
 }
 
-<!-- Procurement Dashboard for Purchasing Manager -->
-@* @if (ViewBag.IsPurchasingManager == true)
-{
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6 class="card-title">Pending RFQs</h6>
-                            <h3>@(ViewBag.ProcurementMetrics?.PendingRFQs ?? 12)</h3>
-                        </div>
-                        <i class="fas fa-file-contract fa-2x"></i>
-                    </div>
-                    <small><a href="@Url.Action("Index", "RFQ")" class="text-white">View All</a></small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6 class="card-title">Quotations Received</h6>
-                            <h3>@(ViewBag.ProcurementMetrics?.QuotationsReceived ?? 8)</h3>
-                        </div>
-                        <i class="fas fa-receipt fa-2x"></i>
-                    </div>
-                    <small><a href="@Url.Action("Index", "Quotations")" class="text-white">Review</a></small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6 class="card-title">Pending Purchase Requests</h6>
-                            <h3>@(ViewBag.ProcurementMetrics?.PendingPurchaseRequests ?? 5)</h3>
-                        </div>
-                        <i class="fas fa-shopping-cart fa-2x"></i>
-                    </div>
-                    <small><a href="@Url.Action("Index", "PurchaseRequests")" class="text-dark">Process</a></small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6 class="card-title">Active Suppliers</h6>
-                            <h3>@(ViewBag.ProcurementMetrics?.ActiveSuppliers ?? Model.Count())</h3>
-                        </div>
-                        <i class="fas fa-truck fa-2x"></i>
-                    </div>
-                    <small>Available for RFQs</small>
-                </div>
-            </div>
-        </div>
-    </div>
-}
- *@
 <div class="card">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
@@ -172,25 +109,31 @@
                     <tbody>
                         @foreach (var supplier in Model)
                         {
+                            var userIsActive = supplier.User?.IsActive ?? false;
+                            var approvalStatus = supplier.User?.ApprovalStatus ?? "Unknown";
+                            var email = supplier.User?.Email ?? "N/A";
+                            var contactNo = supplier.User?.ContactNo ?? "N/A";
+                            var city = supplier.User?.City ?? "N/A";
+
                             <tr>
                                 <td>
                                     <strong>@supplier.CompanyName</strong>
 
-                                    @if (ViewBag.IsPurchasingManager == true && supplier.User.IsActive)
+                                    @if (ViewBag.IsPurchasingManager == true && userIsActive)
                                     {
                                         <span class="badge bg-success ms-1" title="Active Supplier">
                                             <i class="fas fa-check-circle"></i> Active
                                         </span>
                                     }
                                 </td>
-                                <td>@supplier.User.Email</td>
+                                <td>@email</td>
                                 <td>
                                     <span class="badge bg-info">@supplier.SupplierType</span>
                                 </td>
-                                <td>@supplier.User.ContactNo</td>
-                                <td>@supplier.User.City</td>
+                                <td>@contactNo</td>
+                                <td>@city</td>
                                 <td>
-                                    @if (supplier.User.IsActive)
+                                    @if (userIsActive)
                                     {
                                         <span class="badge bg-success">Active</span>
                                     }
@@ -199,7 +142,7 @@
                                         <span class="badge bg-danger">Inactive</span>
                                     }
 
-                                    @switch (supplier.User.ApprovalStatus?.ToLower())
+                                    @switch (approvalStatus.ToLower())
                                     {
                                         case "approved":
                                             <span class="badge bg-primary mt-1">Approved</span>
@@ -211,7 +154,7 @@
                                             <span class="badge bg-danger mt-1">Rejected</span>
                                             break;
                                         default:
-                                            <span class="badge bg-secondary mt-1">@supplier.User.ApprovalStatus</span>
+                                            <span class="badge bg-secondary mt-1">@approvalStatus</span>
                                             break;
                                     }
                                 </td>
@@ -223,7 +166,7 @@
                                         </a>
 
                                         <!-- Procurement Actions for Purchasing Manager -->
-                                        @if (ViewBag.IsPurchasingManager == true && supplier.User.IsActive && supplier.User.ApprovalStatus == "Approved")
+                                        @if (ViewBag.IsPurchasingManager == true && userIsActive && approvalStatus == "Approved")
                                         {
                                             <button type="button" class="btn btn-success btn-sm"
                                                     onclick="createRFQ(@supplier.Id, '@supplier.CompanyName')"
@@ -236,7 +179,7 @@
                                                 <i class="fas fa-receipt"></i> Quotes
                                             </a>
                                         }
-                                        else if (ViewBag.IsPurchasingManager == true && (!supplier.User.IsActive || supplier.User.ApprovalStatus != "Approved"))
+                                        else if (ViewBag.IsPurchasingManager == true && (!userIsActive || approvalStatus != "Approved"))
                                         {
                                             <button type="button" class="btn btn-secondary btn-sm" disabled title="Supplier not active or approved">
                                                 <i class="fas fa-file-alt"></i> RFQ

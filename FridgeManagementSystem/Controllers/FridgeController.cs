@@ -230,11 +230,12 @@ namespace FridgeManagementSystem.Controllers
 
             try
             {
-                // First, get the fridge without the problematic includes
+                // Get the fridge with proper includes for Customer.User
                 var fridge = await _context.Fridges
                     .Include(f => f.FridgeType)
                     .Include(f => f.Supplier)
                     .Include(f => f.Customer)
+                        .ThenInclude(c => c.User) // Add this line to include Customer's User
                     .Include(f => f.CreatedBy)
                     .FirstOrDefaultAsync(m => m.FridgeId == id);
 

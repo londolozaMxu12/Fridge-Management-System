@@ -45,7 +45,7 @@ namespace FridgeManagementSystem.Services
                 <p>Best regards,<br/>Fridge Management System</p>
             ";
 
-            await SendEmailAsync(supplier.Email, subject, body);
+            await SendEmailAsync(supplier.User.Email, subject, body);
         }
     }
 }

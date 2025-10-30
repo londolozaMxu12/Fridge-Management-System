@@ -1,8 +1,22 @@
 ﻿@model Supplier
-
 @{
     ViewData["Title"] = "Delete Supplier";
     Layout = "_AdminLayout";
+
+    // Safe variables for null checking
+    var userEmail = Model.User?.Email ?? "N/A";
+    var userFullName = Model.User?.FullName ?? "N/A";
+    var userContactNo = Model.User?.ContactNo ?? "N/A";
+    var userAddress = Model.User?.Address ?? "N/A";
+    var userCity = Model.User?.City ?? "N/A";
+    var userSuburb = Model.User?.Suburb ?? "N/A";
+    var userPostalCode = Model.User?.PostalCode ?? "N/A";
+    var companyName = Model.CompanyName ?? "N/A";
+    var supplierType = Model.SupplierType ?? "N/A";
+    var createdByFullName = Model.CreatedBy?.FullName ?? "System";
+    var createdAt = Model.CreatedAt;
+    var createdDateShort = createdAt.ToString("MMM dd, yyyy");
+    var createdDateLong = createdAt.ToString("MMM dd, yyyy hh:mm tt");
 }
 
 <div class="row">
@@ -46,15 +60,15 @@
                             <div class="card-body">
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Email:</label>
-                                    <p class="form-control-plaintext">@Model.User.Email</p>
+                                    <p class="form-control-plaintext">@userEmail</p>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Full Name:</label>
-                                    <p class="form-control-plaintext">@Model.User.FullName</p>
+                                    <p class="form-control-plaintext">@userFullName</p>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Contact Number:</label>
-                                    <p class="form-control-plaintext">@Model.User.ContactNo</p>
+                                    <p class="form-control-plaintext">@userContactNo</p>
                                 </div>
                             </div>
                         </div>
@@ -71,17 +85,17 @@
                             <div class="card-body">
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Company Name:</label>
-                                    <p class="form-control-plaintext">@Model.CompanyName</p>
+                                    <p class="form-control-plaintext">@companyName</p>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Supplier Type:</label>
                                     <p class="form-control-plaintext">
-                                        <span class="badge bg-primary">@Model.SupplierType</span>
+                                        <span class="badge bg-primary">@supplierType</span>
                                     </p>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Registration Date:</label>
-                                    <p class="form-control-plaintext">@Model.CreatedAt.ToString("MMM dd, yyyy")</p>
+                                    <p class="form-control-plaintext">@createdDateShort</p>
                                 </div>
                             </div>
                         </div>
@@ -100,21 +114,21 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Address:</label>
-                                    <p class="form-control-plaintext">@Model.User.Address</p>
+                                    <p class="form-control-plaintext">@userAddress</p>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">City:</label>
-                                    <p class="form-control-plaintext">@Model.User.City</p>
+                                    <p class="form-control-plaintext">@userCity</p>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Suburb:</label>
-                                    <p class="form-control-plaintext">@Model.User.Suburb</p>
+                                    <p class="form-control-plaintext">@userSuburb</p>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Postal Code:</label>
-                                    <p class="form-control-plaintext">@Model.User.PostalCode</p>
+                                    <p class="form-control-plaintext">@userPostalCode</p>
                                 </div>
                             </div>
                         </div>
@@ -133,13 +147,13 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Created By:</label>
-                                    <p class="form-control-plaintext">@Model.CreatedBy?.FullName</p>
+                                    <p class="form-control-plaintext">@createdByFullName</p>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Created Date:</label>
-                                    <p class="form-control-plaintext">@Model.CreatedAt.ToString("MMM dd, yyyy hh:mm tt")</p>
+                                    <p class="form-control-plaintext">@createdDateLong</p>
                                 </div>
                             </div>
                         </div>
@@ -182,14 +196,15 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-
             // Form submission confirmation
             const form = document.querySelector('form');
-            form.addEventListener('submit', function(e) {
-                if (!confirm('Are you sure you want to delete this supplier? They will immediately lose access to the system.')) {
-                    e.preventDefault();
-                }
-            });
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    if (!confirm('Are you sure you want to delete this supplier? They will immediately lose access to the system.')) {
+                        e.preventDefault();
+                    }
+                });
+            }
         });
     </script>
 }

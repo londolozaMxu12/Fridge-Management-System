@@ -3,6 +3,12 @@
 @{
     ViewData["Title"] = "Fridge Details";
     Layout = ViewData["Layout"]?.ToString() ?? "_Layout";
+
+    // Safe variables for customer data
+    var customerName = Model.Customer?.User?.FullName ?? "N/A";
+    var businessName = Model.Customer?.BusinessName ?? "N/A";
+    var customerType = Model.Customer?.CustomerType ?? "N/A";
+    var hasCustomer = Model.Customer != null;
 }
 
 <div class="row">
@@ -147,20 +153,20 @@
                     </div>
                 </div>
 
-                @if (Model.Customer != null)
+                @if (hasCustomer)
                 {
                     <div class="row mt-3">
                         <div class="col-12">
                             <h6 class="border-bottom pb-2">Customer Information</h6>
                             <dl class="row">
                                 <dt class="col-sm-3">Customer:</dt>
-                                <dd class="col-sm-9">@Model.Customer.User.FullName</dd>
+                                <dd class="col-sm-9">@customerName</dd>
 
                                 <dt class="col-sm-3">Business Name:</dt>
-                                <dd class="col-sm-9">@Model.Customer.BusinessName</dd>
+                                <dd class="col-sm-9">@businessName</dd>
 
                                 <dt class="col-sm-3">Customer Type:</dt>
-                                <dd class="col-sm-9">@Model.Customer.CustomerType</dd>
+                                <dd class="col-sm-9">@customerType</dd>
                             </dl>
                         </div>
                     </div>

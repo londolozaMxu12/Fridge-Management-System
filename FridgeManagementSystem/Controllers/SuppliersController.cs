@@ -63,7 +63,6 @@ namespace FridgeManagementSystem.Controllers
             }
         }
 
-        // GET: Suppliers
         public async Task<IActionResult> Index()
         {
             await SetEmployeeViewBag();
@@ -71,7 +70,7 @@ namespace FridgeManagementSystem.Controllers
             var suppliers = await _context.Suppliers
                 .Include(s => s.User)
                 .Include(s => s.CreatedBy)
-                .Where(s => s.User.IsActive)
+                .Where(s => s.IsActive && s.User != null && s.User.IsActive) 
                 .OrderBy(s => s.CompanyName)
                 .ToListAsync();
 
@@ -89,10 +88,10 @@ namespace FridgeManagementSystem.Controllers
             await SetEmployeeViewBag();
 
             var supplier = await _context.Suppliers
-                .Include(s => s.User)
-                .Include(s => s.CreatedBy)
-                .Include(s => s.User.ApprovedBy)
-                .FirstOrDefaultAsync(m => m.Id == id && m.User.IsActive);
+    .Include(s => s.User)
+    .Include(s => s.CreatedBy)
+    .Include(s => s.User.ApprovedBy)
+    .FirstOrDefaultAsync(m => m.Id == id && m.IsActive && (m.User == null || m.User.IsActive));
 
             if (supplier == null)
             {
@@ -119,8 +118,8 @@ namespace FridgeManagementSystem.Controllers
             await SetEmployeeViewBag();
 
             var supplier = await _context.Suppliers
-                 .Include(s => s.User)
-                 .FirstOrDefaultAsync(m => m.Id == id && m.User.IsActive);
+     .Include(s => s.User)
+     .FirstOrDefaultAsync(m => m.Id == id && m.IsActive && (m.User == null || m.User.IsActive));
 
             if (supplier == null)
             {
@@ -276,9 +275,9 @@ namespace FridgeManagementSystem.Controllers
             await SetEmployeeViewBag();
 
             var supplier = await _context.Suppliers
-                .Include(s => s.User)
-                .Include(s => s.CreatedBy)
-                .FirstOrDefaultAsync(m => m.Id == id && m.User.IsActive);
+    .Include(s => s.User)
+    .Include(s => s.CreatedBy)
+    .FirstOrDefaultAsync(m => m.Id == id && m.IsActive && (m.User == null || m.User.IsActive));
 
             if (supplier == null)
             {
@@ -289,17 +288,16 @@ namespace FridgeManagementSystem.Controllers
             return View(supplier);
         }
 
-        // POST: Suppliers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")] // Only Admin can delete
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var supplier = await _context.Suppliers
                  .Include(s => s.User)
-                 .FirstOrDefaultAsync(s => s.Id == id && s.User.IsActive);
+                 .FirstOrDefaultAsync(s => s.Id == id && s.IsActive && s.User != null); 
 
-            if (supplier != null)
+            if (supplier != null && supplier.User != null)
             {
                 // Soft delete by deactivating the user
                 supplier.User.IsActive = false;

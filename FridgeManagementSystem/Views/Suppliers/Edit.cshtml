@@ -15,6 +15,21 @@
         Layout = "_Layout";
         ViewData["Title"] = "Edit Supplier";
     }
+
+    // Safe variables for null checking
+    var isActive = Model.IsActive;
+    var approvalStatus = Model.ApprovalStatus ?? "Unknown";
+    var fullName = Model.FullName ?? "";
+    var email = Model.Email ?? "";
+    var contactNo = Model.ContactNo ?? "";
+    var address = Model.Address ?? "";
+    var city = Model.City ?? "";
+    var suburb = Model.Suburb ?? "";
+    var postalCode = Model.PostalCode ?? "";
+    var companyName = Model.CompanyName ?? "";
+    var supplierType = Model.SupplierType ?? "";
+    var createdAt = Model.CreatedAt;
+    var createdDate = createdAt.ToString("yyyy-MM-dd HH:mm");
 }
 
 @if (TempData["SuccessMessage"] != null)
@@ -35,22 +50,22 @@
 <div class="row">
     <div class="col-lg-10 mx-auto">
         <!-- Status Alert -->
-        @if (!Model.IsActive || Model.ApprovalStatus != "Approved")
+        @if (!isActive || approvalStatus != "Approved")
         {
             <div class="alert alert-warning mb-4">
                 <i class="fas fa-exclamation-triangle me-2"></i>
                 <strong>Note:</strong> This supplier is currently
-                @if (!Model.IsActive)
+                @if (!isActive)
                 {
                     <span class="badge bg-danger">Inactive</span>
                 }
-                @if (!Model.IsActive && Model.ApprovalStatus != "Approved")
+                @if (!isActive && approvalStatus != "Approved")
                 {
                     <span> and </span>
                 }
-                @if (Model.ApprovalStatus != "Approved")
+                @if (approvalStatus != "Approved")
                 {
-                    <span class="badge bg-warning">@Model.ApprovalStatus</span>
+                    <span class="badge bg-warning">@approvalStatus</span>
                 }
                 . Some procurement features may be limited.
             </div>
@@ -75,16 +90,16 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Registration Date</label>
-                            <input class="form-control-plaintext bg-light rounded p-2" readonly value="@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")">
+                            <input class="form-control-plaintext bg-light rounded p-2" readonly value="@createdDate">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Account Status</label>
                             <div>
-                                <span class="badge @(Model.IsActive ? "bg-success" : "bg-danger") me-2">
-                                    @(Model.IsActive ? "Active" : "Inactive")
+                                <span class="badge @(isActive ? "bg-success" : "bg-danger") me-2">
+                                    @(isActive ? "Active" : "Inactive")
                                 </span>
-                                <span class="badge @(Model.ApprovalStatus == "Approved" ? "bg-primary" : Model.ApprovalStatus == "Pending" ? "bg-warning" : "bg-danger")">
-                                    @Model.ApprovalStatus
+                                <span class="badge @(approvalStatus == "Approved" ? "bg-primary" : approvalStatus == "Pending" ? "bg-warning" : "bg-danger")">
+                                    @approvalStatus
                                 </span>
                             </div>
                             <small class="form-text text-muted">
@@ -107,12 +122,12 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label asp-for="FullName" class="form-label">Full Name *</label>
-                            <input class="form-control" asp-for="FullName" placeholder="Enter full name">
+                            <input class="form-control" asp-for="FullName" placeholder="Enter full name" value="@fullName">
                             <span asp-validation-for="FullName" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label asp-for="Email" class="form-label">Email Address *</label>
-                            <input type="email" class="form-control" asp-for="Email" placeholder="Enter email address">
+                            <input type="email" class="form-control" asp-for="Email" placeholder="Enter email address" value="@email">
                             <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
                     </div>
@@ -124,27 +139,27 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label asp-for="ContactNo" class="form-label">Contact Number</label>
-                            <input type="tel" class="form-control" asp-for="ContactNo" placeholder="Enter contact number">
+                            <input type="tel" class="form-control" asp-for="ContactNo" placeholder="Enter contact number" value="@contactNo">
                             <span asp-validation-for="ContactNo" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label asp-for="Address" class="form-label">Street Address</label>
-                            <input class="form-control" asp-for="Address" placeholder="Enter street address">
+                            <input class="form-control" asp-for="Address" placeholder="Enter street address" value="@address">
                             <span asp-validation-for="Address" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label asp-for="City" class="form-label">City</label>
-                            <input class="form-control" asp-for="City" placeholder="Enter city">
+                            <input class="form-control" asp-for="City" placeholder="Enter city" value="@city">
                             <span asp-validation-for="City" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label asp-for="Suburb" class="form-label">Suburb</label>
-                            <input class="form-control" asp-for="Suburb" placeholder="Enter suburb">
+                            <input class="form-control" asp-for="Suburb" placeholder="Enter suburb" value="@suburb">
                             <span asp-validation-for="Suburb" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label asp-for="PostalCode" class="form-label">Postal Code</label>
-                            <input class="form-control" asp-for="PostalCode" placeholder="Enter postal code">
+                            <input class="form-control" asp-for="PostalCode" placeholder="Enter postal code" value="@postalCode">
                             <span asp-validation-for="PostalCode" class="text-danger small"></span>
                         </div>
                     </div>
@@ -156,16 +171,25 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label asp-for="CompanyName" class="form-label">Company Name *</label>
-                            <input class="form-control" asp-for="CompanyName" placeholder="Enter company name">
+                            <input class="form-control" asp-for="CompanyName" placeholder="Enter company name" value="@companyName">
                             <span asp-validation-for="CompanyName" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label asp-for="SupplierType" class="form-label">Supplier Type *</label>
                             <select asp-for="SupplierType" class="form-control">
                                 <option value="">-- Select Supplier Type --</option>
-                                @foreach (var type in ViewBag.SupplierTypes)
+                                @if (ViewBag.SupplierTypes != null)
                                 {
-                                    <option value="@type.Value">@type.Text</option>
+                                    foreach (var type in ViewBag.SupplierTypes)
+                                    {
+                                        <option value="@type.Value" selected="@(type.Value == supplierType)">@type.Text</option>
+                                    }
+                                }
+                                else
+                                {
+                                    <option value="Fridge">Fridge Supplier</option>
+                                    <option value="Parts">Parts Supplier</option>
+                                    <option value="Other">Other</option>
                                 }
                             </select>
                             <span asp-validation-for="SupplierType" class="text-danger small"></span>
@@ -182,9 +206,9 @@
                             <div class="col-md-6 mb-3">
                                 <label asp-for="IsActive" class="form-label">Account Status</label>
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" asp-for="IsActive" id="isActiveSwitch">
+                                    <input class="form-check-input" type="checkbox" asp-for="IsActive" id="isActiveSwitch" checked="@isActive">
                                     <label class="form-check-label" for="isActiveSwitch">
-                                        @(Model.IsActive ? "Active" : "Inactive")
+                                        @(isActive ? "Active" : "Inactive")
                                     </label>
                                 </div>
                                 <small class="form-text text-muted">Toggle to activate/deactivate this supplier account.</small>
@@ -192,9 +216,9 @@
                             <div class="col-md-6 mb-3">
                                 <label asp-for="ApprovalStatus" class="form-label">Approval Status</label>
                                 <select asp-for="ApprovalStatus" class="form-control">
-                                    <option value="Pending">Pending</option>
-                                    <option value="Approved">Approved</option>
-                                    <option value="Rejected">Rejected</option>
+                                    <option value="Pending" selected="@(approvalStatus == "Pending")">Pending</option>
+                                    <option value="Approved" selected="@(approvalStatus == "Approved")">Approved</option>
+                                    <option value="Rejected" selected="@(approvalStatus == "Rejected")">Rejected</option>
                                 </select>
                                 <small class="form-text text-muted">Update the supplier's approval status.</small>
                             </div>
@@ -273,8 +297,8 @@
                     </div>
                 </div>
             </div>
-        }
-    </div> *@
+        } *@
+    </div>
 </div>
 
 @section Scripts {
@@ -298,25 +322,41 @@
 
             // Real-time validation feedback
             const form = document.querySelector('form');
-            const inputs = form.querySelectorAll('input, select');
+            if (form) {
+                const inputs = form.querySelectorAll('input, select');
 
-            inputs.forEach(input => {
-                input.addEventListener('blur', function() {
-                    if (this.value.trim() !== '') {
-                        this.classList.add('is-valid');
-                        this.classList.remove('is-invalid');
-                    }
+                inputs.forEach(input => {
+                    input.addEventListener('blur', function() {
+                        if (this.value.trim() !== '') {
+                            this.classList.add('is-valid');
+                            this.classList.remove('is-invalid');
+                        }
+                    });
                 });
-            });
+            }
 
             // Auto-select the current supplier type in dropdown
-            const currentSupplierType = '@Model.SupplierType';
+            const currentSupplierType = '@supplierType';
             if (currentSupplierType) {
                 const supplierTypeSelect = document.querySelector('select[name="SupplierType"]');
                 if (supplierTypeSelect) {
                     for (let i = 0; i < supplierTypeSelect.options.length; i++) {
                         if (supplierTypeSelect.options[i].value === currentSupplierType) {
                             supplierTypeSelect.options[i].selected = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Auto-select the current approval status in dropdown
+            const currentApprovalStatus = '@approvalStatus';
+            if (currentApprovalStatus) {
+                const approvalStatusSelect = document.querySelector('select[name="ApprovalStatus"]');
+                if (approvalStatusSelect) {
+                    for (let i = 0; i < approvalStatusSelect.options.length; i++) {
+                        if (approvalStatusSelect.options[i].value === currentApprovalStatus) {
+                            approvalStatusSelect.options[i].selected = true;
                             break;
                         }
                     }
