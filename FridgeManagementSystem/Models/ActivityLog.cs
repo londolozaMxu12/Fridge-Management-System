@@ -32,7 +32,7 @@ namespace FridgeManagementSystem.Models
         public string NewValues { get; set; } // JSON serialized new values
 
         [Required]
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        public DateTime Timestamp { get; set; } = DateTime.Now;
 
         [StringLength(50)]
         public string IPAddress { get; set; }

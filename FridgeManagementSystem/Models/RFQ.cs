@@ -42,11 +42,11 @@ namespace FridgeManagementSystem.Models
         public string CreatedById { get; set; }
 
         // Navigation properties
-        public virtual PurchaseRequest PurchaseRequest { get; set; }
-        public virtual ApplicationUser CreatedBy { get; set; }
-        public virtual ICollection<RFQSupplier> RFQSuppliers { get; set; } = new List<RFQSupplier>();
-        public virtual ICollection<Quotation> Quotations { get; set; } = new List<Quotation>();
-        public virtual ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
+        public PurchaseRequest PurchaseRequest { get; set; }
+        public ApplicationUser CreatedBy { get; set; }
+        public ICollection<RFQSupplier> RFQSuppliers { get; set; } = new List<RFQSupplier>();
+        public ICollection<Quotation> Quotations { get; set; } = new List<Quotation>();
+        public ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
 
         private static string GenerateRFQNumber()
         {
