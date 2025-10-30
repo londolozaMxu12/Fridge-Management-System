@@ -43,8 +43,8 @@ namespace FridgeManagementSystem.Models
 
         [Required]
         [Display(Name = "Fault Technician")]
-        public int FaultTechnicianId { get; set; }
-        public Employee FaultTechnician { get; set; }
+        public int? FaultTechnicianId { get; set; }
+        public Employee? FaultTechnician { get; set; }
 
         
     }

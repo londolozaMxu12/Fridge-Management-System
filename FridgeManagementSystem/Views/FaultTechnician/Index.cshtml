@@ -175,7 +175,7 @@ else
                             @fault.Title
                             @if (fault.FaultTechnicianId == null)
                             {
-                                <span class="badge bg-warning float-end">Unattended</span>
+                                <span class="badge bg-warning text-light float-end">Unattended</span>
                             }
                             else if (fault.FaultTechnicianId == ViewBag.CurrentTechnicianId)
                             {

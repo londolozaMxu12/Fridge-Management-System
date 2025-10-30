@@ -645,22 +645,28 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                 schedule.Status = model.Status;
                 schedule.UpdatedAt = DateTime.Now;
 
-                // If status changed to Cancelled, update the fault status to Reported
+                // If status changed to Cancelled, update the fault status to Reported AND unassign technician
                 if (model.Status == ScheduleStatus.Cancelled && originalStatus != ScheduleStatus.Cancelled)
                 {
-                    schedule.Fault.Status = FaultStatus.Reported; 
+                    schedule.Fault.Status = FaultStatus.Reported;
+                    schedule.Fault.FaultTechnicianId = null; // Unassign the technician
+                    schedule.Fault.UpdatedAt = DateTime.Now;
+
+                    // Also update the repair schedule's technician to null
+                    schedule.FaultTechnicianId = null;
                 }
                 // If status changed to Completed, update the fault status to Completed
-                else if(model.Status == ScheduleStatus.Completed && originalStatus != ScheduleStatus.Cancelled)
+                else if (model.Status == ScheduleStatus.Completed && originalStatus != ScheduleStatus.Cancelled)
                 {
-                    schedule.Fault.Status = FaultStatus.Completed; 
+                    schedule.Fault.Status = FaultStatus.Completed;
                 }
-                else if (model.Status == ScheduleStatus.Scheduled || model.Status == ScheduleStatus.Rescheduled && originalStatus != ScheduleStatus.Cancelled)
+                else if ((model.Status == ScheduleStatus.Scheduled || model.Status == ScheduleStatus.Rescheduled) && originalStatus != ScheduleStatus.Cancelled)
                 {
                     schedule.Fault.Status = FaultStatus.Scheduled;
                 }
-                
+
                 _context.RepairSchedules.Update(schedule);
+                _context.Faults.Update(schedule.Fault); // Ensure fault changes are tracked
                 await _context.SaveChangesAsync();
 
                 // Notify customer if schedule is updated
@@ -668,6 +674,12 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                     || schedule.Status == ScheduleStatus.Cancelled)
                 {
                     await _notification.NotifyRepairScheduledAsync(schedule);
+                }
+
+                // Send notification about fault being unassigned if cancelled
+                if (model.Status == ScheduleStatus.Cancelled && originalStatus != ScheduleStatus.Cancelled)
+                {
+                    await _notification.NotifyFaultUnassignedAsync(schedule.Fault, currentTechnician);
                 }
 
                 TempData["Success"] = "Repair schedule updated successfully";
@@ -679,48 +691,6 @@ namespace FridgeManagementSystem.Controllers.F.Technician
             return View(model);
         }
 
-        // POST: FaultTechnician/UpdateScheduleStatus/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateScheduleStatus(int id, ScheduleStatus status)
-        {
-            var currentTechnician = await GetCurrentFaultTechnicianAsync();
-            if (currentTechnician == null)
-            {
-                TempData["Error"] = "Access denied. Only fault technicians can update schedules.";
-                return RedirectToAction(nameof(MySchedule));
-            }
-
-            var schedule = await _context.RepairSchedules
-                .Include(rs => rs.Fault)
-                .ThenInclude(f => f.ReportedBy)
-                .ThenInclude(c => c.User)
-                .FirstOrDefaultAsync(rs => rs.RepairScheduleId == id);
-
-            if (schedule == null)
-            {
-                TempData["Error"] = "Repair schedule not found";
-                return RedirectToAction(nameof(MySchedule));
-            }
-
-            // Check if current user is assigned technician
-            if (schedule.FaultTechnicianId != currentTechnician.Id)
-            {
-                TempData["Error"] = "You are not assigned to this repair schedule";
-                return RedirectToAction(nameof(MySchedule));
-            }
-
-            var oldStatus = schedule.Status;
-            schedule.Status = status;
-            schedule.UpdatedAt = DateTime.Now;
-
-            _context.RepairSchedules.Update(schedule);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = $"Repair schedule status updated from {oldStatus} to {status}";
-            return RedirectToAction(nameof(MySchedule));
-        }
-        
         // GET: FaultTechnician/RepairHistory
         public async Task<IActionResult> RepairHistory(string? search, string? status, DateTime? fromDate, DateTime? toDate, int pageNumber = 1, int pageSize = 5)
         {

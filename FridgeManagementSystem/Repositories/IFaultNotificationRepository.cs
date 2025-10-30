@@ -6,5 +6,6 @@
         Task NotifyFaultAttendedAsync(Fault fault, Employee attendingTechnician);
         Task NotifyFaultStatusUpdateAsync(Fault fault, string oldStatus);
         Task NotifyRepairScheduledAsync(RepairSchedule schedule);
+        Task NotifyFaultUnassignedAsync(Fault fault, Employee technician);
     }
 }

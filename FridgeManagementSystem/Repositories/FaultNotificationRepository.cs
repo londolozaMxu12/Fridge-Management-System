@@ -183,5 +183,54 @@ namespace FridgeManagementSystem.Repositories
 
             
         }
+
+        public async Task NotifyFaultUnassignedAsync(Fault fault, Employee technician)
+        {
+            try
+            {
+                // Notify other technicians that the fault is now available
+                var otherTechnicians = await _context.Employees
+                    .Include(e => e.User)
+                    .Where(e => e.EmployeeType.Name == "FaultTechnician" &&
+                               e.Id != technician.Id &&
+                               e.IsActive)
+                    .ToListAsync();
+
+                foreach (var tech in otherTechnicians)
+                {
+                    var notification = new Notification
+                    {
+                        UserId = tech.UserId,
+                        Title = "Fault Available",
+                        Message = $"Fault '{fault.Title}' has been unassigned and is now un attended.",
+                        IsRead = false,
+                        CreatedAt = DateTime.Now,
+                        Link = GenerateAbsoluteUrl($"/FaultTechnician/Details/{fault.FaultId}") // Link to fault details
+                    };
+                    _context.Notifications.Add(notification);
+                }
+
+                // Notify the customer that the repair has been cancelled
+                if (fault.ReportedBy?.Id != null)
+                {
+                    var customerNotification = new Notification
+                    {
+                        UserId = fault.ReportedBy.Id,
+                        Title = "Repair Schedule Cancelled",
+                        Message = $"The repair schedule for your fault '{fault.Title}' has been cancelled. The fault will be attended by other technician.",
+                        IsRead = false,
+                        CreatedAt = DateTime.Now,
+                        Link = GenerateAbsoluteUrl($"/CustomerFault/Details/{fault.FaultId}")// Link to customer fault details
+                    };
+                    _context.Notifications.Add(customerNotification);
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                
+            }
+        }
     }
 }
