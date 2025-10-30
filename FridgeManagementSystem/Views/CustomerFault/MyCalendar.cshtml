@@ -1,0 +1,545 @@
+﻿@using FridgeManagementSystem.ViewModels
+@model CustomerCalendarViewModel
+@{
+    ViewData["Title"] = "My Repair Calendar";
+    Layout = "_CustomerLayout";
+}
+
+<div class="container-fluid px-0">
+    <!-- Calendar Header -->
+    <div class="bg-light border-bottom py-3 mb-0">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h2 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2 text-primary"></i>My Repair Calendar
+                    </h2>
+                    <p class="text-muted mb-0">View all your scheduled repairs</p>
+                </div>
+                <div class="col-auto">
+                    <div class="btn-group">
+                        
+                        <a asp-action="Index" class="btn btn-outline-primary">
+                            <i class="fas fa-list me-1"></i>My Reported Faults
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Screen Calendar -->
+    <div class="container-fluid p-0">
+        <div class="card border-0 rounded-0">
+            <div class="card-body p-0">
+                <div id="fullScreenCalendar" style="min-height: calc(100vh - 200px);"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Full calendar customization */
+        #fullScreenCalendar {
+            background: white;
+        }
+
+        .fc {
+            height: 100%;
+        }
+
+        .fc-toolbar {
+            padding: 1rem;
+            margin-bottom: 0;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .fc-toolbar-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .fc-button {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            font-weight: 500;
+        }
+
+            .fc-button:hover {
+                background-color: #5a6268;
+                border-color: #545b62;
+            }
+
+        .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .fc-event {
+            border: none;
+            border-radius: 4px;
+            padding: 4px 6px;
+            font-size: 0.8em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 45px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+            .fc-event:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+
+        .fc-daygrid-event {
+            border-left: 4px solid;
+        }
+
+        /* Custom event content styling */
+        .fc-event-time {
+            font-weight: 600;
+            font-size: 0.75em;
+            margin-bottom: 2px;
+            line-height: 1.2;
+        }
+
+        .fc-event-title {
+            font-weight: 500;
+            font-size: 0.8em;
+            line-height: 1.3;
+        }
+
+        /* Day view specific styling - full titles */
+        .fc-timeGridDay-view .fc-event-title {
+            display: block;
+            white-space: normal;
+            overflow: visible;
+            -webkit-line-clamp: unset;
+            -webkit-box-orient: unset;
+        }
+
+        .fc-timeGridDay-view .fc-event {
+            min-height: 55px;
+            padding: 6px 8px;
+        }
+
+        /* Month and week views - trimmed titles */
+        .fc-dayGridMonth-view .fc-event-title,
+        .fc-timeGridWeek-view .fc-event-title {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Event colors based on status */
+        .event-scheduled {
+            background-color: #0d6efd;
+            border-color: #0b5ed7;
+        }
+
+        .event-rescheduled {
+            background-color: #ffc107;
+            border-color: #ffb507;
+            color: #000;
+        }
+
+        .event-inprogress {
+            background-color: #fd7e14;
+            border-color: #fc7e14;
+        }
+
+        .event-completed {
+            background-color: #198754;
+            border-color: #157347;
+        }
+
+        .event-cancelled {
+            background-color: #dc3545;
+            border-color: #bb2d3b;
+        }
+
+        /* Better display for time grid views */
+        .fc-timegrid-event {
+            min-height: 50px;
+        }
+
+            .fc-timegrid-event .fc-event-main {
+                padding: 4px 6px;
+            }
+
+        /* Day view specific - more space for full titles */
+        .fc-timeGridDay-view .fc-timegrid-event {
+            min-height: 60px;
+        }
+
+        /* Ensure events are visible in all views */
+        .fc-daygrid-day-events {
+            margin-top: 2px;
+        }
+
+        .fc-daygrid-event-harness {
+            margin-bottom: 2px;
+        }
+
+        /* Mobile responsiveness */
+        @@media (max-width: 768px) {
+            .fc-toolbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .fc-toolbar-title {
+                font-size: 1.25rem;
+            }
+
+            .fc-event {
+                min-height: 40px;
+                padding: 3px 4px;
+            }
+
+            .fc-event-time {
+                font-size: 0.7em;
+            }
+
+            .fc-event-title {
+                font-size: 0.75em;
+            }
+
+            .fc-timeGridDay-view .fc-event {
+                min-height: 50px;
+                padding: 4px 6px;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <!-- FullCalendar CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('fullScreenCalendar');
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                // Layout and Views - Removed list view
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay' // Removed listMonth
+                },
+                initialView: 'dayGridMonth',
+                views: {
+                    timeGridDay: {
+                        buttonText: 'day',
+                        dayMaxEvents: 10,
+                        eventMinHeight: 60, // More height for full titles
+                        slotMinTime: '06:00:00', // Start earlier to accommodate events
+                        slotMaxTime: '20:00:00' // End later to accommodate events
+                    },
+                    timeGridWeek: {
+                        buttonText: 'week',
+                        dayMaxEvents: 8,
+                        eventMinHeight: 45,
+                        slotMinTime: '06:00:00',
+                        slotMaxTime: '20:00:00'
+                    },
+                    dayGridMonth: {
+                        buttonText: 'month',
+                        dayMaxEvents: 4,
+                        eventMinHeight: 40
+                    }
+                },
+
+                // Business Hours
+                businessHours: {
+                    daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday
+                    startTime: '08:00',
+                    endTime: '17:00',
+                },
+
+                // Events Data - Only Scheduled and Rescheduled statuses
+                events: [
+                    @foreach (var schedule in Model.UpcomingSchedules)
+                    {
+                            // Only include Scheduled and Rescheduled statuses
+                            if (schedule.Status == ScheduleStatus.Scheduled || schedule.Status == ScheduleStatus.Rescheduled)
+                            {
+                                    var faultTitle = schedule.Fault?.Title ?? "No Title";
+                                    // For month/week views - trimmed title (30 chars)
+                                    var trimmedTitle = faultTitle.Length > 30 ? faultTitle.Substring(0, 30) + "..." : faultTitle;
+                                    // For day view - full title
+                                    var fullTitle = faultTitle;
+
+                                    var eventClass = GetEventClass(schedule.Status);
+                                    // Convert decimal to double for JavaScript
+                                    var estimatedHours = (double)schedule.EstimatedHours;
+                                    var endTime = schedule.ScheduledDate.AddHours(estimatedHours).ToString("yyyy-MM-ddTHH:mm");
+                                    var startTime = schedule.ScheduledDate.ToString("HH:mm");
+                                    var endTimeDisplay = schedule.ScheduledDate.AddHours(estimatedHours).ToString("HH:mm");
+                                    var timeRange = $"{startTime} - {endTimeDisplay}";
+
+                                    <text>
+                                    {
+                                        id: '@schedule.RepairScheduleId',
+                                        title: '@Html.Raw(trimmedTitle?.Replace("'", "\\'"))', // Default trimmed title
+                                        fullTitle: '@Html.Raw(fullTitle?.Replace("'", "\\'"))', // Full title for day view
+                                        start: '@schedule.ScheduledDate.ToString("yyyy-MM-ddTHH:mm")',
+                                        end: '@endTime',
+                                        extendedProps: {
+                                            technician: '@Html.Raw(schedule.FaultTechnician?.User?.FullName?.Replace("'", "\\'") ?? "Not assigned")',
+                                            fridge: '@Html.Raw(schedule.Fault?.Fridge?.FridgeType?.Name?.Replace("'", "\\'") ?? "N/A")',
+                                            status: '@schedule.Status',
+                                            estimatedHours: @estimatedHours.ToString("0.##"),
+                                            detailsUrl: '@Url.Action("Details", new { id = schedule.FaultId })',
+                                            originalTitle: '@Html.Raw(schedule.Fault?.Title?.Replace("'", "\\'") ?? "No Title")',
+                                            scheduleTime: '@schedule.ScheduledDate.ToString("HH:mm")',
+                                            timeRange: '@timeRange',
+                                            fullDate: '@schedule.ScheduledDate.ToString("dddd, MMMM dd, yyyy HH:mm")',
+                                            durationMinutes: Math.round(@estimatedHours * 60), // Convert hours to minutes
+                                            notes: '@Html.Raw(schedule.Notes?.Replace("'", "\\'") ?? "No additional notes")'
+                                        },
+                                        backgroundColor: getEventColor('@schedule.Status'),
+                                        borderColor: getEventColor('@schedule.Status'),
+                                        textColor: getEventTextColor('@schedule.Status'),
+                                        classNames: ['@eventClass'],
+                                        allDay: false
+                                    },
+                                    </text>
+                            }
+                    }
+                ],
+
+                // Event Interactions
+                eventClick: function(info) {
+                    showEventDetails(info.event);
+                },
+
+                // Event Display
+                eventDisplay: 'block',
+                eventTimeFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                },
+
+                // Calendar Settings
+                nowIndicator: true,
+                navLinks: true,
+                editable: false,
+                selectable: false,
+                dayMaxEvents: true,
+                height: 'auto',
+
+                // Date Navigation
+                validRange: {
+                    start: '@DateTime.Today.AddDays(-7).ToString("yyyy-MM-dd")',
+                    end: '@DateTime.Today.AddDays(90).ToString("yyyy-MM-dd")'
+                },
+
+                // Event Rendering - Custom content for better display
+                eventContent: function(arg) {
+                    const extendedProps = arg.event.extendedProps;
+                    const currentView = arg.view.type;
+
+                    // Create custom event content with time range above title
+                    const timeEl = document.createElement('div');
+                    timeEl.className = 'fc-event-time';
+
+                    // Display time range (start - end) for all views
+                    timeEl.innerHTML = extendedProps.timeRange;
+
+                    const titleEl = document.createElement('div');
+                    titleEl.className = 'fc-event-title';
+
+                    // Use full title for day view, trimmed title for others
+                    if (currentView === 'timeGridDay') {
+                        titleEl.innerHTML = extendedProps.originalTitle; // Full title for day view
+                    } else {
+                        titleEl.innerHTML = arg.event.title; // Trimmed title for month/week views
+                    }
+
+                    const arrayOfDomNodes = [timeEl, titleEl];
+                    return { domNodes: arrayOfDomNodes };
+                },
+
+                // Event Rendering for tooltips
+                eventDidMount: function(info) {
+                    // Add enhanced tooltip
+                    const extendedProps = info.event.extendedProps;
+                    const tooltipContent = `
+                        <div class="text-start">
+                            <strong>${extendedProps.originalTitle}</strong><br>
+                            <strong>Time:</strong> ${extendedProps.fullDate}<br>
+                            <strong>Duration:</strong> ${extendedProps.durationMinutes} minutes<br>
+                            <strong>Technician:</strong> ${extendedProps.technician}<br>
+                            <strong>Fridge:</strong> ${extendedProps.fridge}<br>
+                            <strong>Status:</strong> ${extendedProps.status}
+                        </div>
+                    `;
+
+                    info.el.setAttribute('data-bs-toggle', 'tooltip');
+                    info.el.setAttribute('data-bs-placement', 'top');
+                    info.el.setAttribute('data-bs-html', 'true');
+                    info.el.setAttribute('title', tooltipContent);
+                    new bootstrap.Tooltip(info.el);
+                }
+            });
+
+            calendar.render();
+
+            // Initialize Bootstrap tooltips for other elements
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        function getEventColor(status) {
+            switch(status) {
+                case 'Scheduled': return '#0d6efd';
+                case 'Rescheduled': return '#ffc107';
+                case 'InProgress': return '#fd7e14';
+                case 'Completed': return '#198754';
+                case 'Cancelled': return '#dc3545';
+                default: return '#6c757d';
+            }
+        }
+
+        function getEventTextColor(status) {
+            switch(status) {
+                case 'Rescheduled': return '#000000';
+                default: return '#ffffff';
+            }
+        }
+
+        function showEventDetails(event) {
+            const extendedProps = event.extendedProps;
+
+            const modalHtml = `
+                <div class="modal fade" id="eventModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-tools me-2"></i>Repair Schedule Details
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h4 class="text-primary">${extendedProps.originalTitle}</h4>
+                                        <p class="text-muted mb-0">Fault Repair Schedule</p>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Schedule Details</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <p><strong>Date:</strong><br>${extendedProps.fullDate}</p>
+                                                <p><strong>Time Range:</strong><br>${extendedProps.timeRange}</p>
+                                                <p><strong>Duration:</strong><br>${extendedProps.durationMinutes} minutes</p>
+                                                <p><strong>Status:</strong><br>
+                                                    <span class="badge ${getStatusBadgeClass(extendedProps.status)}">
+                                                        ${extendedProps.status}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="fas fa-users me-2"></i>Assignment</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <p><strong>Technician:</strong><br>${extendedProps.technician}</p>
+                                                <p><strong>Fridge:</strong><br>${extendedProps.fridge}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                ${extendedProps.notes !== 'No additional notes' ? `
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="fas fa-sticky-note me-2"></i>Additional Notes</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="mb-0">${extendedProps.notes}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                ` : ''}
+                            </div>
+                            <div class="modal-footer">
+                                <a href="${extendedProps.detailsUrl}" class="btn btn-primary">
+                                    <i class="fas fa-info-circle me-1"></i> View Fault Details
+                                </a>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times me-1"></i> Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            const existingModal = document.getElementById('eventModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Add new modal to body and show it
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+            modal.show();
+        }
+
+        function getStatusBadgeClass(status) {
+            switch(status) {
+                case 'Scheduled': return 'bg-primary';
+                case 'Rescheduled': return 'bg-warning text-dark';
+                case 'InProgress': return 'bg-info';
+                case 'Completed': return 'bg-success';
+                case 'Cancelled': return 'bg-danger';
+                default: return 'bg-secondary';
+            }
+        }
+    </script>
+}
+
+@functions {
+    public string GetEventClass(ScheduleStatus status)
+    {
+        return status switch
+        {
+            ScheduleStatus.Scheduled => "event-scheduled",
+            ScheduleStatus.Rescheduled => "event-rescheduled",
+            ScheduleStatus.InProgress => "event-inprogress",
+            ScheduleStatus.Completed => "event-completed",
+            ScheduleStatus.Cancelled => "event-cancelled",
+            _ => "event-scheduled"
+        };
+    }
+}

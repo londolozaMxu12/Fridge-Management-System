@@ -19,7 +19,7 @@ namespace FridgeManagementSystem.ViewModels
 
         [Required]
         [Display(Name = "Estimated Hours")]
-        [Range(0.5, double.MaxValue, ErrorMessage = "Estimated hours must be at least 0.5")]
+        [Range(0.50, double.MaxValue, ErrorMessage = "Estimated hours must be at least 0.50")]
         public decimal EstimatedHours { get; set; }
     }
 }

@@ -30,7 +30,7 @@ namespace FridgeManagementSystem.Models
         [Display(Name = "Estimated Hours")]
         public decimal EstimatedHours { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
 
         public string CreatedById { get; set; }

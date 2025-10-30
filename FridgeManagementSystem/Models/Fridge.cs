@@ -44,7 +44,7 @@ namespace FridgeManagementSystem.Models
 
         [Required]
         [StringLength(50)]
-        public string Status { get; set; } = "Available"; // Available, Reserved, Allocated
+        public string Status { get; set; } = "Available"; // Available, Reserved, Allocated, UnderMaintenance, Scrapped
 
         [Display(Name = "Next Service Date")]
         [DataType(DataType.Date)]

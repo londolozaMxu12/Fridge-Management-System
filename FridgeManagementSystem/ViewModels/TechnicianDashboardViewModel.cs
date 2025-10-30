@@ -11,9 +11,10 @@
         public double CompletionRate { get; set; }
 
         // Lists
-        public List<RepairSchedule> UpcomingSchedules { get; set; } = new();
-        public List<Fault> RecentUnattendedFaults { get; set; } = new();
-        public List<Fault> MyRecentFaults { get; set; } = new();
+        public List<RepairSchedule> UpcomingSchedules { get; set; } = new List<RepairSchedule>();
+        public List<RepairSchedule> AllUpcomingSchedules { get; set; } = new List<RepairSchedule>();
+        public List<Fault> RecentUnattendedFaults { get; set; } = new List<Fault>();
+        public List<Fault> MyRecentFaults { get; set; } = new List<Fault>();
 
         // Technician info
         public bool IsFaultTechnician { get; set; }

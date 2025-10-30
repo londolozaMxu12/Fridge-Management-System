@@ -113,21 +113,75 @@ namespace FridgeManagementSystem.Repositories
             await _context.SaveChangesAsync();
         }
 
+        //public async Task NotifyRepairScheduledAsync(RepairSchedule schedule)
+        //{
+        //    var customerNotification = new Notification
+        //    {
+        //        UserId = schedule.Fault.ReportedBy.Id,
+        //        Title = "Repair Scheduled",
+        //        Message = $"Repair for your fault '{schedule.Fault.Title}' has been scheduled for {schedule.ScheduledDate:yyyy-MM-dd HH:mm}, make sure you available at this date and time. " +
+        //        $"" +
+        //        $"Thank you, have a good day! ",
+        //        Link = GenerateAbsoluteUrl($"/CustomerFault/Details/{schedule.FaultId}"),
+        //        CreatedAt = DateTime.Now
+        //    };
+
+        //    _context.Notifications.Add(customerNotification);
+        //    await _context.SaveChangesAsync();
+        //}
+
         public async Task NotifyRepairScheduledAsync(RepairSchedule schedule)
         {
-            var customerNotification = new Notification
+            // Check if the schedule status requires notification
+            if (schedule.Status == ScheduleStatus.Scheduled)
             {
-                UserId = schedule.Fault.ReportedBy.Id,
-                Title = "Repair Scheduled",
-                Message = $"Repair for your fault '{schedule.Fault.Title}' has been scheduled for {schedule.ScheduledDate:yyyy-MM-dd HH:mm}, make sure you available at this date and time. " +
-                $"" +
-                $"Thank you, have a good day! ",
-                Link = GenerateAbsoluteUrl($"/CustomerFault/Details/{schedule.FaultId}"),
-                CreatedAt = DateTime.Now
-            };
+                var customerNotification = new Notification
+                {
+                    UserId = schedule.Fault.ReportedBy.Id,
+                    Title = "Repair Scheduled",
+                    Message = $"Repair for your fault '{schedule.Fault.Title}' has been scheduled for {schedule.ScheduledDate: dd-MM-yyyy HH:mm}, make sure you available at this date and time. " +
+                    $"" +
+                    $"Thank you, have a good day! ",
+                    Link = GenerateAbsoluteUrl($"/CustomerFault/Details/{schedule.FaultId}"),
+                    CreatedAt = DateTime.Now
+                };
 
-            _context.Notifications.Add(customerNotification);
-            await _context.SaveChangesAsync();
+                _context.Notifications.Add(customerNotification);
+                await _context.SaveChangesAsync();
+            }
+            else if (schedule.Status == ScheduleStatus.Rescheduled)
+            {
+                var customerNotification = new Notification
+                {
+                    UserId = schedule.Fault.ReportedBy.Id,
+                    Title = "Repair Rescheduled",
+                    Message = $"Repair for your fault '{schedule.Fault.Title}' has been rescheduled for {schedule.ScheduledDate: dd-MM-yyyy HH:mm}, make sure you available at this date and time. " +
+                    $"" +
+                    $"Thank you, have a good day! ",
+                    Link = GenerateAbsoluteUrl($"/CustomerFault/Details/{schedule.FaultId}"),
+                    CreatedAt = DateTime.Now
+                };
+
+                _context.Notifications.Add(customerNotification);
+                await _context.SaveChangesAsync();
+            }
+            else if(schedule.Status == ScheduleStatus.Cancelled) 
+            {
+                var customerNotification = new Notification
+                {
+                    UserId = schedule.Fault.ReportedBy.Id,
+                    Title = "Repair Scheduled Cancelled",
+                    Message = $"Repair for your fault '{schedule.Fault.Title}' has been Cancelled, technician is not available",
+                    Link = GenerateAbsoluteUrl($"/CustomerFault/Details/{schedule.FaultId}"),
+                    CreatedAt = DateTime.Now
+                };
+
+                _context.Notifications.Add(customerNotification);
+                await _context.SaveChangesAsync();
+            }
+
+
+            
         }
     }
 }

@@ -329,7 +329,7 @@ else
         <div class="col-md-6 text-end">
             <div class="btn-group">
                 <span class="me-2 text-light">Page size:</span>
-                @foreach (var size in new[] { 5, 10, 20, 50 })
+                @foreach (var size in new[] { 4, 8, 16, 42 })
                 {
                     <a class="btn btn-outline-secondary btn-sm @(Model.PageSize == size ? "active" : "")"
                        asp-action="Index"

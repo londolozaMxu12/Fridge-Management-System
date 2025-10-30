@@ -74,7 +74,7 @@ namespace FridgeManagementSystem.Controllers.Faults
                         FridgeId = f.FridgeId,
                         SerialNumber = f.SerialNumber,
                         Description = f.Description,
-                        FridgeType = $"{f.FridgeType.Brand} {f.FridgeType.Name}",
+                        FridgeType = $"{f.FridgeType.Name} {f.FridgeType.Brand}",
                         Status = f.Status
                     }).ToList()
             };
@@ -120,7 +120,7 @@ namespace FridgeManagementSystem.Controllers.Faults
                     _context.Faults.Add(fault);
                     await _context.SaveChangesAsync();
 
-                    // Update fridge status if assigned
+                    // Update fridge status if allocated
                     if (model.FridgeId.HasValue)
                     {
                         var fridge = await _context.Fridges
@@ -175,7 +175,7 @@ namespace FridgeManagementSystem.Controllers.Faults
                 FridgeId = f.FridgeId,
                 SerialNumber = f.SerialNumber,
                 Description = f.Description,
-                FridgeType = $"{f.FridgeType?.Brand} {f.FridgeType?.Name}",
+                FridgeType = $"{f.FridgeType?.Name} {f.FridgeType?.Brand} ",
                 Status = f.Status
             }).ToList();
 
@@ -238,6 +238,46 @@ namespace FridgeManagementSystem.Controllers.Faults
                     Notes = rs.Notes,
                     EstimatedHours = rs.EstimatedHours
                 }).ToList()
+            };
+
+            return View(viewModel);
+        }
+
+        // GET: CustomerFault/MyCalendar - Full Screen Calendar View
+        public async Task<IActionResult> MyCalendar()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var customer = await _context.Customers
+                .Include(c => c.User)
+                .FirstOrDefaultAsync(c => c.Id == userId);
+
+            if (customer == null)
+            {
+                TempData["Error"] = "Customer not found";
+                return RedirectToAction("Index", "CustomerFault");
+            }
+
+            // Get all upcoming schedules for this customer (next 90 days for better calendar view)
+            var upcomingSchedules = await _context.RepairSchedules
+                .Include(rs => rs.Fault)
+                    .ThenInclude(f => f.Fridge)
+                        .ThenInclude(f => f.FridgeType)
+                .Include(rs => rs.Fault)
+                    .ThenInclude(f => f.ReportedBy)
+                .Include(rs => rs.FaultTechnician)
+                    .ThenInclude(t => t.User)
+                .Where(rs => rs.Fault.ReportedById == customer.Id && // Only schedules for a specific customer's faults
+                             rs.ScheduledDate >= DateTime.Today.AddDays(-7) && // Include some past schedules for context
+                             rs.ScheduledDate <= DateTime.Today.AddDays(90) && // Extended view for better planning
+                             rs.Status != ScheduleStatus.Cancelled)
+                .OrderBy(rs => rs.ScheduledDate)
+                .ToListAsync();
+
+            var viewModel = new CustomerCalendarViewModel
+            {
+                CustomerName = customer.User.FullName,
+                BusinessName = customer.BusinessName,
+                UpcomingSchedules = upcomingSchedules
             };
 
             return View(viewModel);

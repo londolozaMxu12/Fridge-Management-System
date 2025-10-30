@@ -94,7 +94,7 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                 await _context.Faults.CountAsync(f => f.FaultTechnicianId == currentTechnicianId &&
                                                     f.Status == FaultStatus.Completed) : 0;
 
-            // Get upcoming schedules (next 7 days)
+            // Get upcoming schedules for list view (next 7 days) - limited to 5
             var upcomingSchedules = currentTechnicianId.HasValue ?
                 await _context.RepairSchedules
                     .Include(rs => rs.Fault)
@@ -107,7 +107,22 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                                 rs.ScheduledDate >= DateTime.Today &&
                                 rs.ScheduledDate <= DateTime.Today.AddDays(7))
                     .OrderBy(rs => rs.ScheduledDate)
-                    .Take(3)
+                    .Take(5)
+                    .ToListAsync() : new List<RepairSchedule>();
+
+            // Get ALL upcoming schedules for calendar view (next 7 days) - no limit
+            var allUpcomingSchedules = currentTechnicianId.HasValue ?
+                await _context.RepairSchedules
+                    .Include(rs => rs.Fault)
+                        .ThenInclude(f => f.ReportedBy)
+                            .ThenInclude(c => c.User)
+                    .Include(rs => rs.Fault)
+                        .ThenInclude(f => f.Fridge)
+                            .ThenInclude(f => f.FridgeType)
+                    .Where(rs => rs.FaultTechnicianId == currentTechnicianId &&
+                                rs.ScheduledDate >= DateTime.Today &&
+                                rs.ScheduledDate <= DateTime.Today.AddDays(7))
+                    .OrderBy(rs => rs.ScheduledDate)
                     .ToListAsync() : new List<RepairSchedule>();
 
             // Get recent unattended faults (for quick action)
@@ -119,7 +134,7 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                 .Where(f => f.FaultTechnicianId == null)
                 .OrderByDescending(f => f.Priority)
                 .ThenByDescending(f => f.ReportedDate)
-                .Take(3)
+                .Take(5)
                 .ToListAsync();
 
             // Get my recent faults
@@ -131,7 +146,7 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                         .ThenInclude(c => c.User)
                     .Where(f => f.FaultTechnicianId == currentTechnicianId)
                     .OrderByDescending(f => f.UpdatedAt)
-                    .Take(3)
+                    .Take(5)
                     .ToListAsync() : new List<Fault>();
 
             // Calculate completion rate
@@ -150,6 +165,7 @@ namespace FridgeManagementSystem.Controllers.F.Technician
 
                 // Lists
                 UpcomingSchedules = upcomingSchedules,
+                AllUpcomingSchedules = allUpcomingSchedules, 
                 RecentUnattendedFaults = recentUnattendedFaults,
                 MyRecentFaults = myRecentFaults,
 
@@ -620,17 +636,27 @@ namespace FridgeManagementSystem.Controllers.F.Technician
 
             if (ModelState.IsValid)
             {
+                // Store the original status to check if it changed to cancelled
+                var originalStatus = schedule.Status;
+
                 schedule.ScheduledDate = model.ScheduledDate;
                 schedule.EstimatedHours = model.EstimatedHours;
                 schedule.Notes = model.Notes;
                 schedule.Status = model.Status;
                 schedule.UpdatedAt = DateTime.Now;
 
+                // If status changed to Cancelled, update the fault status to Reported
+                if (model.Status == ScheduleStatus.Cancelled && originalStatus != ScheduleStatus.Cancelled)
+                {
+                    schedule.Fault.Status = FaultStatus.Reported; // Make sure FaultStatus.Reported exists
+                }
+
                 _context.RepairSchedules.Update(schedule);
                 await _context.SaveChangesAsync();
 
                 // Notify customer if schedule is updated
-                if (schedule.Status == ScheduleStatus.Scheduled || schedule.Status == ScheduleStatus.Rescheduled)
+                if (schedule.Status == ScheduleStatus.Scheduled || schedule.Status == ScheduleStatus.Rescheduled
+                    || schedule.Status == ScheduleStatus.Cancelled)
                 {
                     await _notification.NotifyRepairScheduledAsync(schedule);
                 }
@@ -685,32 +711,7 @@ namespace FridgeManagementSystem.Controllers.F.Technician
             TempData["Success"] = $"Repair schedule status updated from {oldStatus} to {status}";
             return RedirectToAction(nameof(MySchedule));
         }
-        public async Task<IActionResult> GetFaultDetailsPartial(int id)
-        {
-            var fault = await _context.Faults
-                .Include(f => f.Fridge)
-                .ThenInclude(f => f.FridgeType)
-                .Include(f => f.ReportedBy)
-                .ThenInclude(c => c.User)
-                .Include(f => f.FaultTechnician)
-                .ThenInclude(t => t.User)
-                .Include(f => f.RepairSchedules)
-                .ThenInclude(rs => rs.FaultTechnician)
-                .ThenInclude(t => t.User)
-                .FirstOrDefaultAsync(f => f.FaultId == id);
-
-            if (fault == null)
-            {
-                return Content("<div class='alert alert-danger'>Fault not found</div>");
-            }
-
-            var currentTechnician = await GetCurrentFaultTechnicianAsync();
-            ViewBag.CurrentTechnicianId = currentTechnician?.Id;
-            ViewBag.IsFaultTechnician = currentTechnician != null;
-
-            return PartialView("_FaultDetailsPartial", fault);
-        }
-
+        
         // GET: FaultTechnician/RepairHistory
         public async Task<IActionResult> RepairHistory(string? search, string? status, DateTime? fromDate, DateTime? toDate, int pageNumber = 1, int pageSize = 5)
         {

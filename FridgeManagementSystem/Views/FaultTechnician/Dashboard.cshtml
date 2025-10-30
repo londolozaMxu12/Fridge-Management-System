@@ -206,7 +206,7 @@
             </div>
         </div>
 
-        <!-- Upcoming Schedules -->
+        <!-- Upcoming Schedules with Calendar -->
         <div class="col-lg-6 mb-4">
             <div class="card h-100">
                 <div class="card-header bg-info text-white">
@@ -215,43 +215,67 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    @if (Model.UpcomingSchedules.Any())
-                    {
-                        <div class="list-group list-group-flush">
-                            @foreach (var schedule in Model.UpcomingSchedules)
-                            {
-                                <div class="list-group-item">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">@schedule.Fault?.Title</h6>
-                                        <small class="text-muted">@schedule.ScheduledDate.ToString("MMM dd")</small>
+                    <!-- Calendar View -->
+                    <div id="scheduleCalendar" class="mb-4" style="min-height: 400px;"></div>
+
+                    <!-- List View Toggle -->
+                    <div class="text-center mb-3">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleView()">
+                            <i class="fas fa-list me-1"></i>Switch to List View
+                        </button>
+                    </div>
+
+                    <!-- List View (Hidden by default) -->
+                    <div id="listView" style="display: none;">
+                        @if (Model.UpcomingSchedules.Any())
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var schedule in Model.UpcomingSchedules)
+                                {
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <!-- Full title inline with time -->
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <h6 class="mb-0">@schedule.Fault?.Title</h6>
+                                                    <small class="text-muted ms-2" style="white-space: nowrap;">
+                                                        @schedule.ScheduledDate.ToString("MMM dd HH:mm")
+                                                    </small>
+                                                </div>
+                                                <p class="mb-1 text-muted small">
+                                                    @schedule.Fault?.Fridge?.FridgeType?.Name - @schedule.Fault?.ReportedBy?.User?.FullName
+                                                </p>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <small>
+                                                        <span class="badge @GetScheduleStatusBadgeClass(schedule.Status)">@schedule.Status</span>
+                                                        • @schedule.EstimatedHours hours
+                                                    </small>
+                                                    <div class="mt-1">
+                                                        <a asp-action="UpdateSchedule" asp-route-id="@schedule.RepairScheduleId" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-edit"></i> Update
+                                                        </a>
+                                                        <a asp-action="Details" asp-route-id="@schedule.FaultId" class="btn btn-sm btn-outline-info">
+                                                            <i class="fas fa-info-circle"></i> Details
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <p class="mb-1">@schedule.Fault?.Fridge?.FridgeType?.Name - @schedule.Fault?.ReportedBy?.User?.FullName</p>
-                                    <small>
-                                        <span class="badge @GetScheduleStatusBadgeClass(schedule.Status)">@schedule.Status</span>
-                                        • @schedule.EstimatedHours hours
-                                    </small>
-                                    <div class="mt-2">
-                                        <a asp-action="UpdateSchedule" asp-route-id="@schedule.RepairScheduleId" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-edit"></i> Update
-                                        </a>
-                                        <a asp-action="Details" asp-route-id="@schedule.FaultId" class="btn btn-sm btn-outline-info">
-                                            <i class="fas fa-info-circle"></i> Details
-                                        </a>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-calendar-times fa-2x mb-2"></i>
-                            <p>No upcoming schedules</p>
-                            <a asp-action="Index" class="btn btn-primary btn-sm">
-                                <i class="fas fa-plus me-1"></i>Find Faults to Schedule
-                            </a>
-                        </div>
-                    }
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-calendar-times fa-2x mb-2"></i>
+                                <p>No upcoming schedules</p>
+                                <a asp-action="Index" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus me-1"></i>Find Faults to Schedule
+                                </a>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
@@ -263,7 +287,7 @@
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-history me-2"></i>My Recent Faults
+                        <i class="fas fa-history me-2"></i>My Recent Attended Faults
                     </h5>
                 </div>
                 <div class="card-body">
@@ -285,7 +309,11 @@
                                     @foreach (var fault in Model.MyRecentFaults)
                                     {
                                         <tr>
-                                            <td>@fault.Title</td>
+                                            <td>
+                                                <span data-bs-toggle="tooltip" data-bs-placement="top" title="@fault.Title">
+                                                    @fault.Title
+                                                </span>
+                                            </td>
                                             <td>
                                                 @if (fault.Fridge != null && fault.Fridge.FridgeType != null)
                                                 {
@@ -307,14 +335,16 @@
                                             <td>
                                                 <span class="badge @GetPriorityBadgeClass(fault.Priority)">@fault.Priority</span>
                                             </td>
-                                            <td>@fault.UpdatedAt?.ToString("MMM dd, yyyy")</td>
+                                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="@fault.UpdatedAt?.ToString("MMM dd, yyyy HH:mm")">
+                                                @fault.UpdatedAt?.ToString("MMM dd, yyyy HH:mm")
+                                            </td>
                                             <td>
-                                                <a asp-action="Details" asp-route-id="@fault.FaultId" class="btn btn-sm btn-info">
+                                                <a asp-action="Details" asp-route-id="@fault.FaultId" class="btn btn-sm btn-info" data-bs-toggle="tooltip" data-bs-placement="top" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                                 @if (fault.Status != FaultStatus.Completed)
                                                 {
-                                                    <a asp-action="Update" asp-route-id="@fault.FaultId" class="btn btn-sm btn-warning">
+                                                    <a asp-action="Update" asp-route-id="@fault.FaultId" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Fault">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
                                                 }
@@ -340,6 +370,282 @@
         </div>
     </div>
 </div>
+
+@section Styles {
+    <style>
+        /* Calendar styling */
+        #scheduleCalendar {
+            min-height: 400px;
+            background-color: #f8f9fa;
+            border-radius: 0.375rem;
+        }
+
+        .fc {
+            background-color: white;
+            border-radius: 0.375rem;
+            padding: 1rem;
+        }
+
+            /* Ensure calendar has proper dimensions */
+            .fc .fc-view-harness {
+                min-height: 300px;
+            }
+
+        /* Custom event styling */
+        .fc-event {
+            border: none;
+            border-radius: 4px;
+            padding: 4px 6px;
+            font-size: 0.8em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 45px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+            .fc-event:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+
+        /* Custom event content styling */
+        .fc-event-time {
+            font-weight: 600;
+            font-size: 0.75em;
+            margin-bottom: 2px;
+            line-height: 1.2;
+        }
+
+        .fc-event-title {
+            font-weight: 500;
+            font-size: 0.8em;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* List view styling */
+        #listView .list-group-item {
+            padding: 12px 15px;
+        }
+
+            #listView .list-group-item h6 {
+                font-size: 0.95rem;
+                margin-bottom: 4px;
+            }
+
+            #listView .list-group-item .text-muted {
+                font-size: 0.85rem;
+            }
+
+        /* Week and day view specific styling */
+        .fc-timeGridWeek-view .fc-event,
+        .fc-timeGridDay-view .fc-event {
+            min-height: 35px;
+            padding: 2px 4px;
+        }
+
+        .fc-timeGridWeek-view .fc-event-time,
+        .fc-timeGridDay-view .fc-event-time {
+            font-size: 0.7em;
+        }
+
+        .fc-timeGridWeek-view .fc-event-title,
+        .fc-timeGridDay-view .fc-event-title {
+            font-size: 0.75em;
+        }
+    </style>
+}
+
+@section Scripts {
+    <!-- FullCalendar CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Initialize FullCalendar
+            var calendarEl = document.getElementById('scheduleCalendar');
+            if (calendarEl) {
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'timeGridWeek',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'timeGridWeek,timeGridDay,dayGridMonth'
+                    },
+                    slotMinTime: '06:00:00',
+                    slotMaxTime: '20:00:00',
+                    allDaySlot: false,
+                            events: [
+            @foreach (var schedule in Model.AllUpcomingSchedules)
+            {
+                    // For calendar view - trimmed title only
+                    var faultTitle = schedule.Fault?.Title ?? "No Title";
+                    // Trim title to 25 characters for calendar view only
+                    var displayTitle = faultTitle.Length > 10 ? faultTitle.Substring(0, 10) + "..." : faultTitle;
+                    var scheduleTime = schedule.ScheduledDate.ToString("HH:mm");
+                    // Convert decimal to double for AddHours method
+                    var estimatedHours = (double)schedule.EstimatedHours;
+
+                    <text>
+                    {
+                        title: '@Html.Raw(displayTitle?.Replace("'", "\\'"))', // Trimmed title for calendar
+                        start: '@schedule.ScheduledDate.ToString("yyyy-MM-ddTHH:mm")',
+                        end: '@schedule.ScheduledDate.AddHours(estimatedHours).ToString("yyyy-MM-ddTHH:mm")',
+                        extendedProps: {
+                            customer: '@Html.Raw(schedule.Fault?.ReportedBy?.User?.FullName?.Replace("'", "\\'") ?? "N/A")',
+                            fridge: '@Html.Raw(schedule.Fault?.Fridge?.FridgeType?.Name?.Replace("'", "\\'") ?? "N/A")',
+                            status: '@schedule.Status',
+                            estimatedHours: @schedule.EstimatedHours,
+                            updateUrl: '@Url.Action("UpdateSchedule", new { id = schedule.RepairScheduleId })',
+                            detailsUrl: '@Url.Action("Details", new { id = schedule.FaultId })',
+                            originalTitle: '@Html.Raw(schedule.Fault?.Title?.Replace("'", "\\'") ?? "No Title")',
+                            scheduleTime: '@scheduleTime',
+                            fullDate: '@schedule.ScheduledDate.ToString("MMM dd, yyyy HH:mm")'
+                        },
+                        backgroundColor: getEventColor('@schedule.Status'),
+                        borderColor: getEventColor('@schedule.Status')
+                    },
+                    </text>
+            }
+        ],
+                    eventClick: function(info) {
+                        showScheduleDetails(info.event);
+                    },
+                    // Custom event content to display time above title
+                    eventContent: function(arg) {
+                        const extendedProps = arg.event.extendedProps;
+
+                        // Create custom event content with time above title
+                        const timeEl = document.createElement('div');
+                        timeEl.className = 'fc-event-time';
+                        timeEl.innerHTML = extendedProps.scheduleTime;
+
+                        const titleEl = document.createElement('div');
+                        titleEl.className = 'fc-event-title';
+                        titleEl.innerHTML = arg.event.title;
+
+                        const arrayOfDomNodes = [timeEl, titleEl];
+                        return { domNodes: arrayOfDomNodes };
+                    },
+                    eventDidMount: function(info) {
+                        // Add enhanced tooltip to calendar events with full details
+                        if (info.event.title) {
+                            const extendedProps = info.event.extendedProps;
+                            const tooltipContent = `
+                                <strong>${extendedProps.originalTitle}</strong><br>
+                                <strong>Time:</strong> ${extendedProps.fullDate}<br>
+                                <strong>Customer:</strong> ${extendedProps.customer}<br>
+                                <strong>Fridge:</strong> ${extendedProps.fridge}<br>
+                                <strong>Status:</strong> ${extendedProps.status}<br>
+                                <strong>Hours:</strong> ${extendedProps.estimatedHours}
+                            `;
+
+                            info.el.setAttribute('data-bs-toggle', 'tooltip');
+                            info.el.setAttribute('data-bs-placement', 'top');
+                            info.el.setAttribute('data-bs-html', 'true');
+                            info.el.setAttribute('title', tooltipContent);
+                            new bootstrap.Tooltip(info.el);
+                        }
+                    }
+                });
+                calendar.render();
+            }
+        });
+
+        function getEventColor(status) {
+            switch(status) {
+                case 'Scheduled': return '#0d6efd';
+                case 'Rescheduled': return '#ffc107';
+                case 'Completed': return '#198754';
+                case 'Cancelled': return '#dc3545';
+                default: return '#6c757d';
+            }
+        }
+
+        function showScheduleDetails(event) {
+            const extendedProps = event.extendedProps;
+            const modalHtml = `
+                <div class="modal fade" id="scheduleModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary">
+                                <h5 class="modal-title text-light">${extendedProps.originalTitle}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Time:</strong> ${extendedProps.fullDate}</p>
+                                <p><strong>Customer:</strong> ${extendedProps.customer}</p>
+                                <p><strong>Fridge:</strong> ${extendedProps.fridge}</p>
+                                <p><strong>Status:</strong> <span class="badge ${getStatusBadgeClass(extendedProps.status)}">${extendedProps.status}</span></p>
+                                <p><strong>Estimated Hours:</strong> ${extendedProps.estimatedHours}</p>
+                            </div>
+                            <div class="modal-footer">
+                                <a href="${extendedProps.updateUrl}" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i> Update Schedule
+                                </a>
+                                <a href="${extendedProps.detailsUrl}" class="btn btn-info">
+                                    <i class="fas fa-info-circle"></i> Fault Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            const existingModal = document.getElementById('scheduleModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Add new modal to body and show it
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+            modal.show();
+        }
+
+        function getStatusBadgeClass(status) {
+            switch(status) {
+                case 'Scheduled': return 'bg-primary';
+                case 'Rescheduled': return 'bg-warning';
+                case 'Completed': return 'bg-success';
+                case 'Cancelled': return 'bg-danger';
+                default: return 'bg-secondary';
+            }
+        }
+
+        function toggleView() {
+            const calendar = document.getElementById('scheduleCalendar');
+            const listView = document.getElementById('listView');
+            const toggleBtn = document.querySelector('button[onclick="toggleView()"]');
+
+            if (calendar.style.display === 'none') {
+                calendar.style.display = 'block';
+                listView.style.display = 'none';
+                toggleBtn.innerHTML = '<i class="fas fa-list me-1"></i>Switch to List View';
+            } else {
+                calendar.style.display = 'none';
+                listView.style.display = 'block';
+                toggleBtn.innerHTML = '<i class="fas fa-calendar me-1"></i>Switch to Calendar View';
+            }
+        }
+    </script>
+}
 
 @functions {
     public string GetPriorityBadgeClass(FaultPriority priority)
