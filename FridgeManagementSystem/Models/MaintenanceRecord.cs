@@ -31,8 +31,15 @@ namespace FridgeManagementSystem.Models
         [Display(Name = "Fridge")]
         public int FridgeId { get; set; }
         public Fridge Fridge { get; set; }
-        
-        public ICollection<FaultReport> FaultReports { get; set; }
+
+        [Required]
+        [Display(Name = "Report")]
+        public int FaultReortId { get; set; }
+
+        [ForeignKey("FaultReportId")]
+        public FaultReport FaultReport { get; set; }
+
+       // public ICollection<FaultReport> FaultReports { get; set; }
 
     }
 }

@@ -64,6 +64,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Invoice> Invoices { get; set; }
     public DbSet<InvoiceItem> InvoiceItems { get; set; }
+    
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -193,6 +194,7 @@ public class FridgeManagementSystemContext : IdentityDbContext<ApplicationUser>
             entity.Ignore("FridgeId5");
             entity.Ignore("FridgeId6");
             entity.Ignore("FridgeId7");
+            entity.Ignore("FridgeId8");
         });
 
         // 3. Configure Fridge relationships - UPDATED for string CustomerId

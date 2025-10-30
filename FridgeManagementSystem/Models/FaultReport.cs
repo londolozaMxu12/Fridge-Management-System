@@ -6,7 +6,7 @@ namespace FridgeManagementSystem.Models
     public class FaultReport
     {
         [Key]
-        public int FaultId { get; set; }
+        public int FaultReportId { get; set; }
 
         [Required]
         [Display(Name = "Customer")]
@@ -22,13 +22,14 @@ namespace FridgeManagementSystem.Models
         [ForeignKey("FridgeId")]
         public Fridge Fridge { get; set; }
 
+
         [Required]
         [StringLength(500)]
         [Display(Name = "Fault Description")]
         public string Description { get; set; }
 
         [Display(Name = "Date Reported")]
-        public DateTime DateReported { get; set; } = DateTime.Now;
+        public DateTime ReporteDate { get; set; } = DateTime.Now;
 
         [Display(Name = "Status")]
         public string Status { get; set; } = "Pending"; // Default status

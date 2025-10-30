@@ -75,7 +75,8 @@ namespace FridgeManagementSystem.Models
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
         public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
         public ICollection<Fault> ReportedFaults { get; set; } = new List<Fault>();
-       // public Order? Order { get; set; }
+        public ICollection<FaultReport> FaultReports { get; set; } = new List<FaultReport>();
+        // public Order? Order { get; set; }
 
         [NotMapped]
         public string Name => FridgeType?.Name ?? "";
