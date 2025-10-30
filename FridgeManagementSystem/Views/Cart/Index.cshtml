@@ -30,7 +30,7 @@
                 {
                     <tr>
                         <td>
-                            <img src="/Images/Fridges/@item.ImageFileName" width="100" class="rounded" alt="@item.FridgeName">
+                            <img src="@Url.Content($"~/Images/Fridges/{item.ImageFileName}")" width="100" class="rounded" alt="@item.FridgeName">
                         </td>
                         <td>
                             <h4>@item.FridgeName</h4>

@@ -60,7 +60,7 @@
                             var statusBadgeClass = Model.Status?.ToLower() switch
                             {
                                 "allocated" => "bg-success",
-                                "maintenance" => "bg-warning",
+                                "underrepair" => "bg-warning",
                                 "reserved" => "bg-info",
                                 "available" => "bg-secondary",
                                 _ => "bg-secondary"
@@ -136,7 +136,7 @@
                                             var badgeClass = Model.Status?.ToLower() switch
                                             {
                                                 "allocated" => "bg-success",
-                                                "maintenance" => "bg-warning",
+                                                "underrepair" => "bg-warning",
                                                 "reserved" => "bg-info",
                                                 "available" => "bg-secondary",
                                                 _ => "bg-secondary"
@@ -279,13 +279,13 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var fault in Model.ReportedFaults.OrderByDescending(f => f.ReportedDate).Take(3))
+                                    @foreach (var fault in Model.ReportedFaults.OrderByDescending(f => f.ReportedDate).Take(5))
                                     {
                                         <tr>
                                             <td>@fault.ReportedDate.ToString("MM/dd/yyyy")</td>
                                             <td>@fault.Title</td>
                                             <td>
-                                                <span class="badge bg-@(fault.Status == FaultStatus.Completed ? "success" : "warning")">
+                                                <span class="badge bg-@(fault.Status == FaultStatus.Completed ? "success" : fault.Status == FaultStatus.Scheduled ? "info": "warning")">
                                                     @fault.Status
                                                 </span>
                                             </td>

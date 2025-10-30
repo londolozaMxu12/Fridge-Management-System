@@ -94,7 +94,7 @@ namespace FridgeManagementSystem.Controllers
                         .ThenInclude(a => a.Order)
                     .Include(f => f.MaintenanceRecords)
                     .Include(f => f.ReportedFaults)
-                    .FirstOrDefaultAsync(f => f.FridgeId == id && f.CustomerId == userId);  // Use CustomerId (string)
+                    .FirstOrDefaultAsync(f => f.FridgeId == id && f.CustomerId == userId);  // Compare CustomerId (string) with userId (string)
 
                 if (fridge == null)
                 {
@@ -112,6 +112,6 @@ namespace FridgeManagementSystem.Controllers
             }
         }
 
-        
+
     }
 }
