@@ -23,8 +23,8 @@
                                 <a asp-action="Index" class="btn btn-light">
                                     <i class="fas fa-list me-1"></i>All Faults
                                 </a>
-                                <a asp-action="MySchedule" class="btn btn-outline-light">
-                                    <i class="fas fa-calendar me-1"></i>My Schedule
+                                <a asp-action="MySchedule" class="btn btn-outline-secondary text-light">
+                                    <i class="fas fa-calendar me-1 text-light"></i>My Schedule
                                 </a>
                             </div>
                         </div>
@@ -459,6 +459,12 @@
         .fc-timeGridDay-view .fc-event-title {
             font-size: 0.75em;
         }
+
+        /* Day view - full titles */
+        .fc-timeGridDay-view .fc-event-title {
+            -webkit-line-clamp: 3;
+            font-size: 0.8em;
+        }
     </style>
 }
 
@@ -481,63 +487,86 @@
             var calendarEl = document.getElementById('scheduleCalendar');
             if (calendarEl) {
                 var calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'timeGridWeek',
+                    initialView: 'dayGridMonth', // Default to Month view
                     headerToolbar: {
                         left: 'prev,next today',
                         center: 'title',
-                        right: 'timeGridWeek,timeGridDay,dayGridMonth'
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay' // Reordered: Month, Week, Day
                     },
                     slotMinTime: '06:00:00',
                     slotMaxTime: '20:00:00',
                     allDaySlot: false,
-                            events: [
-            @foreach (var schedule in Model.AllUpcomingSchedules)
-            {
-                    // For calendar view - trimmed title only
-                    var faultTitle = schedule.Fault?.Title ?? "No Title";
-                    // Trim title to 25 characters for calendar view only
-                    var displayTitle = faultTitle.Length > 10 ? faultTitle.Substring(0, 10) + "..." : faultTitle;
-                    var scheduleTime = schedule.ScheduledDate.ToString("HH:mm");
-                    // Convert decimal to double for AddHours method
-                    var estimatedHours = (double)schedule.EstimatedHours;
+                    events: [
+                        @foreach (var schedule in Model.AllUpcomingSchedules)
+                        {
+                                // Only include schedules that are "Scheduled" or "Rescheduled"
+                                if (schedule.Status == ScheduleStatus.Scheduled || schedule.Status == ScheduleStatus.Rescheduled
+                                            || schedule.Status == ScheduleStatus.Completed || schedule.Status == ScheduleStatus.Cancelled)
+                                {
+                                        // For calendar view - different title lengths per view
+                                        var faultTitle = schedule.Fault?.Title ?? "No Title";
+                                        // Calculate end date
+                                        var endDate = schedule.ScheduledDate.AddHours((double)schedule.EstimatedHours);
+                                        var scheduleTime = schedule.ScheduledDate.ToString("HH:mm");
+                                        var endTime = endDate.ToString("HH:mm");
+                                        var timeRange = $"{scheduleTime} - {endTime}";
 
-                    <text>
-                    {
-                        title: '@Html.Raw(displayTitle?.Replace("'", "\\'"))', // Trimmed title for calendar
-                        start: '@schedule.ScheduledDate.ToString("yyyy-MM-ddTHH:mm")',
-                        end: '@schedule.ScheduledDate.AddHours(estimatedHours).ToString("yyyy-MM-ddTHH:mm")',
-                        extendedProps: {
-                            customer: '@Html.Raw(schedule.Fault?.ReportedBy?.User?.FullName?.Replace("'", "\\'") ?? "N/A")',
-                            fridge: '@Html.Raw(schedule.Fault?.Fridge?.FridgeType?.Name?.Replace("'", "\\'") ?? "N/A")',
-                            status: '@schedule.Status',
-                            estimatedHours: @schedule.EstimatedHours,
-                            updateUrl: '@Url.Action("UpdateSchedule", new { id = schedule.RepairScheduleId })',
-                            detailsUrl: '@Url.Action("Details", new { id = schedule.FaultId })',
-                            originalTitle: '@Html.Raw(schedule.Fault?.Title?.Replace("'", "\\'") ?? "No Title")',
-                            scheduleTime: '@scheduleTime',
-                            fullDate: '@schedule.ScheduledDate.ToString("MMM dd, yyyy HH:mm")'
-                        },
-                        backgroundColor: getEventColor('@schedule.Status'),
-                        borderColor: getEventColor('@schedule.Status')
-                    },
-                    </text>
-            }
-        ],
+                                        <text>
+                                        {
+                                            title: '@Html.Raw(faultTitle?.Replace("'", "\\'"))', // Full title for all views
+                                            start: '@schedule.ScheduledDate.ToString("yyyy-MM-ddTHH:mm")',
+                                            end: '@endDate.ToString("yyyy-MM-ddTHH:mm")',
+                                            extendedProps: {
+                                                customer: '@Html.Raw(schedule.Fault?.ReportedBy?.User?.FullName?.Replace("'", "\\'") ?? "N/A")',
+                                                fridge: '@Html.Raw(schedule.Fault?.Fridge?.FridgeType?.Name?.Replace("'", "\\'") ?? "N/A")',
+                                                status: '@schedule.Status',
+                                                estimatedHours: @schedule.EstimatedHours,
+                                                updateUrl: '@Url.Action("UpdateSchedule", new { id = schedule.RepairScheduleId })',
+                                                detailsUrl: '@Url.Action("Details", new { id = schedule.FaultId })',
+                                                originalTitle: '@Html.Raw(schedule.Fault?.Title?.Replace("'", "\\'") ?? "No Title")',
+                                                scheduleTime: '@scheduleTime',
+                                                endTime: '@endTime',
+                                                timeRange: '@timeRange',
+                                                fullDate: '@schedule.ScheduledDate.ToString("MMM dd, yyyy HH:mm")'
+                                            },
+                                            backgroundColor: getEventColor('@schedule.Status'),
+                                            borderColor: getEventColor('@schedule.Status')
+                                        },
+                                        </text>
+                                }
+                        }
+                    ],
                     eventClick: function(info) {
                         showScheduleDetails(info.event);
                     },
-                    // Custom event content to display time above title
+                    // Custom event content to display time range and title
                     eventContent: function(arg) {
                         const extendedProps = arg.event.extendedProps;
+                        const viewType = arg.view.type;
 
-                        // Create custom event content with time above title
+                        // Create custom event content
                         const timeEl = document.createElement('div');
                         timeEl.className = 'fc-event-time';
-                        timeEl.innerHTML = extendedProps.scheduleTime;
+
+                        // Show time range for week and day views, single time for month view
+                        if (viewType === 'timeGridWeek' || viewType === 'timeGridDay') {
+                            timeEl.innerHTML = extendedProps.timeRange;
+                        } else {
+                            timeEl.innerHTML = extendedProps.scheduleTime;
+                        }
 
                         const titleEl = document.createElement('div');
                         titleEl.className = 'fc-event-title';
-                        titleEl.innerHTML = arg.event.title;
+
+                        // Show full title for day view, truncated for others
+                        if (viewType === 'timeGridDay') {
+                            titleEl.innerHTML = arg.event.title;
+                            titleEl.style.webkitLineClamp = '3';
+                        } else {
+                            // Truncate title for month and week views
+                            const shortTitle = arg.event.title.length > 12 ? arg.event.title.substring(0, 12) + '...' : arg.event.title;
+                            titleEl.innerHTML = shortTitle;
+                        }
 
                         const arrayOfDomNodes = [timeEl, titleEl];
                         return { domNodes: arrayOfDomNodes };
@@ -548,11 +577,11 @@
                             const extendedProps = info.event.extendedProps;
                             const tooltipContent = `
                                 <strong>${extendedProps.originalTitle}</strong><br>
-                                <strong>Time:</strong> ${extendedProps.fullDate}<br>
+                                <strong>Time:</strong> ${extendedProps.timeRange}<br>
+                                <strong>Duration:</strong> ${extendedProps.estimatedHours} hours<br>
                                 <strong>Customer:</strong> ${extendedProps.customer}<br>
                                 <strong>Fridge:</strong> ${extendedProps.fridge}<br>
-                                <strong>Status:</strong> ${extendedProps.status}<br>
-                                <strong>Hours:</strong> ${extendedProps.estimatedHours}
+                                <strong>Status:</strong> ${extendedProps.status}
                             `;
 
                             info.el.setAttribute('data-bs-toggle', 'tooltip');
@@ -588,11 +617,11 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
-                                <p><strong>Time:</strong> ${extendedProps.fullDate}</p>
+                                <p><strong>Time:</strong> ${extendedProps.timeRange}</p>
+                                <p><strong>Duration:</strong> ${extendedProps.estimatedHours} hours</p>
                                 <p><strong>Customer:</strong> ${extendedProps.customer}</p>
                                 <p><strong>Fridge:</strong> ${extendedProps.fridge}</p>
                                 <p><strong>Status:</strong> <span class="badge ${getStatusBadgeClass(extendedProps.status)}">${extendedProps.status}</span></p>
-                                <p><strong>Estimated Hours:</strong> ${extendedProps.estimatedHours}</p>
                             </div>
                             <div class="modal-footer">
                                 <a href="${extendedProps.updateUrl}" class="btn btn-primary">

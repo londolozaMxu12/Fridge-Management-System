@@ -236,7 +236,7 @@
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay' // Removed listMonth
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay' 
                 },
                 initialView: 'dayGridMonth',
                 views: {
@@ -273,7 +273,8 @@
                     @foreach (var schedule in Model.UpcomingSchedules)
                     {
                             // Only include Scheduled and Rescheduled statuses
-                            if (schedule.Status == ScheduleStatus.Scheduled || schedule.Status == ScheduleStatus.Rescheduled)
+                                if (schedule.Status == ScheduleStatus.Scheduled || schedule.Status == ScheduleStatus.Rescheduled || schedule.Status == ScheduleStatus.Completed
+                                    || schedule.Status == ScheduleStatus.Cancelled)
                             {
                                     var faultTitle = schedule.Fault?.Title ?? "No Title";
                                     // For month/week views - trimmed title (30 chars)
