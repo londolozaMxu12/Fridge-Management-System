@@ -154,7 +154,7 @@ namespace FridgeManagementSystem.Controllers
                 .OrderBy(s => s)
                 .ToListAsync();
 
-            var statuses = new List<string> { "Available", "Allocated", "InService", "Scrapped" };
+            var statuses = new List<string> { "Available", "Allocated", "UnderRepair", "Scrapped", "Delivered", "Reserved", "Shipped" };
 
             var viewModel = new FridgeManagementViewModel
             {
@@ -230,12 +230,13 @@ namespace FridgeManagementSystem.Controllers
 
             try
             {
-                // Get the fridge with proper includes for Customer.User
+                // Get the fridge with proper includes for Supplier.User and Customer.User
                 var fridge = await _context.Fridges
                     .Include(f => f.FridgeType)
                     .Include(f => f.Supplier)
+                        .ThenInclude(s => s.User)
                     .Include(f => f.Customer)
-                        .ThenInclude(c => c.User) // Add this line to include Customer's User
+                        .ThenInclude(c => c.User)
                     .Include(f => f.CreatedBy)
                     .FirstOrDefaultAsync(m => m.FridgeId == id);
 
@@ -844,7 +845,10 @@ namespace FridgeManagementSystem.Controllers
             {
                 new { Value = "Available", Text = "Available" },
                 new { Value = "Allocated", Text = "Allocated" },
-                new { Value = "InService", Text = "In-Service" },
+                new { Value = "UnderRepair", Text = "Under-Repair" },
+                new { Value = "Reserved", Text = "Reserved" },
+                new { Value = "Shipped", Text = "Shipped" },
+                new { Value = "UnderRepair", Text = "Under-Repair" },
                 new { Value = "Scrapped", Text = "Scrapped" }
                 
             }, "Value", "Text");

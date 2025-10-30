@@ -25,14 +25,18 @@
                     <div class="col-md-4 text-center">
                         @if (!string.IsNullOrEmpty(Model.ImageFileName))
                         {
-                            <img src="/products/@Model.ImageFileName" alt="Fridge Image" class="img-fluid rounded" style="max-height: 200px;" />
+                            <img src="@Url.Content($"~/Images/Fridges/{Model.ImageFileName}")"
+                                 alt="Fridge Image"
+                                 class="img-fluid rounded"
+                                 style="max-height: 200px;"
+                                 onerror="this.onerror=null; this.src='@Url.Content("~/Images/default-fridge.jpg")'" />
                         }
                         else
                         {
-                            <div class="text-muted">
-                                <i class="fas fa-image fa-3x mb-2"></i>
-                                <p>No Image</p>
-                            </div>
+                            <img src="@Url.Content("~/Images/default-fridge.jpg")"
+                                 alt="Default Fridge Image"
+                                 class="img-fluid rounded"
+                                 style="max-height: 200px;" />
                         }
                     </div>
                     <div class="col-md-8">
