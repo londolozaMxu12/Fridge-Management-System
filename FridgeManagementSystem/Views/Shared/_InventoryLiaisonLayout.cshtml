@@ -1,13 +1,149 @@
-﻿<!DOCTYPE html>
+﻿@using FridgeManagementSystem.Areas.Identity.Data
+@using FridgeManagementSystem.Data
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@inject UserManager<ApplicationUser> UserManager
+
+<!DOCTYPE html>
 
 <html>
 <head>
-    <meta name="viewport" content="width=device-width" />
-    <title>@ViewBag.Title</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Fridge Management System | Inventory Liaison</title>
+
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/customer.css" asp-append-version="true" />
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
+    @await RenderSectionAsync("Styles", required: false)
+
+    <style>
+        body {
+            background-color: skyblue !important;
+            min-height: 100vh;
+        }
+
+        /* Ensure main content area has proper background */
+        main {
+            background-color: skyblue;
+            min-height: calc(100vh - 160px); /* Adjust based on header/footer height */
+        }
+
+        /* Keep the page header with light background for contrast */
+        .bg-light {
+            background-color: #f8f9fa !important;
+        }
+
+        /* Optional: Add some padding to the main content */
+        .container-fluid {
+            padding-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
+    <header class="navbar navbar-expand-lg navbar-dark bg-success sticky-top">
+        <div class="container-fluid">
+            <!-- Brand -->
+            <img src="~/Images/WhatsApp Image 2025-05-27 at 18.37.15_1c44df4a.jpg" height="60" width="120"
+                 style="border-top-right-radius: 50rem; border-bottom-right-radius: 50rem;" />
+
+
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#liaisonNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navigation -->
+            <div class="collapse navbar-collapse" id="liaisonNavbar">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link active" asp-controller="CustomerManagement" asp-action="Index">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    
+                    
+
+                    
+
+                    <!-- Inventory Management -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link active dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-clipboard-data me-1"></i>Inventory
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Inventory" asp-action="Index">
+                                    <i class="bi bi-box-seam me-2"></i>Fridge Stock
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Inventory" asp-action="LowStock">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>Low Stock Alert
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="PurchaseRequests" asp-action="Index">
+                                    <i class="bi bi-cart-plus me-2"></i>Purchase Requests
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="PurchaseRequests" asp-action="Create">
+                                    <i class="bi bi-plus-circle me-2"></i>New Purchase Request
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Reports -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link active dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-graph-up me-1"></i>Reports
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Reports" asp-action="CustomerDistribution">
+                                    <i class="bi bi-pie-chart me-2"></i>Customer Distribution
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Reports" asp-action="FridgeUtilization">
+                                    <i class="bi bi-bar-chart me-2"></i>Fridge Utilization
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="CustomerLiaison" asp-controller="Reports" asp-action="AllocationHistory">
+                                    <i class="bi bi-clock-history me-2"></i>Allocation History
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" style="white-space:nowrap" href="#" data-bs-toggle="modal" data-bs-target="#notificationsModal">
+                            <i class="bi bi-bell"></i>
+
+                            @await Component.InvokeAsync("Notifications")
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- User Menu -->
+                <ul class="navbar-nav">
+                    <partial name="_LoginPartial" />
+                </ul>
+            </div>
+        </div>
+    </header>
     <div>
         @RenderBody()
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/customer.js" asp-append-version="true"></script>
 </body>
 </html>
