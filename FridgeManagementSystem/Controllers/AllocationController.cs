@@ -53,8 +53,8 @@ namespace FridgeManagementSystem.Controllers
                 .Include(o => o.Items)
                     .ThenInclude(i => i.Fridge)
                     .ThenInclude(f => f.FridgeType)
-                .Where(o => o.OrderStatus == "Accepted" || o.OrderStatus == "Processing" || o.OrderStatus == "Shipped" &&
-                           o.Items.Any(i => i.Fridge.Status == "Reserved"))
+                .Where(o => o.OrderStatus == "Accepted" && o.Items.Any(i => i.Fridge.Status == "Reserved"))
+
                 .OrderBy(o => o.CreatedAt)
                 .ToListAsync();
 
@@ -160,7 +160,7 @@ namespace FridgeManagementSystem.Controllers
                     AllocatedById = User.FindFirstValue(ClaimTypes.NameIdentifier),
                     FridgeId = fridgeId,
                     OrderId = orderId,
-                    AllocationDate = DateTime.UtcNow,
+                    AllocationDate = DateTime.Now,
                     IsActive = true
                 };
 

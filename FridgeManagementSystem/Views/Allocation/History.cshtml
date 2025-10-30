@@ -127,7 +127,7 @@ else
                             {
                                 <span class="badge bg-success">Active</span>
                                 <br />
-                                <small class="text-muted">@((DateTime.UtcNow - allocation.AllocationDate).Days) day@((DateTime.UtcNow - allocation.AllocationDate).Days != 1 ? "s" : "") ago</small>
+                                <small class="text-muted">@((DateTime.Now - allocation.AllocationDate).Days) day@((DateTime.Now - allocation.AllocationDate).Days != 1 ? "s" : "") ago</small>
                             }
                             else
                             {
@@ -145,7 +145,7 @@ else
                                 }
                                 @if (allocation.FridgeId > 0)
                                 {
-                                    <a href="@Url.Action("Details", "Fridges", new { id = allocation.FridgeId })"
+                                    <a href="@Url.Action("Details", "Fridge", new { id = allocation.FridgeId })"
                                        class="btn btn-outline-info btn-sm mt-1" title="View Fridge">
                                         <i class="bi bi-box"></i>
                                     </a>

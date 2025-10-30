@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Fridge Details";
-    Layout = "_AdminLayout";
+    Layout = ViewData["Layout"]?.ToString() ?? "_Layout";
 }
 
 <div class="row">

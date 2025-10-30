@@ -15,20 +15,49 @@ using System.Security.Claims;
 
 namespace FridgeManagementSystem.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, Employee")]
     public class FridgeController : Controller
     {
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly FridgeManagementSystemContext _context;
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<FridgeController> _logger;
 
-        public FridgeController(FridgeManagementSystemContext context, IWebHostEnvironment environment, ILogger<FridgeController> logger)
+        public FridgeController(FridgeManagementSystemContext context, IWebHostEnvironment environment, ILogger<FridgeController> logger,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _environment = environment;
             _logger = logger;
+            _userManager = userManager;
         }
+        private async Task SetLayoutAsync()
+        {
+            if (User.IsInRole("Admin"))
+            {
+                ViewData["Layout"] = "_AdminLayout";
+            }
+            else if (User.IsInRole("Employee"))
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                var employee = await _context.Employees
+                    .Include(e => e.EmployeeType)
+                    .FirstOrDefaultAsync(e => e.UserId == currentUser.Id);
 
+                if (employee?.EmployeeType?.Name == "CustomerLiaison")
+                {
+                    ViewData["Layout"] = "_CustomerLiaisonLayout";
+                }
+                else
+                {
+                    ViewData["Layout"] = "_Layout";
+                }
+            }
+            else
+            {
+                ViewData["Layout"] = "_Layout";
+            }
+        }
         // GET: Fridge
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 5, string sortBy = "AcquisitionDate",
             string sortOrder = "desc",
@@ -173,24 +202,63 @@ namespace FridgeManagementSystem.Controllers
                 return NotFound();
             }
 
-            var fridge = await _context.Fridges
-                .Include(f => f.FridgeType)
-                .Include(f => f.Supplier)
-                .ThenInclude(s => s.User)
-                .Include(f => f.Customer)
-                .ThenInclude(c => c.User)
-                .Include(f => f.CreatedBy)
-                .Include(f => f.MaintenanceRecords)
-                .ThenInclude(m => m.MaintenanceTechnician)
-                .ThenInclude(e => e.User)
-                .FirstOrDefaultAsync(m => m.FridgeId == id);
-
-            if (fridge == null)
+            // Set layout based on user role
+            if (User.IsInRole("Admin"))
             {
-                return NotFound();
+                ViewData["Layout"] = "_AdminLayout";
+            }
+            else if (User.IsInRole("Employee"))
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                var employee = await _context.Employees
+                    .Include(e => e.EmployeeType)
+                    .FirstOrDefaultAsync(e => e.UserId == currentUser.Id);
+
+                if (employee?.EmployeeType?.Name == "CustomerLiaison")
+                {
+                    ViewData["Layout"] = "_CustomerLiaisonLayout";
+                }
+                else
+                {
+                    ViewData["Layout"] = "_Layout";
+                }
+            }
+            else
+            {
+                ViewData["Layout"] = "_Layout";
             }
 
-            return View(fridge);
+            try
+            {
+                // First, get the fridge without the problematic includes
+                var fridge = await _context.Fridges
+                    .Include(f => f.FridgeType)
+                    .Include(f => f.Supplier)
+                    .Include(f => f.Customer)
+                    .Include(f => f.CreatedBy)
+                    .FirstOrDefaultAsync(m => m.FridgeId == id);
+
+                if (fridge == null)
+                {
+                    return NotFound();
+                }
+
+                // Then load MaintenanceRecords separately with null handling
+                await _context.Entry(fridge)
+                    .Collection(f => f.MaintenanceRecords)
+                    .Query()
+                    .Include(m => m.MaintenanceTechnician)
+                        .ThenInclude(e => e != null ? e.User : null)
+                    .LoadAsync();
+
+                return View(fridge);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading fridge details for ID {FridgeId}", id);
+                TempData["ErrorMessage"] = "An error occurred while loading fridge details.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         // GET: Fridge/Create
