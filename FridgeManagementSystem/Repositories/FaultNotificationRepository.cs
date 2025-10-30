@@ -165,20 +165,6 @@ namespace FridgeManagementSystem.Repositories
                 _context.Notifications.Add(customerNotification);
                 await _context.SaveChangesAsync();
             }
-            else if(schedule.Status == ScheduleStatus.Cancelled) 
-            {
-                var customerNotification = new Notification
-                {
-                    UserId = schedule.Fault.ReportedBy.Id,
-                    Title = "Repair Scheduled Cancelled",
-                    Message = $"Repair for your fault '{schedule.Fault.Title}' has been Cancelled, technician is not available",
-                    Link = GenerateAbsoluteUrl($"/CustomerFault/Details/{schedule.FaultId}"),
-                    CreatedAt = DateTime.Now
-                };
-
-                _context.Notifications.Add(customerNotification);
-                await _context.SaveChangesAsync();
-            }
 
 
             
@@ -201,7 +187,7 @@ namespace FridgeManagementSystem.Repositories
                     var notification = new Notification
                     {
                         UserId = tech.UserId,
-                        Title = "Fault Available",
+                        Title = "Fault Available to attend",
                         Message = $"Fault '{fault.Title}' has been unassigned and is now un attended.",
                         IsRead = false,
                         CreatedAt = DateTime.Now,
