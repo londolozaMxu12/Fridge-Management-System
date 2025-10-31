@@ -74,6 +74,7 @@ builder.Services.AddScoped<IFaultNotificationRepository, FaultNotificationReposi
 builder.Services.AddScoped<ITechnicianReportRepository, TechnicianReportRepository>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IEmployeeNumberService, EmployeeNumberService>();
+builder.Services.AddScoped<IPdfReportService, PdfReportService>();
 
 // Register Admin Seed Service
 builder.Services.AddScoped<IAdminSeedService, AdminSeedService>();

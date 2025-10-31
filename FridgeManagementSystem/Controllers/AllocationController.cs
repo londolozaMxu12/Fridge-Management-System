@@ -1,6 +1,7 @@
 ﻿using FridgeManagementSystem.Areas.Identity.Data;
 using FridgeManagementSystem.Data;
 using FridgeManagementSystem.Models;
+using FridgeManagementSystem.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,7 @@ namespace FridgeManagementSystem.Controllers
     [Authorize]
     public class AllocationController : Controller
     {
+        private readonly IPdfReportService _pdfReportService;
         private readonly FridgeManagementSystemContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IOrderNotificationRepository _notification;
@@ -21,12 +23,14 @@ namespace FridgeManagementSystem.Controllers
             FridgeManagementSystemContext context,
             UserManager<ApplicationUser> userManager,
             IOrderNotificationRepository notification,
-            ILogger<AllocationController> logger)
+            ILogger<AllocationController> logger,
+            IPdfReportService pdfReportService)
         {
             _context = context;
             _userManager = userManager;
             _notification = notification;
             _logger = logger;
+            _pdfReportService = pdfReportService;
         }
 
         private async Task<bool> IsCustomerLiaisonAsync()
@@ -359,6 +363,38 @@ namespace FridgeManagementSystem.Controllers
             return View(ordersNeedingAllocation);
         }
 
-        
+        // PDF Export Action
+        public async Task<IActionResult> ExportAllocationHistoryPdf()
+        {
+            if (!await IsCustomerLiaisonAsync())
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                var allocations = await _context.Allocations
+                    .Include(a => a.Order)
+                    .Include(a => a.Fridge)
+                        .ThenInclude(f => f.FridgeType)
+                    .Include(a => a.Customer)
+                        .ThenInclude(c => c.User)
+                    .Include(a => a.AllocatedBy)
+                    .Where(a => a.IsActive)
+                    .OrderByDescending(a => a.AllocationDate)
+                    .ToListAsync();
+
+                var pdfBytes = _pdfReportService.GenerateAllocationHistoryPdf(allocations);
+
+                var fileName = $"Allocation_History_Report_{DateTime.Now:yyyyMMdd}.pdf";
+                return File(pdfBytes, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating PDF report");
+                TempData["ErrorMessage"] = "An error occurred while generating the PDF report.";
+                return RedirectToAction(nameof(History));
+            }
+        }
     }
 }
