@@ -20,8 +20,8 @@
             <div class="text-black mb-4">
                 <i class="bi bi-refrigerator text-black" style="font-size: 4rem;"></i>
             </div>
-            <h4 class="text-light mb-3">No Fridges Allocated</h4>
-            <p class="text-light mb-4">You don't have any allocated fridges at the moment.</p>
+            <h4 class="text-light mb-3">No Fridges Delivery to you yet</h4>
+            <p class="text-light mb-4">You don't have any delivered fridges at the moment.</p>
             <a asp-controller="Store" asp-action="Index" class="btn btn-primary btn-lg">
                 <i class="bi bi-cart-plus me-2"></i>Browse Store
             </a>
@@ -110,7 +110,7 @@
                                     <small>
                                         <i class="bi bi-check-circle me-1"></i>
                                         <strong>Ready for Use</strong><br>
-                                        Your fridge is allocated and ready to use
+                                        Your fridge is delivered and ready to use
                                     </small>
                                 </div>
                             }
@@ -136,10 +136,7 @@
                                 @if (fridge.Status == "Allocated")
                                 {
                                     <div class="btn-group w-100" role="group">
-                                        <a asp-action="RequestMaintenance" asp-route-id="@fridge.FridgeId"
-                                           class="btn btn-outline-warning btn-sm">
-                                            <i class="bi bi-tools me-1"></i>Maintenance
-                                        </a>
+                                        
                                         <a asp-action="Create" asp-controller="CustomerFault" asp-route-id="@fridge.FridgeId"
                                            class="btn btn-outline-danger btn-sm">
                                             <i class="bi bi-exclamation-triangle me-1"></i>Report Fault
@@ -223,7 +220,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-3">
+            @* <div class="col-md-4 mb-3">
                 <div class="card bg-success text-white">
                     <div class="card-body text-center">
                         <i class="bi bi-telephone" style="font-size: 2rem;"></i>
@@ -232,7 +229,7 @@
                         <a href="#" class="btn btn-light btn-sm">Contact Us</a>
                     </div>
                 </div>
-            </div>
+            </div> *@
         </div>
     </div>
 }
@@ -276,7 +273,7 @@
             "available" => "bg-info",
             "maintenance" => "bg-warning",
             "faulty" => "bg-danger",
-            "decommissioned" => "bg-secondary",
+            "scrapped" => "bg-secondary",
             _ => "bg-secondary"
         };
     }

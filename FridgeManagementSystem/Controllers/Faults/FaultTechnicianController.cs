@@ -345,7 +345,7 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                 var oldStatus = fault.Status.ToString();
                 fault.FaultTechnicianId = currentTechnician.Id;
                 fault.Status = FaultStatus.InProgress;
-                fault.UpdatedAt = DateTime.UtcNow;
+                fault.UpdatedAt = DateTime.Now;
 
                 // Create an initial repair schedule
                 var repairSchedule = new RepairSchedule
@@ -643,7 +643,7 @@ namespace FridgeManagementSystem.Controllers.F.Technician
                 schedule.EstimatedHours = model.EstimatedHours;
                 schedule.Notes = model.Notes;
                 schedule.Status = model.Status;
-                schedule.UpdatedAt = DateTime.Now;
+                schedule.UpdatedAt = DateTime.UtcNow;
 
                 // If status changed to Cancelled, update the fault status to Reported AND unassign technician
                 if (model.Status == ScheduleStatus.Cancelled && originalStatus != ScheduleStatus.Cancelled)

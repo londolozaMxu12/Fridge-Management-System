@@ -18,8 +18,9 @@ namespace FridgeManagementSystem.Areas.Identity.Data
         public string? Address { get; set; }
         public string? City { get; set; } 
         public string? Suburb { get; set; }
-        [Display(Name = "Postal Code")]
-        public string? PostalCode { get; set; } 
+        [RegularExpression("^[0-9]", ErrorMessage = "Only numbers are allowed.")]
+        [Display(Name = "Postal Code"), StringLength(4)]
+        public string? PostalCode { get; set; }
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         [Required]

@@ -53,7 +53,6 @@ namespace FridgeManagementSystem.Controllers
         {
             try
             {
-                // Get cart items from database for logged-in users
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var cart = await _context.ShoppingCart
                     .Include(c => c.Items)
@@ -63,6 +62,7 @@ namespace FridgeManagementSystem.Controllers
 
                 List<CartItemViewModel> cartItems;
                 decimal subtotal;
+                int cartCount = 0; // Initialize cart count
 
                 if (cart == null || !cart.Items.Any())
                 {
@@ -84,12 +84,14 @@ namespace FridgeManagementSystem.Controllers
                     }).ToList();
 
                     subtotal = cartItems.Sum(item => item.Quantity * item.UnitPrice);
+                    cartCount = cart.Items.Sum(i => i.Quantity);
                 }
 
                 ViewBag.CartItems = cartItems;
                 ViewBag.ShippingFee = _shippingFee;
                 ViewBag.Subtotal = subtotal;
                 ViewBag.Total = subtotal + _shippingFee;
+                ViewBag.CartCount = cartCount;
 
                 // Pre-fill the form with user's address
                 var user = await _userManager.GetUserAsync(User);
@@ -106,6 +108,7 @@ namespace FridgeManagementSystem.Controllers
             {
                 _logger.LogError(ex, "Error loading cart page");
                 ViewBag.ErrorMessage = "An error occurred while loading your cart";
+                ViewBag.CartCount = 0; // Ensure cart count is set even on error
                 return View(new CheckoutViewModel());
             }
         }
@@ -339,7 +342,7 @@ namespace FridgeManagementSystem.Controllers
                     // Create order item WITH the OrderId
                     var orderItem = new OrderItem
                     {
-                        OrderId = order.Id, // THIS WAS MISSING!
+                        OrderId = order.Id,
                         FridgeId = item.FridgeId,
                         Quantity = item.Quantity,
                         UnitPrice = item.UnitPrice
@@ -420,6 +423,12 @@ namespace FridgeManagementSystem.Controllers
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Json(new { success = false, message = "User not authenticated" });
+                }
+
                 var cart = await _context.ShoppingCart
                     .Include(c => c.Items)
                     .FirstOrDefaultAsync(c => c.UserId == userId);
@@ -456,7 +465,13 @@ namespace FridgeManagementSystem.Controllers
 
                 await _context.SaveChangesAsync();
 
-                var cartCount = cart.Items.Sum(i => i.Quantity);
+                // Get updated cart count
+                var updatedCart = await _context.ShoppingCart
+                    .Include(c => c.Items)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
+
+                var cartCount = updatedCart?.Items.Sum(i => i.Quantity) ?? 0;
+
                 return Json(new
                 {
                     success = true,

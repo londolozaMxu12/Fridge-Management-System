@@ -1,5 +1,4 @@
 ﻿@model IEnumerable<Order>
-
 @{
     ViewData["Title"] = "My Orders";
     Layout = "_CustomerLayout";
@@ -206,11 +205,11 @@
                                                title="View Order Details">
                                                 <i class="fas fa-eye"></i> View
                                             </a>
-                                            <button class="btn btn-outline-info track-order-btn mt-1"
+                                            @* <button class="btn btn-outline-info track-order-btn mt-1"
                                                     data-order-id="@order.Id"
                                                     title="Track Order">
                                                 <i class="fas fa-shipping-fast"></i> Track
-                                            </button>
+                                            </button> *@
                                             <a class="btn btn-outline-success mt-1 download-invoice-btn"
                                                href="@Url.Action("DownloadInvoice", "CustomerOrders", new { id = order.Id })"
                                                title="Download Invoice"
@@ -314,7 +313,7 @@
 </div>
 
 <!-- Tracking Modal -->
-<div class="modal fade" id="trackingModal" tabindex="-1" aria-hidden="true">
+@* <div class="modal fade" id="trackingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
@@ -337,10 +336,43 @@
             </div>
         </div>
     </div>
-</div>
+</div> *@
 
 @section Scripts {
     <script>
+        // Improved fetch helper with better error handling
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                // Check if response is HTML (error page) instead of JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('text/html')) {
+                    const text = await response.text();
+                    // Check if it's an error page
+                    if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                        throw new Error('Server returned HTML error page instead of JSON response');
+                    }
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                throw error;
+            }
+        }
+
         // Track Order functionality
         document.addEventListener('DOMContentLoaded', function() {
             // Add event listeners to track buttons
@@ -375,114 +407,108 @@
             });
         });
 
-        function showTrackingModal(orderId) {
-            // Show loading state
-            const trackingContent = document.getElementById('trackingContent');
-            trackingContent.innerHTML = `
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-2">Loading tracking information...</p>
-                </div>
-            `;
+        // function showTrackingModal(orderId) {
+        //     // Show loading state
+        //     const trackingContent = document.getElementById('trackingContent');
+        //     trackingContent.innerHTML = `
+        //         <div class="text-center py-4">
+        //             <div class="spinner-border text-primary" role="status">
+        //                 <span class="visually-hidden">Loading...</span>
+        //             </div>
+        //             <p class="mt-2">Loading tracking information...</p>
+        //         </div>
+        //     `;
 
-            // Set order ID in modal header
-            document.getElementById('trackingOrderId').textContent = orderId;
+        //     // Set order ID in modal header
+        //     document.getElementById('trackingOrderId').textContent = orderId;
 
-            // Update view details link
-            document.getElementById('viewDetailsBtn').href = `/CustomerOrders/Details/${orderId}`;
+        //     // Update view details link
+        //     document.getElementById('viewDetailsBtn').href = `/CustomerOrders/Details/${orderId}`;
 
-            // Show modal
-            const trackingModal = new bootstrap.Modal(document.getElementById('trackingModal'));
-            trackingModal.show();
+        //     // Show modal
+        //     const trackingModal = new bootstrap.Modal(document.getElementById('trackingModal'));
+        //     trackingModal.show();
 
-            // Load tracking data
-            fetch(`/CustomerOrders/TrackOrder?id=${orderId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        displayTrackingInfo(data.data);
-                    } else {
-                        throw new Error(data.message || 'Failed to load tracking information');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    trackingContent.innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            Error loading tracking information: ${error.message}
-                        </div>
-                    `;
-                });
-        }
+        //     // Load tracking data
+        //     apiCall(`/CustomerOrders/TrackOrder?id=${orderId}`)
+        //         .then(data => {
+        //             if (data.success) {
+        //                 displayTrackingInfo(data.data);
+        //             } else {
+        //                 throw new Error(data.message || 'Failed to load tracking information');
+        //             }
+        //         })
+        //         .catch(error => {
+        //             console.error('Error:', error);
+        //             trackingContent.innerHTML = `
+        //                 <div class="alert alert-danger">
+        //                     <i class="fas fa-exclamation-triangle me-2"></i>
+        //                     Error loading tracking information. Please try again.
+        //                 </div>
+        //             `;
+        //         });
+        // }
 
-                function displayTrackingInfo(trackingData) {
-            const trackingContent = document.getElementById('trackingContent');
+        // function displayTrackingInfo(trackingData) {
+        //     const trackingContent = document.getElementById('trackingContent');
 
-            console.log('Tracking Data:', trackingData); // Debug log
+        //     console.log('Tracking Data:', trackingData); // Debug log
 
-            // Safely get values with fallbacks
-            const status = trackingData.Status || 'Unknown';
-            const paymentStatus = trackingData.PaymentStatus || 'Unknown';
-            const createdAt = trackingData.CreatedAt ? new Date(trackingData.CreatedAt) : new Date();
-            const estimatedDelivery = trackingData.EstimatedDelivery ? new Date(trackingData.EstimatedDelivery) : new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+        //     // Safely get values with fallbacks
+        //     const status = trackingData.Status || 'Unknown';
+        //     const paymentStatus = trackingData.PaymentStatus || 'Unknown';
+        //     const createdAt = trackingData.CreatedAt ? new Date(trackingData.CreatedAt) : new Date();
+        //     const estimatedDelivery = trackingData.EstimatedDelivery ? new Date(trackingData.EstimatedDelivery) : new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-            // Create status timeline
-            const statusTimeline = createStatusTimeline(status);
+        //     // Create status timeline
+        //     const statusTimeline = createStatusTimeline(status);
 
-            // Create items list - handle both array and undefined
-            const items = trackingData.Items || [];
-            const itemsList = items.length > 0 ? items.map(item => `
-                <div class="border-bottom pb-2 mb-2">
-                    <strong>${item.Name || 'Unknown Product'}</strong><br>
-                    <small class="text-muted">
-                        ${item.Brand || ''} ${item.Model || ''} • Qty: ${item.Quantity || 0}
-                    </small>
-                </div>
-            `).join('') : '<p class="text-muted">No items found</p>';
+        //     // Create items list - handle both array and undefined
+        //     const items = trackingData.Items || [];
+        //     const itemsList = items.length > 0 ? items.map(item => `
+        //         <div class="border-bottom pb-2 mb-2">
+        //             <strong>${item.Name || 'Unknown Product'}</strong><br>
+        //             <small class="text-muted">
+        //                 ${item.Brand || ''} ${item.Model || ''} • Qty: ${item.Quantity || 0}
+        //             </small>
+        //         </div>
+        //     `).join('') : '<p class="text-muted">No items found</p>';
 
-            const html = `
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title">Order Information</h6>
-                                <p><strong>Status:</strong> <span class="badge ${getOrderBadgeColor(status)}">${status}</span></p>
-                                <p><strong>Payment:</strong> <span class="badge ${getPaymentBadgeColor(paymentStatus)}">${paymentStatus}</span></p>
-                                <p><strong>Order Date:</strong> ${createdAt.toLocaleDateString()}</p>
-                                <p><strong>Estimated Delivery:</strong> ${estimatedDelivery.toLocaleDateString()}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <h6 class="card-title">Progress</h6>
-                                ${statusTimeline}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        //     const html = `
+        //         <div class="row">
+        //             <div class="col-md-6">
+        //                 <div class="card mb-3">
+        //                     <div class="card-body">
+        //                         <h6 class="card-title">Order Information</h6>
+        //                         <p><strong>Status:</strong> <span class="badge ${getOrderBadgeColor(status)}">${status}</span></p>
+        //                         <p><strong>Payment:</strong> <span class="badge ${getPaymentBadgeColor(paymentStatus)}">${paymentStatus}</span></p>
+        //                         <p><strong>Order Date:</strong> ${createdAt.toLocaleDateString()}</p>
+        //                         <p><strong>Estimated Delivery:</strong> ${estimatedDelivery.toLocaleDateString()}</p>
+        //                     </div>
+        //                 </div>
+        //             </div>
+        //             <div class="col-md-6">
+        //                 <div class="card">
+        //                     <div class="card-body">
+        //                         <h6 class="card-title">Progress</h6>
+        //                         ${statusTimeline}
+        //                     </div>
+        //                 </div>
+        //             </div>
+        //         </div>
 
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <h6 class="card-title mb-0">Order Items</h6>
-                    </div>
-                    <div class="card-body">
-                        ${itemsList}
-                    </div>
-                </div>
-            `;
+        //         <div class="card mt-3">
+        //             <div class="card-header">
+        //                 <h6 class="card-title mb-0">Order Items</h6>
+        //             </div>
+        //             <div class="card-body">
+        //                 ${itemsList}
+        //             </div>
+        //         </div>
+        //     `;
 
-            trackingContent.innerHTML = html;
-        }
+        //     trackingContent.innerHTML = html;
+        // }
 
         function createStatusTimeline(currentStatus) {
             const statuses = [
@@ -571,19 +597,12 @@
 
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
-            fetch(`/CustomerOrders/CancelOrder?id=${orderId}`, {
+            apiCall(`/CustomerOrders/CancelOrder?id=${orderId}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'RequestVerificationToken': token
                 },
                 body: JSON.stringify({ id: orderId })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
             })
             .then(data => {
                 if (data.success) {
@@ -611,6 +630,17 @@
                 });
             });
         }
+
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+        });
+
+        // Unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Unhandled promise rejection:', e.reason);
+            e.preventDefault();
+        });
     </script>
 }
 

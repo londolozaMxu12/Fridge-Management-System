@@ -57,7 +57,7 @@
                                     @foreach (var fridge in Model.CustomerFridges)
                                     {
                                         <option value="@fridge.FridgeId">
-                                            @fridge.FridgeType - @fridge.SerialNumber (@fridge.Status)
+                                            @fridge.FridgeType - @fridge.SerialNumber
                                         </option>
                                     }
                                 </select>
@@ -71,7 +71,7 @@
                     {
                         <div class="alert alert-info">
                             <h6 class="alert-heading">
-                                <i class="fas fa-refrigerator"></i> Your Fridges
+                                <i class="fas fa-refrigerator"></i> My Fridges
                             </h6>
                             <div class="row">
                                 @foreach (var fridge in Model.CustomerFridges)

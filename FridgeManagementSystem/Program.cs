@@ -14,20 +14,12 @@ using QuestPDF.Infrastructure;
 using System.Globalization;
 //using FridgeManagementSystem.Managers.Validators;
 
-// Set QuestPDF license (Community version - free for non-commercial use)
-QuestPDF.Settings.License = LicenseType.Community;
-
-// Set EPPlus license context (EPPlus is free for non-commercial use)
-ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
 var builder = WebApplication.CreateBuilder(args);
-
 // Set QuestPDF license (Community version - free for non-commercial use)
 QuestPDF.Settings.License = LicenseType.Community;
 
 // Set EPPlus license context (EPPlus is free for non-commercial use)
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
 
 var connectionString = builder.Configuration.GetConnectionString("FridgeManagementSystemContextConnection") ?? throw new InvalidOperationException("Connection string 'FridgeManagementSystemContextConnection' not found.");
 
@@ -86,13 +78,25 @@ builder.Services.AddHttpContextAccessor();
 //builder.Services.AddTransient<IHomeRepository, HomeRepository>();
 //builder.Services.AddTransient<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "RequestVerificationToken";
+    options.SuppressXFrameOptionsHeader = false;
+});
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Identity/Account/Login";           
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
+
+
 
 var app = builder.Build();
 
@@ -125,18 +129,6 @@ var cultureInfo = new CultureInfo("en-ZA");
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-    //app.UseExceptionHandler("/Home/Error");
-    //// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    //app.UseHsts();
-}
-else
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-}
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -162,6 +154,23 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+
+// Add this for API error handling
+app.Use(async (context, next) =>
+{
+    await next();
+
+    if (context.Response.StatusCode == 404 && !context.Response.HasStarted)
+    {
+        // Handle API 404s differently than page 404s
+        if (context.Request.Path.StartsWithSegments("/api") ||
+            context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync("{\"success\":false,\"message\":\"Resource not found\"}");
+        }
+    }
+});
 
 app.MapControllerRoute(
     name: "default",

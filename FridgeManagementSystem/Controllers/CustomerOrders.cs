@@ -116,6 +116,11 @@ namespace FridgeManagementSystem.Controllers
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Json(new { success = false, message = "User not authenticated." });
+                }
+
                 // Get the order with ALL related data
                 var order = await _context.Orders
                     .Include(o => o.Items)
@@ -128,7 +133,7 @@ namespace FridgeManagementSystem.Controllers
                 }
 
                 // Check if order can be cancelled
-                var cancellableStatuses = new[] { "Received", "Pending", "Processing" };
+                var cancellableStatuses = new[] { "Pending", "Processing" };
                 if (!cancellableStatuses.Contains(order.OrderStatus))
                 {
                     return Json(new
@@ -156,10 +161,6 @@ namespace FridgeManagementSystem.Controllers
                             _logger?.LogInformation("Released fridge {FridgeId} from order {OrderId}", item.Fridge.FridgeId, order.Id);
                         }
                     }
-                }
-                else
-                {
-                    _logger?.LogWarning("Order {OrderId} has no order items - this might indicate a data issue", id);
                 }
 
                 // Remove any allocations for this order
@@ -194,55 +195,55 @@ namespace FridgeManagementSystem.Controllers
         }
 
         //method to get order tracking information
-        public async Task<IActionResult> TrackOrder(int id)
-        {
-            try
-            {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //public async Task<IActionResult> TrackOrder(int id)
+        //{
+        //    try
+        //    {
+        //        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Json(new { success = false, message = "User not authenticated." });
-                }
+        //        if (string.IsNullOrEmpty(userId))
+        //        {
+        //            return Json(new { success = false, message = "User not authenticated." });
+        //        }
 
-                var order = await _context.Orders
-                    .Include(o => o.Items)
-                        .ThenInclude(i => i.Fridge)
-                        .ThenInclude(f => f.FridgeType)
-                    .FirstOrDefaultAsync(o => o.Id == id && o.CustomerId == userId);
+        //        var order = await _context.Orders
+        //            .Include(o => o.Items)
+        //                .ThenInclude(i => i.Fridge)
+        //                .ThenInclude(f => f.FridgeType)
+        //            .FirstOrDefaultAsync(o => o.Id == id && o.CustomerId == userId);
 
-                if (order == null)
-                {
-                    return Json(new { success = false, message = "Order not found." });
-                }
+        //        if (order == null)
+        //        {
+        //            return Json(new { success = false, message = "Order not found." });
+        //        }
 
-                // Safely handle items - fixed version
-                var items = (order.Items ?? new List<OrderItem>()).Select(i => new
-                {
-                    Name = i.Fridge?.FridgeType?.Name ?? "Unknown Product",
-                    Brand = i.Fridge?.FridgeType?.Brand ?? "Unknown Brand",
-                    Model = i.Fridge?.FridgeType?.Model ?? "Unknown Model",
-                    Quantity = i.Quantity
-                }).ToList();
+        //        // Safely handle items - fixed version
+        //        var items = (order.Items ?? new List<OrderItem>()).Select(i => new
+        //        {
+        //            Name = i.Fridge?.FridgeType?.Name ?? "Unknown Product",
+        //            Brand = i.Fridge?.FridgeType?.Brand ?? "Unknown Brand",
+        //            Model = i.Fridge?.FridgeType?.Model ?? "Unknown Model",
+        //            Quantity = i.Quantity
+        //        }).ToList();
 
-                var trackingInfo = new
-                {
-                    OrderId = order.Id,
-                    Status = order.OrderStatus ?? "Unknown",
-                    PaymentStatus = order.PaymentStatus ?? "Unknown",
-                    CreatedAt = order.CreatedAt,
-                    EstimatedDelivery = order.CreatedAt.AddDays(7),
-                    Items = items
-                };
+        //        var trackingInfo = new
+        //        {
+        //            OrderId = order.Id,
+        //            Status = order.OrderStatus ?? "Unknown",
+        //            PaymentStatus = order.PaymentStatus ?? "Unknown",
+        //            CreatedAt = order.CreatedAt,
+        //            EstimatedDelivery = order.CreatedAt.AddDays(7),
+        //            Items = items
+        //        };
 
-                return Json(new { success = true, data = trackingInfo });
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Error in TrackOrder for order {OrderId}", id);
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
+        //        return Json(new { success = true, data = trackingInfo });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger?.LogError(ex, "Error in TrackOrder for order {OrderId}", id);
+        //        return Json(new { success = false, message = ex.Message });
+        //    }
+        //}
 
         // Method to get order items with details
         public async Task<IActionResult> GetOrderItems(int id)
@@ -318,6 +319,11 @@ namespace FridgeManagementSystem.Controllers
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Json(new { success = false, message = "User not authenticated." });
+                }
+
                 var order = await _context.Orders
                     .FirstOrDefaultAsync(o => o.Id == id && o.CustomerId == userId);
 
@@ -336,7 +342,11 @@ namespace FridgeManagementSystem.Controllers
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Error generating invoice for order {OrderId}", id);
-                return Json(new { success = false, message = "Error generating invoice." });
+                return Json(new
+                {
+                    success = false,
+                    message = $"Error generating invoice: {ex.Message}"
+                });
             }
         }
 

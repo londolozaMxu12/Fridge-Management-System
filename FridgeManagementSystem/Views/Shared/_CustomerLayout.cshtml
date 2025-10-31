@@ -249,40 +249,10 @@
 
     <!-- Customer-specific JavaScript -->
     <script>
-            // Global function to update cart count
-        function updateCartCount() {
-            fetch('@Url.Action("GetCartCount", "Cart")')
-                .then(response => response.json())
-                .then(data => {
-                    // Update cart count in navbar
-                    const cartCountElements = document.querySelectorAll('.cart-count, [data-cart-count]');
-                    cartCountElements.forEach(element => {
-                        element.textContent = data.count;
-                        element.style.display = data.count > 0 ? 'inline' : 'none';
-                    });
-
-                    // Also update any elements with specific IDs
-                    const cartBadge = document.getElementById('cartCountBadge');
-                    if (cartBadge) {
-                        cartBadge.textContent = data.count;
-                        cartBadge.style.display = data.count > 0 ? 'inline' : 'none';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error updating cart count:', error);
-                });
-        }
-
-        // Update cart count when page loads
+        // Notifications functionality
         document.addEventListener('DOMContentLoaded', function() {
-            updateCartCount();
-        });
+            console.log('Initializing notifications...');
 
-        // Update cart count periodically (every 30 seconds)
-        setInterval(updateCartCount, 30000);
-
-
-        document.addEventListener('DOMContentLoaded', function() {
             // Load notifications when modal is shown
             const notificationsModal = document.getElementById('notificationsModal');
             if (notificationsModal) {
@@ -474,59 +444,144 @@
             }
         });
 
-                // Cart functionality for customer layout
-        async function loadCartCount() {
-            try {
-                var response = await fetch('/Cart/GetCartCount');
-                if (response.status == 200) {
-                    var result = await response.json();
-                    var cartCountEl = document.getElementById("cartCount");
-                    if (cartCountEl) {
-                        cartCountEl.innerHTML = result.count;
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+        });
+
+        // Unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Unhandled promise rejection:', e.reason);
+            e.preventDefault();
+        });
+
+        // Network error handler
+        function handleNetworkError(error, defaultMessage = 'An error occurred. Please try again.') {
+            console.error('Network error:', error);
+
+            if (error.message.includes('JSON') || error.message.includes('<!DOCTYPE')) {
+                return 'Server error occurred. Please try again later.';
+            }
+
+            return error.message || defaultMessage;
+        }
+    </script>
+    <script>
+        // Improved cart count functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing cart count...');
+            updateCartCount();
+
+            // Also update after a short delay to ensure user is authenticated
+            setTimeout(updateCartCount, 1000);
+        });
+
+        // Global function to update cart count
+        function updateCartCount() {
+            console.log('Updating cart count...');
+
+            fetch('@Url.Action("GetCartCount", "Cart")')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                }
-            }
-            catch(err) {
-                console.log('Error loading cart count:', err);
-            }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Cart count response:', data);
+
+                    // Update the cart count badge
+                    const cartCountBadge = document.getElementById('cartCountBadge');
+                    if (cartCountBadge) {
+                        cartCountBadge.textContent = data.count;
+                        console.log('Cart count updated to:', data.count);
+
+                        // Show/hide the badge based on count
+                        if (data.count > 0) {
+                            cartCountBadge.style.display = 'inline-block';
+                        } else {
+                            cartCountBadge.style.display = 'inline-block'; // Always show, just with 0
+                        }
+                    } else {
+                        console.warn('Cart count badge element not found');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating cart count:', error);
+                    // Set to 0 on error
+                    const cartCountBadge = document.getElementById('cartCountBadge');
+                    if (cartCountBadge) {
+                        cartCountBadge.textContent = '0';
+                    }
+                });
         }
 
-        // Function to add item to cart (for use in store pages)
+        // Global function to refresh cart count (call this after cart operations)
+        function refreshCartCount() {
+            updateCartCount();
+        }
+
+        // Update cart count every 60 seconds to stay in sync
+        setInterval(updateCartCount, 30000);
+
+        // Enhanced add to cart function for store pages
         function addToCart(button, fridgeId) {
             // Get anti-forgery token
-            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            if (!token) {
+                console.error('Anti-forgery token not found');
+                showAlert('Security token missing. Please refresh the page.', 'danger');
+                return;
+            }
 
             // Show loading state
             const originalText = button.innerHTML;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Added';
             button.disabled = true;
 
             fetch('/Cart/AddToCart', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'RequestVerificationToken': token
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token,
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: `fridgeId=${fridgeId}&quantity=1`
+                body: JSON.stringify({ fridgeId: fridgeId, quantity: 1 })
             })
             .then(response => {
+                // Check if response is HTML error page
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('text/html')) {
+                    return response.text().then(html => {
+                        throw new Error('Server returned HTML error page');
+                    });
+                }
+
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
                 console.log('Add to cart response:', data);
                 if (data.success) {
-                    loadCartCount(); // Update cart count
+                    // Update cart count immediately
+                    refreshCartCount();
                     showAlert(data.message, 'success');
+
+                    // Also update the cart count badge text
+                    const cartCountBadge = document.getElementById('cartCountBadge');
+                    if (cartCountBadge && data.cartCount !== undefined) {
+                        cartCountBadge.textContent = data.cartCount;
+                    }
                 } else {
-                    showAlert(data.message, 'danger');
+                    showAlert(data.message, 'warning');
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                showAlert('An error occurred while adding to cart', 'danger');
+                console.error('Error adding to cart:', error);
+                showAlert('An error occurred while adding to cart. Please try again.', 'danger');
             })
             .finally(() => {
                 // Reset button
@@ -534,14 +589,6 @@
                 button.disabled = false;
             });
         }
-
-        // Update cart count on page load and periodically
-        document.addEventListener('DOMContentLoaded', function() {
-            loadCartCount();
-
-            // Refresh cart count every 30 seconds to stay in sync
-            setInterval(loadCartCount, 30000);
-        });
     </script>
 
 

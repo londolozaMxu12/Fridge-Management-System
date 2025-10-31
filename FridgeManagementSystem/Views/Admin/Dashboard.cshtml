@@ -1,5 +1,450 @@
-﻿@{
+﻿@model FridgeManagementSystem.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
     Layout = "_AdminLayout";
 }
 
-<h1>ADMIN DASHBOARD</h1>
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 text-gray-800">
+                <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+            </h1>
+            <p class="text-muted">Overview of your Fridge Management System</p>
+        </div>
+        <div class="text-end">
+            <small class="text-muted">Last updated: @DateTime.Now.ToString("MMM dd, yyyy hh:mm tt")</small>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <!-- User Statistics -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Users
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalUsers</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending Approvals
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.PendingApprovals</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clock-history fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Customers
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.ActiveCustomers</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-person-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Employees
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalEmployees</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-briefcase fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fridge Statistics -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Fridges
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalFridges</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-refrigerator fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Available Fridges
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.AvailableFridges</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Allocated Fridges
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.AllocatedFridges</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-person-badge fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Under Repair
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.UnderRepairFridges</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-tools fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Recent Activities -->
+    <div class="row">
+        <!-- Employee Distribution -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Employee Type Distribution</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.EmployeeTypeDistribution.Any())
+                    {
+                        <canvas id="employeeTypeChart" height="200"></canvas>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">No employee data available</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Fridge Status Distribution -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Fridge Status Distribution</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.FridgeStatusDistribution.Any())
+                    {
+                        <canvas id="fridgeStatusChart" height="200"></canvas>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">No fridge data available</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="row">
+        <!-- Recent Users -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Users</h6>
+                    <a asp-action="PendingApprovals" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model.RecentUsers)
+                                {
+                                    <tr>
+                                        <td>@user.Name</td>
+                                        <td>
+                                            <span class="badge bg-secondary">@user.Type</span>
+                                        </td>
+                                        <td>@user.Date.ToString("MMM dd, yyyy")</td>
+                                        <td>
+                                            <span class="badge @(user.Status == "Approved" ? "bg-success" : user.Status == "Pending" ? "bg-warning" : "bg-danger")">
+                                                @user.Status
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.RecentUsers.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No recent users</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Fridges -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Fridges</h6>
+                    <a asp-controller="Fridge" asp-action="Index" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Type</th>
+                                    <th>Date Added</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var fridge in Model.RecentFridges)
+                                {
+                                    <tr>
+                                        <td>@fridge.Name</td>
+                                        <td>
+                                            <span class="badge bg-info">@fridge.Type</span>
+                                        </td>
+                                        <td>@fridge.Date.ToString("MMM dd, yyyy")</td>
+                                        <td>
+                                            <span class="badge @GetStatusBadgeClass(fridge.Status)">
+                                                @fridge.Status
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.RecentFridges.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No recent fridges</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <a asp-action="PendingApprovals" class="btn btn-warning btn-lg w-100">
+                                <i class="bi bi-clock-history me-2"></i>Pending Approvals
+                                @if (Model.PendingApprovals > 0)
+                                {
+                                    <span class="badge bg-danger ms-2">@Model.PendingApprovals</span>
+                                }
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a asp-action="EmployeeManagement" class="btn btn-info btn-lg w-100">
+                                <i class="bi bi-people me-2"></i>Manage Employees
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a asp-controller="Fridge" asp-action="Create" class="btn btn-success btn-lg w-100">
+                                <i class="bi bi-plus-circle me-2"></i>Add Fridge
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a asp-controller="Suppliers" asp-action="Index" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-truck me-2"></i>Manage Suppliers
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Employee Type Distribution Chart
+        @if (Model.EmployeeTypeDistribution.Any())
+        {
+                <text>
+                var employeeCtx = document.getElementById('employeeTypeChart').getContext('2d');
+                var employeeChart = new Chart(employeeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [@Html.Raw(string.Join(", ", Model.EmployeeTypeDistribution.Keys.Select(k => $"'{k}'")))],
+                        datasets: [{
+                            data: [@string.Join(", ", Model.EmployeeTypeDistribution.Values)],
+                            backgroundColor: [
+                                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e',
+                                '#e74a3b', '#858796', '#5a5c69'
+                            ],
+                            hoverBackgroundColor: [
+                                '#2e59d9', '#17a673', '#2c9faf', '#f4b619',
+                                '#e02d1b', '#707384', '#484a54'
+                            ],
+                            hoverBorderColor: "rgba(234, 236, 244, 1)",
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+                </text>
+        }
+
+        // Fridge Status Distribution Chart
+        @if (Model.FridgeStatusDistribution.Any())
+        {
+                <text>
+                var fridgeCtx = document.getElementById('fridgeStatusChart').getContext('2d');
+                var fridgeChart = new Chart(fridgeCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: [@Html.Raw(string.Join(", ", Model.FridgeStatusDistribution.Keys.Select(k => $"'{k}'")))],
+                        datasets: [{
+                            data: [@string.Join(", ", Model.FridgeStatusDistribution.Values)],
+                            backgroundColor: [
+                                '#1cc88a', '#f6c23e', '#e74a3b', '#36b9cc',
+                                '#4e73df', '#858796', '#5a5c69'
+                            ],
+                            hoverBackgroundColor: [
+                                '#17a673', '#f4b619', '#e02d1b', '#2c9faf',
+                                '#2e59d9', '#707384', '#484a54'
+                            ],
+                            hoverBorderColor: "rgba(234, 236, 244, 1)",
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+                </text>
+        }
+
+        // Auto refresh dashboard every 5 minutes
+        setTimeout(function() {
+            window.location.reload();
+        }, 300000); // 5 minutes
+    </script>
+}
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Available" => "bg-success",
+            "Allocated" => "bg-warning",
+            "UnderRepair" => "bg-danger",
+            "Reserved" => "bg-info",
+            "Shipped" => "bg-primary",
+            "Scrapped" => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+}

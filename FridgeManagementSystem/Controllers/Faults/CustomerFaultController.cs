@@ -110,17 +110,17 @@ namespace FridgeManagementSystem.Controllers.Faults
                         Description = model.Description,
                         Priority = model.Priority,
                         Status = FaultStatus.Reported,
-                        ReportedDate = DateTime.Now,
+                        ReportedDate = DateTime.UtcNow,
                         ReportedById = customer.Id,
                         FridgeId = model.FridgeId,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
                     };
 
                     _context.Faults.Add(fault);
                     await _context.SaveChangesAsync();
 
-                    // Update fridge status if allocated
+                    // Update fridge status if delivered
                     if (model.FridgeId.HasValue)
                     {
                         var fridge = await _context.Fridges

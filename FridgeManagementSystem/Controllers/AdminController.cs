@@ -56,9 +56,101 @@ namespace FridgeManagementSystem.Controllers
             return $"{baseUrl}{relativePath}";
         }
 
-        public IActionResult Dashboard()
+        // GET: Admin/Dashboard
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Dashboard()
         {
-            return View();
+            try
+            {
+                var dashboardData = new AdminDashboardViewModel
+                {
+                    // User Statistics
+                    TotalUsers = await _userManager.Users.CountAsync(),
+                    PendingApprovals = await _userManager.Users
+                        .Where(u => u.ApprovalStatus == "Pending" && u.Customers != null)
+                        .CountAsync(),
+                    ActiveCustomers = await _userManager.Users
+                        .Where(u => u.IsActive && u.Customers != null && u.ApprovalStatus == "Approved")
+                        .CountAsync(),
+                    TotalEmployees = await _userManager.Users
+                        .Where(u => u.Employees != null && u.IsActive)
+                        .CountAsync(),
+
+                    // Fridge Statistics
+                    TotalFridges = await _context.Fridges.Where(f => f.IsActive).CountAsync(),
+                    AvailableFridges = await _context.Fridges
+                        .Where(f => f.IsActive && f.Status == "Available")
+                        .CountAsync(),
+                    AllocatedFridges = await _context.Fridges
+                        .Where(f => f.IsActive && f.Status == "Allocated")
+                        .CountAsync(),
+                    UnderRepairFridges = await _context.Fridges
+                        .Where(f => f.IsActive && f.Status == "UnderRepair")
+                        .CountAsync(),
+
+                    // Supplier Statistics
+                    TotalSuppliers = await _context.Suppliers
+                        .Where(s => s.IsActive && s.User.IsActive)
+                        .CountAsync(),
+                    ActiveSuppliers = await _context.Suppliers
+                        .Where(s => s.IsActive && s.User.IsActive && s.User.ApprovalStatus == "Approved")
+                        .CountAsync(),
+
+                    // Recent Activities
+                    RecentUsers = await _userManager.Users
+                        .OrderByDescending(u => u.CreatedAt)
+                        .Take(5)
+                        .Select(u => new RecentActivityViewModel
+                        {
+                            Id = u.Id,
+                            Name = u.FullName,
+                            Type = u.Customers != null ? "Customer" :
+                                   u.Employees != null ? "Employee" :
+                                   u.Suppliers != null ? "Supplier" : "User",
+                            Date = u.CreatedAt,
+                            Status = u.ApprovalStatus
+                        })
+                        .ToListAsync(),
+
+                    RecentFridges = await _context.Fridges
+                        .Include(f => f.FridgeType)
+                        .Where(f => f.IsActive)
+                        .OrderByDescending(f => f.AcquisitionDate)
+                        .Take(5)
+                        .Select(f => new RecentActivityViewModel
+                        {
+                            Id = f.FridgeId.ToString(),
+                            Name = $"{f.FridgeType.Brand} - {f.FridgeType.Model}",
+                            Type = "Fridge",
+                            Date = f.AcquisitionDate,
+                            Status = f.Status
+                        })
+                        .ToListAsync()
+                };
+
+                // Employee Type Distribution
+                dashboardData.EmployeeTypeDistribution = await _context.Employees
+                    .Include(e => e.EmployeeType)
+                    .Where(e => e.User.IsActive)
+                    .GroupBy(e => e.EmployeeType.Name)
+                    .Select(g => new KeyValuePair<string, int>(g.Key, g.Count()))
+                    .ToDictionaryAsync(x => x.Key, x => x.Value);
+
+                // Fridge Status Distribution
+                dashboardData.FridgeStatusDistribution = await _context.Fridges
+                    .Where(f => f.IsActive)
+                    .GroupBy(f => f.Status)
+                    .Select(g => new KeyValuePair<string, int>(g.Key, g.Count()))
+                    .ToDictionaryAsync(x => x.Key, x => x.Value);
+
+                return View(dashboardData);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading admin dashboard data");
+                TempData["ErrorMessage"] = "An error occurred while loading dashboard data.";
+                return View(new AdminDashboardViewModel());
+            }
         }
 
         // GET: Admin/PendingApprovals

@@ -1,0 +1,84 @@
+﻿@using Microsoft.AspNetCore.Identity
+@model FridgeManagementSystem.ViewModels.UserProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person me-2"></i>My Profile
+                    </h4>
+                </div>
+                <div class="card-body text-black">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Full Name:</div>
+                        <div class="col-sm-8">@Model.FullName</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Email:</div>
+                        <div class="col-sm-8">@Model.Email</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Username:</div>
+                        <div class="col-sm-8">@Model.UserName</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Contact Number:</div>
+                        <div class="col-sm-8">@(Model.ContactNo ?? "Not provided")</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Address:</div>
+                        <div class="col-sm-8">@(Model.Address ?? "Not provided")</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">City:</div>
+                        <div class="col-sm-8">@(Model.City ?? "Not provided")</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Suburb:</div>
+                        <div class="col-sm-8">@(Model.Suburb ?? "Not provided")</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Postal Code:</div>
+                        <div class="col-sm-8">@(Model.PostalCode ?? "Not provided")</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Account Created:</div>
+                        <div class="col-sm-8">@Model.CreatedAt.ToString("dd/MM/yyyy")</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Status:</div>
+                        <div class="col-sm-8">
+                            <span class="badge @(Model.ApprovalStatus == "Approved" ? "bg-success" : Model.ApprovalStatus == "Rejected" ? "bg-danger" : "bg-warning")">
+                                @Model.ApprovalStatus
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <a asp-action="Edit" class="btn btn-primary">
+                            <i class="bi bi-pencil me-2"></i>Edit Profile
+                        </a>
+                        @* <a asp-controller="User" asp-action="Profile" asp-route-id="@UserMananger.GetUserId(User)" class="btn btn-outline-primary">Back to Home</a> *@
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Views/Shared/_ValidationScriptsPartial.cshtml -->
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+++

@@ -98,8 +98,8 @@
                         <label class="form-label">Payment Method</label>
                         <select class="form-select" asp-for="PaymentMethod">
                             <option value="CashOnDelivery">Cash on Delivery</option>
-                            <option value="CreditCard">Credit Card</option>
-                            <option value="PayPal">PayPal</option>
+                            @* <option value="CreditCard">Credit Card</option>
+                            <option value="PayPal">PayPal</option> *@
                         </select>
                     </div>
 
@@ -147,19 +147,100 @@
 
 @section Scripts {
     <script>
-        // Store referrer information when checkout page loads
+        // Initialize cart count when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            const referrer = document.referrer;
-            console.log('Checkout page referrer:', referrer);
-
-            // Store where the user came from for the continue shopping button
-            if (referrer && referrer.includes(window.location.hostname)) {
-                sessionStorage.setItem('checkoutReferrer', referrer);
-            } else {
-                // Default to store if no valid referrer
-                sessionStorage.setItem('checkoutReferrer', '@Url.Action("Index", "Store")');
-            }
+            updateCartCountDisplay();
         });
+
+        // Function to update cart count display
+        function updateCartCountDisplay() {
+            const cartCountBadge = document.getElementById('cartCountBadge');
+            if (cartCountBadge) {
+                // Get the count from ViewBag (set by server) or fetch it
+                const serverCartCount = @(ViewBag.CartCount ?? 0);
+                cartCountBadge.textContent = serverCartCount;
+
+                // Also update from API to ensure consistency
+                fetchCartCount();
+            }
+        }
+
+        // Function to fetch current cart count from API
+        function fetchCartCount() {
+            fetch('@Url.Action("GetCartCount", "Cart")')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const cartCountBadge = document.getElementById('cartCountBadge');
+                    if (cartCountBadge && data.count !== undefined) {
+                        cartCountBadge.textContent = data.count;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching cart count:', error);
+                });
+        }
+
+        // Update cart count after quantity changes
+        function updateQuantity(fridgeId, quantity) {
+            const formData = new FormData();
+            formData.append('fridgeId', fridgeId);
+            formData.append('quantity', quantity);
+
+            fetch('@Url.Action("UpdateQuantity", "Cart")', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Update cart count immediately after successful update
+                    fetchCartCount();
+                    location.reload(); // Or use partial refresh instead of full reload
+                }
+            });
+        }
+
+        // Update cart count after item removal
+        function remove(fridgeId) {
+            if (confirm('Are you sure you want to remove this Fridge from your cart?')) {
+                const formData = new FormData();
+                formData.append('fridgeId', fridgeId);
+
+                fetch('@Url.Action("RemoveItem", "Cart")', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Update cart count immediately after successful removal
+                        fetchCartCount();
+                        location.reload();
+                    }
+                });
+            }
+        }
+
+        // Store referrer information when checkout page loads
+        const referrer = document.referrer;
+        console.log('Checkout page referrer:', referrer);
+
+        // Store where the user came from for the continue shopping button
+        if (referrer && referrer.includes(window.location.hostname)) {
+            sessionStorage.setItem('checkoutReferrer', referrer);
+        } else {
+            // Default to store if no valid referrer
+            sessionStorage.setItem('checkoutReferrer', '@Url.Action("Index", "Store")');
+        }
 
         // Smart continue shopping functionality
         function continueShopping() {
@@ -195,45 +276,6 @@
             const currentQuantity = parseInt(event.target.parentElement.querySelector('span').textContent);
             if (currentQuantity > 1) {
                 updateQuantity(fridgeId, currentQuantity - 1);
-            }
-        }
-
-        function updateQuantity(fridgeId, quantity) {
-            const formData = new FormData();
-            formData.append('fridgeId', fridgeId);
-            formData.append('quantity', quantity);
-
-            fetch('@Url.Action("UpdateQuantity", "Cart")', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    location.reload();
-                }
-            });
-        }
-
-        function remove(fridgeId) {
-            if (confirm('Are you sure you want to remove this Fridge from your cart?')) {
-                const formData = new FormData();
-                formData.append('fridgeId', fridgeId);
-
-                fetch('@Url.Action("RemoveItem", "Cart")', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    }
-                });
             }
         }
     </script>

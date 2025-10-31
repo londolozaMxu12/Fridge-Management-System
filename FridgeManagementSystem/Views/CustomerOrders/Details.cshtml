@@ -49,9 +49,9 @@
             <i class="fas fa-receipt me-2"></i>Order #@Model.Id
         </h1>
         <div>
-            <button class="btn btn-info me-2" onclick="loadTrackingInfo(@Model.Id, true)">
-                <i class="fas fa-shipping-fast me-2"></i>Refresh Tracking
-            </button>
+            @* <button class="btn btn-info me-2" onclick="loadTrackingInfo(@Model.Id, true)">
+                <i class="fas fa-sync-alt me-2"></i>Refresh Tracking
+            </button> *@
             <a class="btn btn-outline-light" asp-controller="CustomerOrders" asp-action="Index">
                 <i class="fas fa-arrow-left me-2"></i>Back to Orders
             </a>
@@ -78,7 +78,7 @@
         <!-- Order Information & Tracking -->
         <div class="col-lg-8">
             <!-- Real-time Tracking Section -->
-            <div class="card mb-4">
+            @* <div class="card mb-4">
                 <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-shipping-fast me-2"></i>Live Order Tracking
@@ -95,7 +95,7 @@
                         <p class="mt-2 text-muted">Loading real-time tracking information...</p>
                     </div>
                 </div>
-            </div>
+            </div> *@
 
             <!-- Order Information -->
             <div class="card mb-4">
@@ -201,7 +201,6 @@
                                                     {
                                                         <br />
                                                         <strong>Serial:</strong>
- 
                                                         @item.Fridge.SerialNumber
                                                     }
                                                     <br />
@@ -325,9 +324,41 @@
 
 @section Scripts {
     <script>
-                // Invoice functionality
+        // Improved fetch helper with better error handling
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                // Check if response is HTML (error page) instead of JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('text/html')) {
+                    const text = await response.text();
+                    // Check if it's an error page
+                    if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                        throw new Error('Server returned HTML error page instead of JSON response');
+                    }
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                throw error;
+            }
+        }
+
+        // Invoice functionality
         function viewInvoice(orderId) {
-            // Show loading state
             Swal.fire({
                 title: 'Generating Invoice...',
                 text: 'Please wait while we prepare your invoice',
@@ -337,11 +368,9 @@
                 }
             });
 
-            fetch(`/CustomerOrders/ViewInvoice?id=${orderId}`)
-                .then(response => response.json())
+            apiCall(`/CustomerOrders/ViewInvoice?id=${orderId}`)
                 .then(data => {
                     if (data.success) {
-                        // Create PDF viewer modal
                         const pdfUrl = 'data:application/pdf;base64,' + data.data;
 
                         Swal.fire({
@@ -350,7 +379,7 @@
                                 <div class="text-center">
                                     <iframe src="${pdfUrl}" width="100%" height="500px" style="border: none;"></iframe>
                                     <div class="mt-3">
-                                        <a href="${pdfUrl}" download="invoice.pdf" class="btn btn-primary me-2">
+                                        <a href="${pdfUrl}" download="invoice-${orderId}.pdf" class="btn btn-primary me-2">
                                             <i class="fas fa-download me-1"></i>Download
                                         </a>
                                         <button class="btn btn-secondary" onclick="window.print()">
@@ -378,132 +407,75 @@
                 });
         }
 
-        // Add click handler for download buttons to show confirmation
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.download-invoice-btn').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    const orderId = this.getAttribute('data-order-id');
+        // // Track Order functionality for Details view
+        // function loadTrackingInfo(orderId, showLoading = false) {
+        //     const trackingSection = document.getElementById('trackingSection');
 
-                    Swal.fire({
-                        title: 'Download Invoice',
-                        text: 'The invoice will be downloaded as a PDF file.',
-                        icon: 'info',
-                        showCancelButton: true,
-                        confirmButtonText: 'Download',
-                        cancelButtonText: 'Cancel'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            // Continue with download
-                            return true;
-                        } else {
-                            e.preventDefault();
-                        }
-                    });
-                });
-            });
-        });
+        //     if (showLoading) {
+        //         trackingSection.innerHTML = `
+        //             <div class="text-center py-3">
+        //                 <div class="spinner-border text-primary" role="status">
+        //                     <span class="visually-hidden">Loading tracking information...</span>
+        //                 </div>
+        //                 <p class="mt-2 text-muted">Loading real-time tracking information...</p>
+        //             </div>
+        //         `;
+        //     }
 
-        // Track Order functionality for Details view
-        function loadTrackingInfo(orderId, showLoading = false) {
-            const trackingSection = document.getElementById('trackingSection');
+        //     apiCall(`/CustomerOrders/TrackOrder?id=${orderId}`)
+        //         .then(data => {
+        //             if (data.success) {
+        //                 displayTrackingDetails(data.data);
+        //             } else {
+        //                 throw new Error(data.message || 'Failed to load tracking information');
+        //             }
+        //         })
+        //         .catch(error => {
+        //             console.error('Error:', error);
+        //             trackingSection.innerHTML = `
+        //                 <div class="alert alert-danger">
+        //                     <i class="fas fa-exclamation-triangle me-2"></i>
+        //                     Error loading tracking information. Please try again.
+        //                 </div>
+        //             `;
+        //         });
+        // }
 
-            if (showLoading) {
-                trackingSection.innerHTML = `
-                    <div class="text-center py-3">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading tracking information...</span>
-                        </div>
-                        <p class="mt-2 text-muted">Loading real-time tracking information...</p>
-                    </div>
-                `;
-            }
+        // function displayTrackingDetails(trackingData) {
+        //     const trackingSection = document.getElementById('trackingSection');
 
-            fetch(`/CustomerOrders/TrackOrder?id=${orderId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        displayTrackingDetails(data.data);
-                    } else {
-                        throw new Error(data.message || 'Failed to load tracking information');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    trackingSection.innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            Error loading tracking information: ${error.message}
-                        </div>
-                    `;
-                });
-        }
+        //     const statusTimeline = createStatusTimeline(trackingData.Status);
+        //     const progressPercentage = getProgressPercentage(trackingData.Status);
 
-        function displayTrackingDetails(trackingData) {
-            const trackingSection = document.getElementById('trackingSection');
+        //     const html = `
+        //         <div class="row">
+        //             <div class="col-md-6">
+        //                 <div class="text-center mb-3">
+        //                     <h3 class="text-${getStatusColor(trackingData.Status)}">${trackingData.Status}</h3>
+        //                     <div class="progress" style="height: 12px;">
+        //                         <div class="progress-bar bg-${getStatusColor(trackingData.Status)}"
+        //                              style="width: ${progressPercentage}%"
+        //                              role="progressbar">
+        //                             ${progressPercentage}%
+        //                         </div>
+        //                     </div>
+        //                     <small class="text-muted">${getStatusDescription(trackingData.Status)}</small>
+        //                 </div>
 
-            const statusTimeline = createStatusTimeline(trackingData.Status);
-            const progressPercentage = getProgressPercentage(trackingData.Status);
+        //                 <div class="mb-3">
+        //                     <p><i class="fas fa-calendar me-2"></i><strong>Ordered:</strong> ${new Date(trackingData.CreatedAt).toLocaleDateString()}</p>
+        //                     <p><i class="fas fa-truck me-2"></i><strong>Estimated Delivery:</strong> ${new Date(trackingData.EstimatedDelivery).toLocaleDateString()}</p>
+        //                     <p><i class="fas fa-sync-alt me-2"></i><strong>Last Updated:</strong> ${new Date().toLocaleString()}</p>
+        //                 </div>
+        //             </div>
+        //             <div class="col-md-6">
+        //                 ${statusTimeline}
+        //             </div>
+        //         </div>
+        //     `;
 
-            const allocationsInfo = trackingData.Allocations?.length > 0 ?
-                `<p><i class="fas fa-check text-success me-2"></i><strong>${trackingData.Allocations.length}</strong> fridge(s) allocated and ready</p>` :
-                '<p><i class="fas fa-clock text-warning me-2"></i>Awaiting fridge allocation</p>';
-
-            const lastUpdate = trackingData.Allocations?.length > 0 ?
-                new Date(Math.max(...trackingData.Allocations.map(a => new Date(a.AllocationDate)))) :
-                trackingData.CreatedAt;
-
-            const html = `
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="text-center mb-3">
-                            <h3 class="text-${getStatusColor(trackingData.Status)}">${trackingData.Status}</h3>
-                            <div class="progress" style="height: 12px;">
-                                <div class="progress-bar bg-${getStatusColor(trackingData.Status)}"
-                                     style="width: ${progressPercentage}%"
-                                     role="progressbar">
-                                    ${progressPercentage}%
-                                </div>
-                            </div>
-                            <small class="text-muted">${getStatusDescription(trackingData.Status)}</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <p><i class="fas fa-calendar me-2"></i><strong>Ordered:</strong> ${new Date(trackingData.CreatedAt).toLocaleDateString()}</p>
-                            <p><i class="fas fa-truck me-2"></i><strong>Estimated Delivery:</strong> ${new Date(trackingData.EstimatedDelivery).toLocaleDateString()}</p>
-                            <p><i class="fas fa-sync-alt me-2"></i><strong>Last Updated:</strong> ${new Date(lastUpdate).toLocaleString()}</p>
-                            ${allocationsInfo}
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        ${statusTimeline}
-                    </div>
-                </div>
-
-                ${trackingData.Allocations?.length > 0 ? `
-                <div class="mt-3 p-3 bg-light rounded">
-                    <h6><i class="fas fa-info-circle me-2"></i>Allocation Details</h6>
-                    <div class="row">
-                        ${trackingData.Allocations.map(allocation => `
-                            <div class="col-md-6">
-                                <small class="text-muted">
-                                    <i class="fas fa-box me-1"></i> Fridge ${allocation.FridgeId}<br>
-                                    <i class="fas fa-user me-1"></i> ${allocation.AllocatedBy}<br>
-                                    <i class="fas fa-calendar me-1"></i> ${new Date(allocation.AllocationDate).toLocaleDateString()}
-                                </small>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : ''}
-            `;
-
-            trackingSection.innerHTML = html;
-        }
+        //     trackingSection.innerHTML = html;
+        // }
 
         function createStatusTimeline(currentStatus) {
             const statuses = [
@@ -592,20 +564,9 @@
                     bsAlert.close();
                 }, 3000);
             });
-
-            // Add hover effects to table rows
-            const tableRows = document.querySelectorAll('table tbody tr');
-            tableRows.forEach(row => {
-                row.addEventListener('mouseenter', function() {
-                    this.style.backgroundColor = '#f8f9fa';
-                });
-                row.addEventListener('mouseleave', function() {
-                    this.style.backgroundColor = '';
-                });
-            });
         });
 
-        // Cancel order function (same as in Index view)
+        // Cancel order function
         function confirmCancel(orderId, currentStatus) {
             Swal.fire({
                 title: 'Confirm Cancellation',
@@ -639,19 +600,12 @@
 
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
-            fetch(`/CustomerOrders/CancelOrder?id=${orderId}`, {
+            apiCall(`/CustomerOrders/CancelOrder?id=${orderId}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'RequestVerificationToken': token
                 },
                 body: JSON.stringify({ id: orderId })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
             })
             .then(data => {
                 if (data.success) {
@@ -679,6 +633,16 @@
                 });
             });
         }
+
+        // Global error handlers
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+        });
+
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Unhandled promise rejection:', e.reason);
+            e.preventDefault();
+        });
     </script>
 
     <style>
@@ -760,20 +724,17 @@
         }
 
         @@keyframes pulse {
-            0%
+            0% {
+                transform: scale(1);
+            }
 
-        {
-            transform: scale(1);
-        }
+            50% {
+                transform: scale(1.1);
+            }
 
-        50% {
-            transform: scale(1.1);
-        }
-
-        100% {
-            transform: scale(1);
-        }
-
+            100% {
+                transform: scale(1);
+            }
         }
     </style>
 }
