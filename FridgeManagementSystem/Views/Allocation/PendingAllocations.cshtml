@@ -1,0 +1,289 @@
+﻿@model IEnumerable<FridgeManagementSystem.Models.Order>
+@{
+    ViewData["Title"] = "Pending Allocations";
+    Layout = "_CustomerLiaisonLayout";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-clock-history text-warning"></i> Pending Allocations</h1>
+        <div class="d-flex gap-2">
+            <a asp-action="History" class="btn btn-outline-primary">
+                <i class="bi bi-list-check"></i> Allocation History
+            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Standard View
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">@Model.Count()</h4>
+                            <small>Pending Orders</small>
+                        </div>
+                        <i class="bi bi-clock-history fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">@Model.Sum(o => o.Items?.Count(i => i.Fridge?.Status == "Reserved") ?? 0)</h4>
+                            <small>Reserved Fridges</small>
+                        </div>
+                        <i class="bi bi-box-seam fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">@Model.Sum(o => o.Items?.Sum(i => i.Quantity) ?? 0)</h4>
+                            <small>Total Units</small>
+                        </div>
+                        <i class="bi bi-box fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center">
+            <i class="bi bi-check-circle"></i> No pending allocations found. All orders have been processed.
+        </div>
+    }
+    else
+    {
+        <!-- Pending Allocations Table -->
+        <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-task"></i> Orders Ready for Allocation
+                    <span class="badge bg-warning ms-2">@Model.Count()</span>
+                </h5>
+                <div class="text-muted">
+                    Showing @Model.Count() order@(Model.Count() != 1 ? "s" : "")
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Order Details</th>
+                                <th>Customer Information</th>
+                                <th>Items Summary</th>
+                                <th>Fridge Status</th>
+                                <th>Order Value</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in Model)
+                            {
+                                // Calculate order statistics
+                                var orderItems = order.Items ?? new List<OrderItem>();
+                                var totalItems = orderItems.Sum(i => i.Quantity);
+                                var distinctItems = orderItems.Count;
+                                var reservedFridges = orderItems.Count(i => i.Fridge?.Status == "Reserved");
+                                var totalAmount = orderItems.Sum(i => i.Quantity * i.UnitPrice) + order.ShippingFee;
+
+                                // Get customer details safely
+                                var customerName = order.Customer?.User?.FullName ?? "N/A";
+                                var businessName = order.Customer?.BusinessName ?? "N/A";
+                                var customerEmail = order.Customer?.User?.Email ?? "N/A";
+                                var customerType = order.Customer?.CustomerType ?? "N/A";
+
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">Order #@order.Id</div>
+                                        <small class="text-muted">
+                                            @order.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                                        </small>
+                                        <br>
+                                        <small class="text-truncate" style="max-width: 200px;"
+                                               title="@order.DeliveryAddress">
+                                            <i class="bi bi-geo-alt"></i> @order.DeliveryAddress
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold">@customerName</div>
+                                        <div class="text-muted">@businessName</div>
+                                        <small class="badge @GetCustomerTypeBadge(customerType)">
+                                            @customerType
+                                        </small>
+                                        <br>
+                                        <small><i class="bi bi-envelope"></i> @customerEmail</small>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold">
+                                            @totalItems unit@(totalItems != 1 ? "s" : "")
+                                        </div>
+                                        <small class="text-muted">
+                                            @distinctItems item@(distinctItems != 1 ? "s" : "")
+                                        </small>
+                                        @if (orderItems.Any())
+                                        {
+                                            <div class="mt-2">
+                                                @foreach (var item in orderItems.Take(3))
+                                                {
+                                                    <div class="badge bg-light text-dark me-1 mb-1">
+                                                        @(item.Fridge?.FridgeType?.Name ?? "Unknown") × @item.Quantity
+                                                    </div>
+                                                }
+                                                @if (orderItems.Count > 3)
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        +@(orderItems.Count - 3) more
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column gap-1">
+                                            @if (reservedFridges > 0)
+                                            {
+                                                <span class="badge bg-warning">
+                                                    <i class="bi bi-clock"></i> @reservedFridges reserved
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">No reserved fridges</span>
+                                            }
+                                        </div>
+                                        @if (reservedFridges > 0)
+                                        {
+                                            <small class="text-muted text-center d-block mt-1">
+                                                Ready for allocation
+                                            </small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-success">
+                                            R @totalAmount.ToString("N2")
+                                        </div>
+                                        <small class="text-muted">
+                                            +R @order.ShippingFee.ToString("N2") shipping
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group-vertical btn-group-sm">
+                                            <a asp-action="Details" asp-route-orderId="@order.Id"
+                                               class="btn btn-primary btn-sm">
+                                                <i class="bi bi-gear"></i> Allocate Fridge
+                                                @if (reservedFridges > 0)
+                                                {
+                                                    <span class="badge bg-light text-dark ms-1">@reservedFridges</span>
+                                                }
+                                            </a>
+                                            <a asp-controller="LiaisonOrders" asp-action="Details"
+                                               asp-route-id="@order.Id" class="btn btn-outline-secondary btn-sm">
+                                                <i class="bi bi-eye"></i> View Order
+                                            </a>
+                                            @if (reservedFridges > 0)
+                                            {
+                                                <form asp-action="AllocateAll" asp-route-orderId="@order.Id" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-success btn-sm mt-1"
+                                                            onclick="return confirm('Allocate all @reservedFridges reserved fridges for order #@order.Id?')">
+                                                        <i class="bi bi-check-all"></i> Allocate All
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="bi bi-graph-up"></i> Allocation Overview</h6>
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <h4>@Model.Count()</h4>
+                                <small class="text-muted">Total Orders</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h4 class="text-warning">@Model.Sum(o => o.Items?.Count(i => i.Fridge?.Status == "Reserved") ?? 0)</h4>
+                                <small class="text-muted">Reserved Fridges</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h4>@Model.Sum(o => o.Items?.Sum(i => i.Quantity) ?? 0)</h4>
+                                <small class="text-muted">Total Units</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h4 class="text-primary">@Model.Select(o => o.CustomerId).Distinct().Count()</h4>
+                                <small class="text-muted">Unique Customers</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Add row hover effects
+            $('table tbody tr').hover(
+                function() {
+                    $(this).addClass('table-active');
+                },
+                function() {
+                    $(this).removeClass('table-active');
+                }
+            );
+
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Add click animation to allocation buttons
+            $('.btn-primary').on('click', function() {
+                $(this).prop('disabled', true);
+                $(this).html('<i class="bi bi-hourglass-split"></i> Loading...');
+            });
+        });
+    </script>
+}
+
+@functions {
+    private string GetCustomerTypeBadge(string customerType)
+    {
+        return customerType?.ToLower() switch
+        {
+            "spazashop" => "bg-primary",
+            "liquor" => "bg-success",
+            "other" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+}

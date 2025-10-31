@@ -337,5 +337,28 @@ namespace FridgeManagementSystem.Controllers
                 return Json(new { error = "Error loading statistics" });
             }
         }
+
+        // GET: Enhanced pending allocations view with better organization
+        public async Task<IActionResult> PendingAllocations()
+        {
+            if (!await IsCustomerLiaisonAsync())
+            {
+                return Forbid();
+            }
+
+            var ordersNeedingAllocation = await _context.Orders
+                .Include(o => o.Customer)
+                    .ThenInclude(c => c.User)
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.Fridge)
+                    .ThenInclude(f => f.FridgeType)
+                .Where(o => o.OrderStatus == "Accepted" && o.Items.Any(i => i.Fridge.Status == "Reserved"))
+                .OrderBy(o => o.CreatedAt)
+                .ToListAsync();
+
+            return View(ordersNeedingAllocation);
+        }
+
+        
     }
 }

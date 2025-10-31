@@ -1,0 +1,447 @@
+﻿@model FridgeManagementSystem.Models.Order
+@{
+    ViewData["Title"] = $"Detailed Allocation - Order #{Model.Id}";
+    Layout = "_CustomerLiaisonLayout";
+
+    // Calculate detailed statistics
+    var orderItems = Model.Items ?? new List<OrderItem>();
+    var totalItems = orderItems.Sum(i => i.Quantity);
+    var totalAmount = orderItems.Sum(i => i.Quantity * i.UnitPrice) + Model.ShippingFee;
+
+    // Get reserved fridges from order items
+    var reservedFridges = orderItems
+        .Where(i => i.Fridge != null && i.Fridge.Status == "Reserved")
+        .Select(i => i.Fridge)
+        .ToList();
+
+    // Get allocated fridges - BOTH from order items AND allocations table
+    var allocatedFridgesFromItems = orderItems
+        .Where(i => i.Fridge != null && i.Fridge.Status == "Allocated")
+        .Select(i => i.Fridge)
+        .ToList();
+
+    // Also get from allocations table if available
+    var allocatedFridgesFromAllocations = Model.Allocations?
+        .Where(a => a.IsActive && a.Fridge != null)
+        .Select(a => a.Fridge)
+        .ToList() ?? new List<Fridge>();
+
+    // Combine both sources and remove duplicates
+    var allAllocatedFridges = allocatedFridgesFromItems
+        .Union(allocatedFridgesFromAllocations)
+        .Distinct()
+        .ToList();
+
+    // Group items by type for summary
+    var itemSummary = orderItems
+        .GroupBy(i => new
+        {
+            Name = i.Fridge?.FridgeType?.Name ?? "Unknown",
+            Brand = i.Fridge?.FridgeType?.Brand ?? "Unknown",
+            Model = i.Fridge?.FridgeType?.Model ?? "Unknown"
+        })
+        .Select(g => new
+        {
+            FridgeType = g.Key.Name,
+            Brand = g.Key.Brand,
+            Model = g.Key.Model,
+            TotalOrdered = g.Sum(x => x.Quantity),
+            Reserved = g.Count(x => x.Fridge?.Status == "Reserved"),
+            Allocated = g.Count(x => x.Fridge?.Status == "Allocated")
+        })
+        .ToList();
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="bi bi-gear text-primary"></i> Detailed Allocation</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="PendingAllocations">Pending Allocations</a></li>
+                    <li class="breadcrumb-item active">Order #@Model.Id</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="d-flex gap-2">
+            @if (reservedFridges.Any())
+            {
+                <form asp-action="AllocateAll" asp-route-orderId="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-success"
+                            onclick="return confirm('Allocate all @reservedFridges.Count reserved fridges for order #@Model.Id?')">
+                        <i class="bi bi-check-all"></i> Allocate All (@reservedFridges.Count)
+                    </button>
+                </form>
+            }
+            <a asp-action="PendingAllocations" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Order Summary -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-file-text"></i> Order Summary</h5>
+                    <span class="badge bg-light text-dark">#@Model.Id</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="40%">Customer:</th>
+                                    <td>@(Model.Customer?.User?.FullName ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <th>Business:</th>
+                                    <td>@(Model.Customer?.BusinessName ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <th>Customer Type:</th>
+                                    <td>
+                                        <span class="badge @GetCustomerTypeBadge(Model.Customer?.CustomerType)">
+                                            @(Model.Customer?.CustomerType ?? "N/A")
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Email:</th>
+                                    <td>@(Model.Customer?.User?.Email ?? "N/A")</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="40%">Order Date:</th>
+                                    <td>@Model.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>
+                                </tr>
+                                <tr>
+                                    <th>Status:</th>
+                                    <td><span class="badge @GetStatusBadge(Model.OrderStatus)">@Model.OrderStatus</span></td>
+                                </tr>
+                                <tr>
+                                    <th>Total Amount:</th>
+                                    <td class="fw-bold text-success">R @totalAmount.ToString("N2")</td>
+                                </tr>
+                                <tr>
+                                    <th>Shipping Fee:</th>
+                                    <td>R @Model.ShippingFee.ToString("N2")</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <strong>Delivery Address:</strong>
+                            <p class="mb-0 text-muted">@Model.DeliveryAddress</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Allocation Progress</h5>
+                </div>
+                <div class="card-body text-center">
+                    @{
+                        var totalFridges = reservedFridges.Count + allAllocatedFridges.Count;
+                        var allocatedPercentage = totalFridges > 0 ? (allAllocatedFridges.Count * 100) / totalFridges : 0;
+                    }
+                    <div class="progress mb-3" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar"
+                             style="width: @allocatedPercentage%"
+                             aria-valuenow="@allocatedPercentage" aria-valuemin="0" aria-valuemax="100">
+                            @allocatedPercentage%
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h4>@totalItems</h4>
+                            <small class="text-muted">Total Units</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-warning">@reservedFridges.Count</h4>
+                            <small class="text-muted">Reserved</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-success">@allAllocatedFridges.Count</h4>
+                            <small class="text-muted">Allocated</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-box-seam"></i> Items Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>Fridge Type</th>
+                                    <th>Brand & Model</th>
+                                    <th>Total Ordered</th>
+                                    <th>Reserved</th>
+                                    <th>Allocated</th>
+                                    <th>Pending</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in itemSummary)
+                                {
+                                    var itemProgress = item.TotalOrdered > 0 ? (item.Allocated * 100) / item.TotalOrdered : 0;
+                                    <tr>
+                                        <td class="fw-bold">@item.FridgeType</td>
+                                        <td>@item.Brand @item.Model</td>
+                                        <td>@item.TotalOrdered</td>
+                                        <td>
+                                            <span class="badge bg-warning">@item.Reserved</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">@item.Allocated</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">@(item.TotalOrdered - item.Allocated)</span>
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 8px;">
+                                                <div class="progress-bar bg-success" style="width: @itemProgress%"></div>
+                                            </div>
+                                            <small class="text-muted">@itemProgress%</small>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fridge Allocation Sections -->
+    <div class="row">
+        <!-- Reserved Fridges -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock"></i> Reserved Fridges
+                        <span class="badge bg-dark ms-2">@reservedFridges.Count</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (!reservedFridges.Any())
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-check-circle fa-2x"></i>
+                            <p class="mt-2">No reserved fridges pending allocation</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group">
+                            @foreach (var fridge in reservedFridges)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">@(fridge.FridgeType?.Name ?? "Unknown Type")</h6>
+                                            <p class="mb-1">
+                                                <strong>Serial:</strong> @fridge.SerialNumber<br>
+                                                <strong>Brand:</strong> @(fridge.FridgeType?.Brand ?? "N/A")<br>
+                                                <strong>Model:</strong> @(fridge.FridgeType?.Model ?? "N/A")<br>
+                                               @*  @if (fridge.ReservationDate.HasValue)
+                                                {
+                                                    <small class="text-muted">
+                                                        Reserved: @fridge.ReservationDate.Value.ToString("MMM dd, yyyy HH:mm")
+                                                    </small>
+                                                } *@
+                                            </p>
+                                        </div>
+                                        <div class="ms-3">
+                                            <form asp-action="Allocate" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="orderId" value="@Model.Id" />
+                                                <input type="hidden" name="fridgeId" value="@fridge.FridgeId" />
+                                                <button type="submit" class="btn btn-success btn-sm"
+                                                        onclick="return confirm('Allocate fridge @fridge.SerialNumber to order #@Model.Id?')">
+                                                    <i class="bi bi-check"></i> Allocate
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Allocated Fridges -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-check-circle"></i> Allocated Fridges
+                        <span class="badge bg-light text-dark ms-2">@allAllocatedFridges.Count</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (!allAllocatedFridges.Any())
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fa-2x"></i>
+                            <p class="mt-2">No fridges allocated yet</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group">
+                            @foreach (var fridge in allAllocatedFridges)
+                            {
+                                var allocation = Model.Allocations?.FirstOrDefault(a => a.FridgeId == fridge.FridgeId);
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">@(fridge.FridgeType?.Name ?? "Unknown Type")</h6>
+                                            <p class="mb-1">
+                                                <strong>Serial:</strong> @fridge.SerialNumber<br>
+                                                <strong>Brand:</strong> @(fridge.FridgeType?.Brand ?? "N/A")<br>
+                                                <strong>Model:</strong> @(fridge.FridgeType?.Model ?? "N/A")<br>
+                                                <small class="text-muted">
+                                                    @if (fridge.AllocationDate.HasValue)
+                                                    {
+                                                        <text>Allocated: @fridge.AllocationDate.Value.ToString("MMM dd, yyyy HH:mm")</text>
+                                                    }
+                                                    @if (allocation?.AllocatedBy != null)
+                                                    {
+                                                        <br>
+                                            
+                                                        <text>By: @allocation.AllocatedBy.FullName</text>
+                                                    }
+                                                </small>
+                                            </p>
+                                        </div>
+                                        <div class="ms-3">
+                                            <span class="badge bg-success">Allocated</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    @if (reservedFridges.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <form asp-action="AllocateAll" asp-route-orderId="@Model.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-success"
+                                        onclick="return confirm('Allocate all @reservedFridges.Count reserved fridges?')">
+                                    <i class="bi bi-check-all"></i> Allocate All (@reservedFridges.Count) Fridges
+                                </button>
+                            </form>
+                            <a asp-controller="LiaisonOrders" asp-action="Details" asp-route-id="@Model.Id"
+                               class="btn btn-outline-primary">
+                                <i class="bi bi-eye"></i> View Full Order Details
+                            </a>
+                            <a asp-action="History" class="btn btn-outline-info">
+                                <i class="bi bi-clock-history"></i> View Allocation History
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Add loading states to buttons
+            $('form').on('submit', function() {
+                const submitBtn = $(this).find('button[type="submit"]');
+                submitBtn.prop('disabled', true);
+                submitBtn.html('<i class="bi bi-hourglass-split"></i> Processing...');
+            });
+
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+        });
+    </script>
+}
+
+@functions {
+    private string GetCustomerTypeBadge(string customerType)
+    {
+        return customerType?.ToLower() switch
+        {
+            "spazashop" => "bg-primary",
+            "liquor" => "bg-success",
+            "other" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetStatusBadge(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "accepted" => "bg-primary",
+            "processing" => "bg-warning",
+            "shipped" => "bg-info",
+            "delivered" => "bg-success",
+            "cancelled" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}
