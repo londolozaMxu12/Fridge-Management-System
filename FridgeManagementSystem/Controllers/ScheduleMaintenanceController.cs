@@ -24,7 +24,7 @@ namespace FridgeManagementSystem.Controllers
         {
             _roleManager = roleManager;
             _userManager = userManager;
-            _context = context;
+            _context = context; 
         }
         [HttpGet]
         public IActionResult Create(string customerId)
